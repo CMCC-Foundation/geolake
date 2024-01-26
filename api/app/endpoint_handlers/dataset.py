@@ -29,9 +29,10 @@ data_store = Datastore()
 MESSAGE_SEPARATOR = os.environ["MESSAGE_SEPARATOR"]
 
 def _is_etimate_enabled(dataset_id, product_id):
-    if dataset_id in ("sentinel-2",):
-        return False
-    return True
+    return False
+    # if dataset_id in ("sentinel-2",):
+    #     return False
+    # return True
 
 
 @log_execution_time(log)

@@ -87,6 +87,16 @@ class AbstractBaseDriver(ABC, DataSourceBase):
         data_ = self.read()
         return self._process_geokube_dataset(data_, query=query, compute=True)
 
+    @staticmethod
+    def _maybe_compute_delayed(delayed_item):
+        if isinstance(delayed_item, Delayed):
+            return delayed_item.compute()
+        elif isinstance(delayed_item, Dataset):
+            return delayed_item.apply(
+                lambda dc: dc.compute() if isinstance(dc, Delayed) else dc
+            )   
+        return delayed_item
+    
     def _process_geokube_dataset(
         self,
         dataset: Dataset | DataCube,
@@ -98,12 +108,14 @@ class AbstractBaseDriver(ABC, DataSourceBase):
         )
         if not query:
             self.log.info("query is empty!")
-            return dataset.compute() if compute else dataset
+            if compute:
+                return AbstractBaseDriver._maybe_compute_delayed(dataset)           
+            return dataset
         if isinstance(dataset, Dataset):
             self.log.info("filtering with: %s", query.filters)
             dataset = dataset.filter(**query.filters)
-        if isinstance(dataset, Delayed) and compute:
-            dataset = dataset.compute()
+        if compute:
+            dataset = AbstractBaseDriver._maybe_compute_delayed(dataset)
         if query.variable:
             self.log.info("selecting variable: %s", query.variable)
             dataset = dataset[query.variable]
@@ -120,13 +132,4 @@ class AbstractBaseDriver(ABC, DataSourceBase):
             self.log.info("subsetting by vertical: %s", query.vertical)
             method = None if isinstance(query.vertical, slice) else "nearest"
             dataset = dataset.sel(vertical=query.vertical, method=method)
-        if isinstance(dataset, Dataset) and compute:
-            self.log.info(
-                "computing delayed datacubes in the dataset with %d"
-                " records...",
-                len(dataset),
-            )
-            dataset = dataset.apply(
-                lambda dc: dc.compute() if isinstance(dc, Delayed) else dc
-            )
         return dataset
