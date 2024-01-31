@@ -86,9 +86,9 @@ def _prepare_df_from_files(files: Iterable[str], pattern: str) -> pd.DataFrame:
     return pd.DataFrame(data)
 
 
-class CMCCSentinelSource(GeokubeSource):
-    name = "cmcc_sentinel_geokube"
-    version = "0.0.1"
+class SentinelSource(GeokubeSource):
+    name = "sentinel"
+    version = "0.1.0"
 
     def __init__(
         self,

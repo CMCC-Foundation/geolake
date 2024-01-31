@@ -106,8 +106,8 @@ def preprocess_wrf(dset: xr.Dataset, **kwargs) -> xr.Dataset:
     return dset
 
 
-class CMCCWRFSource(GeokubeSource):
-    name = "cmcc_wrf_geokube"
+class WRFSource(GeokubeSource):
+    name = "wrf"
 
     def __init__(
         self,
@@ -143,7 +143,7 @@ class CMCCWRFSource(GeokubeSource):
             variables_to_skip=variables_to_skip,
         )
         #     self.xarray_kwargs.update({'engine' : 'netcdf'})
-        super(CMCCWRFSource, self).__init__(metadata=metadata, **kwargs)
+        super(WRFSource, self).__init__(metadata=metadata, **kwargs)
 
     def _open_dataset(self):
         if self.pattern is None:

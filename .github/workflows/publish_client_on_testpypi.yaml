@@ -12,7 +12,8 @@ jobs:
         python-version: ["3.11"]
         os: [ubuntu-latest]
     permissions:
-        id-token: write
+      contents: read
+      id-token: write
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
@@ -30,4 +31,4 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: ./client/dist
-          repository-url: https://test.pypi.org/legacy/                           
+          repository-url: https://test.pypi.org/legacy/
