@@ -1,19 +1,31 @@
 """Modules realizing logic for dataset-related endpoints"""
 import os
 import pika
+<<<<<<< HEAD
 import json
+=======
+>>>>>>> release_0.1.1
 from typing import Optional
 
 from fastapi.responses import FileResponse
 
 from dbmanager.dbmanager import DBManager, RequestStatus
+<<<<<<< HEAD
 from intake_geokube.queries.geoquery import GeoQuery
 from intake_geokube.queries.workflow import Workflow
+=======
+from geoquery.geoquery import GeoQuery
+from geoquery.task import TaskList
+>>>>>>> release_0.1.1
 from datastore.datastore import Datastore, DEFAULT_MAX_REQUEST_SIZE_GB
 from datastore import exception as datastore_exception
 
 from utils.metrics import log_execution_time
+<<<<<<< HEAD
 from utils.api_logging import get_geolake_logger
+=======
+from utils.api_logging import get_dds_logger
+>>>>>>> release_0.1.1
 from auth.manager import (
     is_role_eligible_for_product,
 )
@@ -23,7 +35,11 @@ from validation import assert_product_exists
 
 from . import request
 
+<<<<<<< HEAD
 log = get_geolake_logger(__name__)
+=======
+log = get_dds_logger(__name__)
+>>>>>>> release_0.1.1
 data_store = Datastore()
 
 MESSAGE_SEPARATOR = os.environ["MESSAGE_SEPARATOR"]
@@ -286,7 +302,11 @@ def async_query(
         user_id=user_id,
         dataset=dataset_id,
         product=product_id,
+<<<<<<< HEAD
         query=json.dumps(query.model_dump_original()),
+=======
+        query=query.original_query_json(),
+>>>>>>> release_0.1.1
     )
 
     # TODO: find a separator; for the moment use "\"
@@ -371,7 +391,11 @@ def sync_query(
 @log_execution_time(log)
 def run_workflow(
     user_id: str,
+<<<<<<< HEAD
     workflow: Workflow,
+=======
+    workflow: TaskList,
+>>>>>>> release_0.1.1
 ):
     """Realize the logic for the endpoint:
 
@@ -383,7 +407,11 @@ def run_workflow(
     ----------
     user_id : str
         ID of the user executing the query
+<<<<<<< HEAD
     workflow : Workflow
+=======
+    workflow : TaskList
+>>>>>>> release_0.1.1
         Workflow to perform
 
     Returns

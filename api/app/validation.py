@@ -1,12 +1,20 @@
 from datastore.datastore import Datastore
+<<<<<<< HEAD
 from utils.api_logging import get_geolake_logger
+=======
+from utils.api_logging import get_dds_logger
+>>>>>>> release_0.1.1
 from decorators_factory import assert_parameters_are_defined, bind_arguments
 from functools import wraps
 from inspect import signature
 import exceptions as exc
 
 
+<<<<<<< HEAD
 log = get_geolake_logger(__name__)
+=======
+log = get_dds_logger(__name__)
+>>>>>>> release_0.1.1
 
 
 def assert_product_exists(func):

@@ -1,0 +1,26 @@
+metadata:
+  description: >-
+     Some description
+  contact: 
+    name: Data Deliver System Support Team
+    email: dds-support@cmcc.it
+    webpage: https://www.cmcc.it/research-organization/research-divisions/advanced-scientific-computing-division#1553329820238-2055494b-9aa6
+  publication_date: pub_date
+  update_frequency: update_frequency
+  related_data:
+    - name: related_data_name
+      url: related_data_url
+sources:
+  ensemble-spread:
+    description: Ensemble Spread
+    driver: geokube_netcdf
+    args:
+      mapping: {"latitude": {"api": "my_lat", "new_feature": "new_val"}}
+      path: '/data/inputs/E-OBS/spread/*_ens_*.nc'
+      pattern: '/data/inputs/E-OBS/spread/{var}_ens_spread_{resolution}deg_reg_{version}.nc'
+      delay_read_cubes: false
+      metadata_caching: false
+      xarray_kwargs:
+        parallel: true
+        decode_coords: 'all'
+        chunks: { 'latitude': -1, 'longitude': -1, 'time': 50 }

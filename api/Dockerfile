@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 ARG REGISTRY=rg.nl-ams.scw.cloud/geogeolake-production
+=======
+ARG REGISTRY=rg.fr-par.scw.cloud/geolake
+>>>>>>> release_0.1.1
 ARG TAG=latest
 FROM $REGISTRY/geolake-datastore:$TAG
 WORKDIR /app

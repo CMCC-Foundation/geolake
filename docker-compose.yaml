@@ -1,4 +1,4 @@
-version: "3.9"
+version: "3"
 services:
   api:
     build: 
@@ -14,6 +14,13 @@ services:
       - db
     environment:
       CATALOG_PATH: /code/app/resources/catalogs/catalog.yaml
+      POSTGRES_DB: dds
+      POSTGRES_USER: dds
+      POSTGRES_PASSWORD: dds
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432       
+    volumes:
+      - downloads:/downloads:ro 
     command: ["./wait-for-it.sh", "broker:5672", "--",  "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]
   executor:
     build: 
@@ -30,6 +37,13 @@ services:
     environment:
       EXECUTOR_TYPES: query,info,estimate
       CATALOG_PATH: /code/app/resources/catalogs/catalog.yaml
+      POSTGRES_DB: dds
+      POSTGRES_USER: dds
+      POSTGRES_PASSWORD: dds
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432 
+    volumes:
+      - downloads:/downloads:rw  
     command: ["./wait-for-it.sh", "broker:5672", "--", "python", "./app/main.py"]
   broker:
     image: rabbitmq:3
@@ -41,6 +55,37 @@ services:
     ports:
       - 5432:5432
     environment:
+<<<<<<< HEAD
       POSTGRES_DB: geolake
       POSTGRES_USER: geolake
       POSTGRES_PASSWORD: geolake
+=======
+      POSTGRES_DB: dds
+      POSTGRES_USER: dds
+      POSTGRES_PASSWORD: dds
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+  web:
+    build: 
+      context: ./
+      dockerfile: ./web/Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+    links:
+      - db
+    environment:
+      CATALOG_PATH: /code/app/resources/catalogs/catalog.yaml
+      POSTGRES_DB: dds
+      POSTGRES_USER: dds
+      POSTGRES_PASSWORD: dds
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432       
+    volumes:
+      - downloads:/downloads:ro 
+    command: ["./wait-for-it.sh", "broker:5672", "--",  "uvicorn", "web.main:app", "--host", "0.0.0.0", "--port", "80"]      
+
+volumes:
+  downloads:
+>>>>>>> release_0.1.1

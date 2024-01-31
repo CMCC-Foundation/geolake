@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: geodds
+  labels:
+    geodds.service: broker
+  name: broker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      geodds.service: broker
+  template:
+    metadata:
+      labels:
+        geodds.service: broker
+    spec:
+      containers:
+        - image: rabbitmq:3.9.25-management-alpine
+          name: broker
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "500m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          volumeMounts:
+            - name: config
+              mountPath: "/etc/rabbitmq/rabbitmq.conf"
+              subPath: rabbitmq.conf
+      restartPolicy: Always
+      volumes:
+        - name: config
+          configMap:
+            name: broker-config
+            items:
+              - key: "rabbitmq.conf"
+                path: "rabbitmq.conf"

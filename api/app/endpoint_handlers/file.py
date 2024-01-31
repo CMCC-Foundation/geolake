@@ -4,11 +4,19 @@ import os
 from fastapi.responses import FileResponse
 from dbmanager.dbmanager import DBManager, RequestStatus
 
+<<<<<<< HEAD
 from utils.api_logging import get_geolake_logger
 from utils.metrics import log_execution_time
 import exceptions as exc
 
 log = get_geolake_logger(__name__)
+=======
+from utils.api_logging import get_dds_logger
+from utils.metrics import log_execution_time
+import exceptions as exc
+
+log = get_dds_logger(__name__)
+>>>>>>> release_0.1.1
 
 
 @log_execution_time(log)
@@ -33,7 +41,11 @@ def download_request_result(request_id: int):
     Raises
     -------
     RequestNotYetAccomplished
+<<<<<<< HEAD
         If geolake request was not yet finished
+=======
+        If dds request was not yet finished
+>>>>>>> release_0.1.1
     FileNotFoundError
         If file was not found
     """

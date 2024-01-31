@@ -1,11 +1,10 @@
 """Main module with dekube-geolake API endpoints defined"""
 __version__ = "2.0"
 import os
-from typing import Optional
 
 from datetime import datetime
 
-from fastapi import FastAPI, HTTPException, Request, status, Query
+from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.authentication import AuthenticationMiddleware
 from starlette.authentication import requires
@@ -104,27 +103,11 @@ app.state.api_http_requests_total = Counter(
     "api_http_requests_total", "Total number of requests"
 )
 
-
 # ======== Endpoints definitions ========= #
 @app.get("/", tags=[tags.BASIC])
 async def geolake_info():
     """Return current version of the GeoLake API"""
     return f"GeoLake API {__version__}"
-
-
-@app.get("/datasets", tags=[tags.DATASET])
-@timer(
-    app.state.api_request_duration_seconds, labels={"route": "GET /datasets"}
-)
-async def get_datasets(request: Request):
-    """List all products eligible for a user defined by user_token"""
-    app.state.api_http_requests_total.inc({"route": "GET /datasets"})
-    try:
-        return dataset_handler.get_datasets(
-            user_roles_names=request.auth.scopes
-        )
-    except exc.BaseGeoLakeException as err:
-        raise err.wrap_around_http_exception() from err
 
 
 @app.get("/datasets/{dataset_id}", tags=[tags.DATASET])
@@ -266,6 +249,58 @@ async def get_feature(
         )
     except exc.BaseGeoLakeException as err:
         raise err.wrap_around_http_exception() from err
+
+# ======== CORS ========= #
+cors_kwargs: dict[str, str | list[str]]
+if venv.ALLOWED_CORS_ORIGINS_REGEX in os.environ:
+    cors_kwargs = {
+        "allow_origin_regex": os.environ[venv.ALLOWED_CORS_ORIGINS_REGEX]
+    }
+else:
+    cors_kwargs = {"allow_origins": ["*"]}
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    **cors_kwargs,
+)
+
+
+# ======== Prometheus metrics ========= #
+app.add_middleware(MetricsMiddleware)
+app.add_route("/metrics", metrics)
+
+app.state.api_request_duration_seconds = Summary(
+    "api_request_duration_seconds", "Requests duration"
+)
+app.state.api_http_requests_total = Counter(
+    "api_http_requests_total", "Total number of requests"
+)
+
+
+# ======== Endpoints definitions ========= #
+@app.get("/", tags=[tags.BASIC])
+async def dds_info():
+    """Return current version of the DDS API"""
+    return f"DDS API {__version__}"
+
+
+@app.get("/datasets", tags=[tags.DATASET])
+@timer(
+    app.state.api_request_duration_seconds, labels={"route": "GET /datasets"}
+)
+async def get_datasets(request: Request):
+    """List all products eligible for a user defined by user_token"""
+    app.state.api_http_requests_total.inc({"route": "GET /datasets"})
+    try:
+        return dataset_handler.get_datasets(
+            user_roles_names=request.auth.scopes
+        )
+    except exc.BaseDDSException as err:
+        raise err.wrap_around_http_exception() from err
+
 
 @app.get("/datasets/{dataset_id}/{product_id}/metadata", tags=[tags.DATASET])
 @timer(

@@ -443,6 +443,7 @@ class Executor(metaclass=LoggableMeta):
             fail_reason = f"{type(e).__name__}: {str(e)}"
         return (location_path, status, fail_reason)
 
+
     def handle_message(self, connection, channel, delivery_tag, body):
         message: Message = Message(body)
         self._LOG.debug(

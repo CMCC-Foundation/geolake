@@ -1,0 +1,38 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  name: ddshub
+  namespace: geodds
+spec:
+  host: ddshub.cmcc.it
+  upstreams:
+  - name: api
+    service: api
+    port: 8080
+
+  - name: web
+    service: web
+    port: 8080
+
+  - name: wps
+    service: wps
+    port: 80
+
+  routes:
+  - path: ~ /api/?(.*)
+    action:
+      proxy:
+        upstream: api 
+        rewritePath: /$1
+
+  - path: ~ /web/?(.*)
+    action:
+      proxy:
+        upstream: web 
+        rewritePath: /$1
+
+  - path: /wps
+    action:
+      proxy:
+        upstream: wps 
+

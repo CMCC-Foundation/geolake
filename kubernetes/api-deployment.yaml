@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    geodds.service: api
+  name: api
+  namespace: geodds
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      geodds.service: api
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        geodds.service: api
+    spec:
+      containers:
+      - args:
+        - ./wait-for-it.sh
+        - broker:5672
+        - --
+        - uvicorn
+        - app.main:app
+        - --host
+        - 0.0.0.0
+        - --port
+        - '80'
+        env:
+        - name: LOGGING_LEVEL
+          value: DEBUG
+        - name: CATALOG_PATH
+          value: /catalog/catalog.yaml
+        - name: POSTGRES_DB
+          value: dds
+        - name: POSTGRES_HOST
+          value: db
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db
+              key: user_psw
+        - name: POSTGRES_PORT
+          value: '5432'
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: db
+              key: user_name
+        - name: ENDPOINT_PREFIX
+          value: /api
+        - name: ECHO_DB
+          value: 'false'
+        - name: ALLOWED_CORS_ORIGINS_REGEX
+          value: https://dds(-dev|)+\.cmcc\.it.*
+        image: rg.nl-ams.scw.cloud/dds-production/geodds-api:v0.1a179
+        name: api
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: 500m
+            memory: 8Gi
+          requests:
+            cpu: 250m
+            memory: 6Gi
+        volumeMounts:
+        - mountPath: /catalog
+          name: catalog
+          readOnly: true
+        - mountPath: /work/services/dds/DDS-2.0/cache
+          name: cache
+          readOnly: false
+        - mountPath: /data
+          name: data
+          readOnly: true
+        - mountPath: /downloads
+          name: downloads
+          readOnly: true
+      imagePullSecrets:
+      - name: scalereg
+      restartPolicy: Always
+      volumes:
+      - hostPath:
+          path: /work/services/dds/DDS-2.0/catalog/Catalog
+        name: catalog
+      - hostPath:
+          path: /work/services/dds/DDS-2.0/downloads
+        name: downloads
+      - hostPath:
+          path: /work/services/dds/DDS-2.0/cache
+        name: cache
+      - hostPath:
+          path: /data
+        name: data

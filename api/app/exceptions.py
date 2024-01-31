@@ -1,11 +1,20 @@
+<<<<<<< HEAD
 """Module with GeoLake exceptions definitions"""
+=======
+"""Module with DDS exceptions definitions"""
+>>>>>>> release_0.1.1
 from typing import Optional
 
 from fastapi import HTTPException
 
 
+<<<<<<< HEAD
 class BaseGeoLakeException(BaseException):
     """Base class for GeoLake.api exceptions"""
+=======
+class BaseDDSException(BaseException):
+    """Base class for DDS.api exceptions"""
+>>>>>>> release_0.1.1
 
     msg: str = "Bad request"
     code: int = 400
@@ -18,13 +27,21 @@ class BaseGeoLakeException(BaseException):
         )
 
 
+<<<<<<< HEAD
 class EmptyUserTokenError(BaseGeoLakeException):
+=======
+class EmptyUserTokenError(BaseDDSException):
+>>>>>>> release_0.1.1
     """Raised if `User-Token` is empty"""
 
     msg: str = "User-Token cannot be empty!"
 
 
+<<<<<<< HEAD
 class ImproperUserTokenError(BaseGeoLakeException):
+=======
+class ImproperUserTokenError(BaseDDSException):
+>>>>>>> release_0.1.1
     """Raised if `User-Token` format is wrong"""
 
     msg: str = (
@@ -33,7 +50,11 @@ class ImproperUserTokenError(BaseGeoLakeException):
     )
 
 
+<<<<<<< HEAD
 class NoEligibleProductInDatasetError(BaseGeoLakeException):
+=======
+class NoEligibleProductInDatasetError(BaseDDSException):
+>>>>>>> release_0.1.1
     """No eligible products in the dataset Error"""
 
     msg: str = (
@@ -48,7 +69,11 @@ class NoEligibleProductInDatasetError(BaseGeoLakeException):
         super().__init__(self.msg)
 
 
+<<<<<<< HEAD
 class MissingKeyInCatalogEntryError(BaseGeoLakeException):
+=======
+class MissingKeyInCatalogEntryError(BaseDDSException):
+>>>>>>> release_0.1.1
     """Missing key in the catalog entry"""
 
     msg: str = (
@@ -60,7 +85,11 @@ class MissingKeyInCatalogEntryError(BaseGeoLakeException):
         super().__init__(self.msg)
 
 
+<<<<<<< HEAD
 class MaximumAllowedSizeExceededError(BaseGeoLakeException):
+=======
+class MaximumAllowedSizeExceededError(BaseDDSException):
+>>>>>>> release_0.1.1
     """Estimated size is too big"""
 
     msg: str = (
@@ -81,8 +110,13 @@ class MaximumAllowedSizeExceededError(BaseGeoLakeException):
         super().__init__(self.msg)
 
 
+<<<<<<< HEAD
 class RequestNotYetAccomplished(BaseGeoLakeException):
     """Raised if geolake request was not finished yet"""
+=======
+class RequestNotYetAccomplished(BaseDDSException):
+    """Raised if dds request was not finished yet"""
+>>>>>>> release_0.1.1
 
     msg: str = (
         "Request with id: {request_id} does not exist or it is not"
@@ -94,7 +128,11 @@ class RequestNotYetAccomplished(BaseGeoLakeException):
         super().__init__(self.msg)
 
 
+<<<<<<< HEAD
 class RequestNotFound(BaseGeoLakeException):
+=======
+class RequestNotFound(BaseDDSException):
+>>>>>>> release_0.1.1
     """If the given request could not be found"""
 
     msg: str = "Request with ID '{request_id}' was not found"
@@ -104,7 +142,11 @@ class RequestNotFound(BaseGeoLakeException):
         super().__init__(self.msg)
 
 
+<<<<<<< HEAD
 class RequestStatusNotDone(BaseGeoLakeException):
+=======
+class RequestStatusNotDone(BaseDDSException):
+>>>>>>> release_0.1.1
     """Raised when the submitted request failed"""
 
     msg: str = (
@@ -119,7 +161,11 @@ class RequestStatusNotDone(BaseGeoLakeException):
         super().__init__(self.msg)
 
 
+<<<<<<< HEAD
 class AuthorizationFailed(BaseGeoLakeException):
+=======
+class AuthorizationFailed(BaseDDSException):
+>>>>>>> release_0.1.1
     """Raised when the user is not authorized for the given resource"""
 
     msg: str = "{user} is not authorized for the resource!"
@@ -133,7 +179,11 @@ class AuthorizationFailed(BaseGeoLakeException):
         super().__init__(self.msg)
 
 
+<<<<<<< HEAD
 class AuthenticationFailed(BaseGeoLakeException):
+=======
+class AuthenticationFailed(BaseDDSException):
+>>>>>>> release_0.1.1
     """Raised when the key of the provided user differs from the one s
     tored in the DB"""
 
@@ -145,7 +195,11 @@ class AuthenticationFailed(BaseGeoLakeException):
         super().__init__(self.msg)
 
 
+<<<<<<< HEAD
 class MissingDatasetError(BaseGeoLakeException):
+=======
+class MissingDatasetError(BaseDDSException):
+>>>>>>> release_0.1.1
     """Raied if the queried dataset is not present in the catalog"""
 
     msg: str = "Dataset '{dataset_id}' does not exist in the catalog!"
@@ -155,7 +209,11 @@ class MissingDatasetError(BaseGeoLakeException):
         super().__init__(self.msg)
 
 
+<<<<<<< HEAD
 class MissingProductError(BaseGeoLakeException):
+=======
+class MissingProductError(BaseDDSException):
+>>>>>>> release_0.1.1
     """Raised if the requested product is not defined for the dataset"""
 
     msg: str = (
@@ -169,7 +227,11 @@ class MissingProductError(BaseGeoLakeException):
         super().__init__(self.msg)
 
 
+<<<<<<< HEAD
 class EmptyDatasetError(BaseGeoLakeException):
+=======
+class EmptyDatasetError(BaseDDSException):
+>>>>>>> release_0.1.1
     """The size of the requested dataset is zero"""
 
     msg: str = "The resulting dataset '{dataset_id}.{product_id}' is empty"
@@ -181,7 +243,11 @@ class EmptyDatasetError(BaseGeoLakeException):
         )
         super().__init__(self.msg)
 
+<<<<<<< HEAD
 class ProductRetrievingError(BaseGeoLakeException):
+=======
+class ProductRetrievingError(BaseDDSException):
+>>>>>>> release_0.1.1
     """Retrieving of the product failed."""
 
     msg: str = "Retrieving of the product '{dataset_id}.{product_id}' failed with the status {status}"

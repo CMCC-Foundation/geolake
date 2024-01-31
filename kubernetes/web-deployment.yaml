@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    geodds.service: web
+  name: web
+  namespace: geodds
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      geodds.service: web
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        geodds.service: web
+    spec:
+      containers:
+      - args:
+        - ./wait-for-it.sh
+        - broker:5672
+        - --
+        - uvicorn
+        - app.main:app
+        - --proxy-headers
+        - --host
+        - 0.0.0.0
+        - --port
+        - '80'
+        env:
+        - name: LOGGING_LEVEL
+          value: DEBUG
+        - name: API_TIMEOUT
+          value: '20'
+        - name: POSTGRES_DB
+          value: dds
+        - name: POSTGRES_HOST
+          value: db
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: user_psw
+              name: db
+        - name: POSTGRES_PORT
+          value: '5432'
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              key: user_name
+              name: db
+        - name: API_URL
+          value: http://api:8080
+        - name: DOWNLOAD_PREFIX
+          value: https://ddshub.cmcc.it/api
+        - name: ENDPOINT_PREFIX
+          value: /web
+        - name: ECHO_DB
+          value: 'false'
+        - name: ALLOWED_CORS_ORIGINS_REGEX
+          value: https://dds(-dev|)+\.cmcc\.it.*
+        image: rg.nl-ams.scw.cloud/dds-production/geodds-web:v0.1a124
+        name: web
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: 500m
+            memory: 8Gi
+          requests:
+            cpu: 250m
+            memory: 8Gi
+        volumeMounts:
+        - mountPath: /catalog
+          name: catalog
+          readOnly: true
+        - mountPath: /work/services/dds/DDS-2.0/cache
+          name: cache
+          readOnly: false
+        - mountPath: /data
+          name: data
+          readOnly: true
+      imagePullSecrets:
+      - name: scalereg
+      restartPolicy: Always
+      volumes:
+      - hostPath:
+          path: /work/services/dds/DDS-2.0/catalog/Catalog
+        name: catalog
+      - hostPath:
+          path: /work/services/dds/DDS-2.0/cache
+        name: cache
+      - hostPath:
+          path: /data
+        name: data

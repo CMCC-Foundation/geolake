@@ -1,0 +1,45 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: db-backup
+  namespace: geodds
+spec:
+  schedule: "0 3 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          imagePullSecrets:
+          - name: scalereg      
+          containers:
+          - name: backup
+            image: rg.nl-ams.scw.cloud/dds-production/backup:v0.1a1
+            volumeMounts:
+            - mountPath: /snapshots
+              name: snapshots
+              readOnly: false
+            args:
+              - /bin/sh
+              - -c
+              - /scripts/do_backup.sh 
+            env:
+              - name: POSTGRES_DB
+                value: dds
+              - name: POSTGRES_HOST
+                value: db                
+              - name: POSTGRES_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: db
+                    key: user_psw
+              - name: POSTGRES_USER
+                valueFrom:
+                  secretKeyRef:
+                    name: db
+                    key: user_name    
+          volumes:
+          - hostPath:
+              path: /home/dds/db-backup-dds-dev
+            name: snapshots      
+          restartPolicy: OnFailure
+
