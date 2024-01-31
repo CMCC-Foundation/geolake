@@ -61,6 +61,7 @@ jobs:
         push: true
         build-args: |
           REGISTRY=${{ vars.DOCKER_REGISTRY  }}
+          GEODDS_UTILS_PAT=${{ secrets.GEODDS_UTILS_PAT }}
         tags: | 
           ${{ vars.DOCKER_REGISTRY }}/geolake-api:${{ env.TAG }}  
           ${{ vars.DOCKER_REGISTRY }}/geolake-api:latest 
@@ -72,6 +73,19 @@ jobs:
         push: true
         build-args: |
           REGISTRY=${{ vars.DOCKER_REGISTRY  }}
+          GEODDS_UTILS_PAT=${{ secrets.GEODDS_UTILS_PAT }}
         tags: | 
           ${{ vars.DOCKER_REGISTRY }}/geolake-executor:${{ env.TAG }}  
-          ${{ vars.DOCKER_REGISTRY }}/geolake-executor:latest                           
+          ${{ vars.DOCKER_REGISTRY }}/geolake-executor:latest        
+    - name: Build and push broker component
+      uses: docker/build-push-action@v4
+      with:
+        context: ./broker
+        file: ./broker/Dockerfile
+        push: true
+        build-args: |
+          REGISTRY=${{ vars.DOCKER_REGISTRY  }}
+          GEODDS_UTILS_PAT=${{ secrets.GEODDS_UTILS_PAT }}
+        tags: | 
+          ${{ vars.DOCKER_REGISTRY }}/geolake-broker:${{ env.TAG }}  
+          ${{ vars.DOCKER_REGISTRY }}/geolake-broker:latest                                    

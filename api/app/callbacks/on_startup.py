@@ -1,4 +1,5 @@
 """Module with functions call during API server startup"""
+
 from utils.api_logging import get_dds_logger
 
 from datastore.datastore import Datastore

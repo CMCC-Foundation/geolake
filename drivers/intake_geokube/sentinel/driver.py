@@ -62,8 +62,10 @@ def _bounding_box_to_polygon(
 
 
 def _timecombo_to_day_range(combo: TimeComboDict) -> tuple[str, str]:
-    return (f"{combo['year']}-{combo['month']}-{combo['day']}T00:00:00",
-            f"{combo['year']}-{combo['month']}-{combo['day']}T23:59:59")
+    return (
+        f"{combo['year']}-{combo['month']}-{combo['day']}T00:00:00",
+        f"{combo['year']}-{combo['month']}-{combo['day']}T23:59:59",
+    )
 
 
 def _location_to_valid_point(
@@ -156,7 +158,10 @@ def preprocess_sentinel(dset: xr.Dataset) -> xr.Dataset:
         "latitude": (("x", "y"), lat_vals),
         "longitude": (("x", "y"), lon_vals),
     }).rename({"band_data": _get_field_name_from_path(source_path)})
-    expanded_timedim_dataarrays = {var_name: dset[var_name].expand_dims('time') for var_name in dset.data_vars}
+    expanded_timedim_dataarrays = {
+        var_name: dset[var_name].expand_dims("time")
+        for var_name in dset.data_vars
+    }
     dset = dset.update(expanded_timedim_dataarrays)
     return dset
 
@@ -257,10 +262,18 @@ class SentinelDriver(AbstractBaseDriver):
         builder = self._force_sentinel_type(builder)
         if query.time:
             if isinstance(query.time, dict):
-                timecombo_start, timecombo_end = _timecombo_to_day_range(query.time)
-                self.log.debug("filtering by timecombo: [%s, %s] ", timecombo_start, timecombo_end)
+                timecombo_start, timecombo_end = _timecombo_to_day_range(
+                    query.time
+                )
+                self.log.debug(
+                    "filtering by timecombo: [%s, %s] ",
+                    timecombo_start,
+                    timecombo_end,
+                )
                 builder = builder.filter_date(
-                    _SentinelKeys.SENSING_TIME, ge=timecombo_start, le=timecombo_end
+                    _SentinelKeys.SENSING_TIME,
+                    ge=timecombo_start,
+                    le=timecombo_end,
                 )
             elif isinstance(query.time, slice):
                 self.log.debug("filtering by slice: %s", query.time)

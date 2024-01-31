@@ -1,4 +1,5 @@
 """Module with `LoggableMeta` metaclass"""
+
 import os
 import logging
 

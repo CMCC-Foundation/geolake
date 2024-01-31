@@ -1,8 +1,10 @@
 """Modules with functions realizing logic for requests-related endpoints"""
+
 from dbmanager.dbmanager import DBManager
 
+from geodds_utils.workflow import log_execution_time
 from utils.api_logging import get_dds_logger
-from utils.metrics import log_execution_time
+
 import exceptions as exc
 
 log = get_dds_logger(__name__)
@@ -26,7 +28,7 @@ def get_requests(user_id: str):
     requests : list
         List of all requests done by the user
     """
-    return DBManager().get_requests_for_user_id(user_id=user_id)
+    return DBManager().get_request(user_id=user_id)
 
 
 @log_execution_time(log)
@@ -51,15 +53,14 @@ def get_request_status(user_id: str, request_id: int):
         Tuple of status and fail reason.
     """
     # NOTE: maybe verification should be added if user checks only him\her requests
-    try:
-        status, reason = DBManager().get_request_status_and_reason(request_id)
-    except IndexError as err:
+    request = DBManager().get_request(request_id=request_id)
+    if not request:
         log.error(
             "request with id: '%s' was not found!",
             request_id,
         )
-        raise exc.RequestNotFound(request_id=request_id) from err
-    return {"status": status.name, "fail_reason": reason}
+        raise exc.RequestNotFound(request_id=request_id)
+    return {"status": request.status.name, "fail_reason": request.fail_reason}
 
 
 @log_execution_time(log)
@@ -88,8 +89,9 @@ def get_request_resulting_size(request_id: int):
     if request := DBManager().get_request_details(request_id):
         size = request.download.size_bytes
         if not size or size == 0:
-            raise exc.EmptyDatasetError(dataset_id=request.dataset, 
-                                        product_id=request.product)
+            raise exc.EmptyDatasetError(
+                dataset_id=request.dataset, product_id=request.product
+            )
         return size
     log.info(
         "request with id '%s' could not be found",
@@ -128,17 +130,14 @@ def get_request_uri(request_id: int):
         )
         raise exc.RequestNotFound(request_id=request_id) from err
     if download_details is None:
-        (
-            request_status,
-            _,
-        ) = DBManager().get_request_status_and_reason(request_id)
+        request = DBManager().get_request(request_id=request_id)
         log.info(
             "download URI not found for request id: '%s'."
             " Request status is '%s'",
             request_id,
-            request_status,
+            request.status,
         )
         raise exc.RequestStatusNotDone(
-            request_id=request_id, request_status=request_status
+            request_id=request_id, request_status=request.status
         )
     return download_details.download_uri

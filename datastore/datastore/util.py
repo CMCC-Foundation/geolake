@@ -1,4 +1,5 @@
 """Utils module"""
+
 from functools import wraps
 import datetime
 import logging

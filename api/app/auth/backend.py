@@ -1,4 +1,5 @@
 """The module contains authentication backend"""
+
 from uuid import UUID
 
 from starlette.authentication import (

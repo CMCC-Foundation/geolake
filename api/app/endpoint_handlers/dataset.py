@@ -1,13 +1,15 @@
 """Modules realizing logic for dataset-related endpoints"""
-import os
-import pika
+
 import json
 from typing import Optional
 
 from fastapi.responses import FileResponse
 
+from geodds_utils.units import make_bytes_readable_dict
+from geodds_utils.workflow import log_execution_time
+
 from dbmanager.dbmanager import DBManager, RequestStatus
-from intake_geokube.queries.geoquery import GeoQuery
+from intake_geokube.queries.geoquery import GeoQuery, Workflow
 from intake_geokube.queries.workflow import Workflow
 from datastore.datastore import Datastore, DEFAULT_MAX_REQUEST_SIZE_GB
 from datastore import exception as datastore_exception
@@ -26,7 +28,24 @@ from . import request
 log = get_dds_logger(__name__)
 data_store = Datastore()
 
-MESSAGE_SEPARATOR = os.environ["MESSAGE_SEPARATOR"]
+PENDING_QUEUE: str = "pending"
+
+
+def convert_to_workflow(
+    dataset_id: str, product_id: str, geoquery: GeoQuery
+) -> Workflow:
+    raw_task = {
+        "id": "geoquery",
+        "op": "subset",
+        "use": [],
+        "args": {
+            "dataset_id": dataset_id,
+            "product_id": product_id,
+            "query": geoquery.dict(),
+        },
+    }
+    return TaskList.parse([raw_task])
+
 
 def _is_etimate_enabled(dataset_id, product_id):
     if dataset_id in ("sentinel-2",):
@@ -260,7 +279,9 @@ def async_query(
     """
     log.debug("geoquery: %s", query)
     if _is_etimate_enabled(dataset_id, product_id):
-        estimated_size = estimate(dataset_id, product_id, query, "GB").get("value")
+        estimated_size = estimate(dataset_id, product_id, query, "GB").get(
+            "value"
+        )
         allowed_size = data_store.product_metadata(dataset_id, product_id).get(
             "maximum_query_size_gb", DEFAULT_MAX_REQUEST_SIZE_GB
         )
@@ -275,35 +296,16 @@ def async_query(
             raise exc.EmptyDatasetError(
                 dataset_id=dataset_id, product_id=product_id
             )
-    broker_conn = pika.BlockingConnection(
-        pika.ConnectionParameters(
-            host=os.getenv("BROKER_SERVICE_HOST", "broker")
-        )
-    )
-    broker_channel = broker_conn.channel()
 
     request_id = DBManager().create_request(
         user_id=user_id,
         dataset=dataset_id,
         product=product_id,
-        query=json.dumps(query.model_dump_original()),
+        query=convert_to_workflow(dataset_id, product_id, query).json(),
+        status=RequestStatus.PENDING,
     )
-
-    # TODO: find a separator; for the moment use "\"
-    message = MESSAGE_SEPARATOR.join(
-        [str(request_id), "query", dataset_id, product_id, query.json()]
-    )
-
-    broker_channel.basic_publish(
-        exchange="",
-        routing_key="query_queue",
-        body=message,
-        properties=pika.BasicProperties(
-            delivery_mode=2,  # make message persistent
-        ),
-    )
-    broker_conn.close()
     return request_id
+
 
 @log_execution_time(log)
 @assert_product_exists
@@ -343,29 +345,32 @@ def sync_query(
         if estimated size is zero
 
     """
-    
+
     import time
+
     request_id = async_query(user_id, dataset_id, product_id, query)
     status, _ = DBManager().get_request_status_and_reason(request_id)
     log.debug("sync query: status: %s", status)
-    while status in (RequestStatus.RUNNING, RequestStatus.QUEUED, 
-                     RequestStatus.PENDING):
+    while status in (
+        RequestStatus.RUNNING,
+        RequestStatus.QUEUED,
+        RequestStatus.PENDING,
+    ):
         time.sleep(1)
         status, _ = DBManager().get_request_status_and_reason(request_id)
         log.debug("sync query: status: %s", status)
-    
+
     if status is RequestStatus.DONE:
         download_details = DBManager().get_download_details_for_request_id(
-                request_id
+            request_id
         )
         return FileResponse(
             path=download_details.location_path,
             filename=download_details.location_path.split(os.sep)[-1],
         )
     raise exc.ProductRetrievingError(
-        dataset_id=dataset_id, 
-        product_id=product_id,
-        status=status.name)
+        dataset_id=dataset_id, product_id=product_id, status=status.name
+    )
 
 
 @log_execution_time(log)
@@ -400,31 +405,12 @@ def run_workflow(
 
     """
     log.debug("geoquery: %s", workflow)
-    broker_conn = pika.BlockingConnection(
-        pika.ConnectionParameters(
-            host=os.getenv("BROKER_SERVICE_HOST", "broker")
-        )
-    )
-    broker_channel = broker_conn.channel()
+
     request_id = DBManager().create_request(
         user_id=user_id,
         dataset=workflow.dataset_id,
         product=workflow.product_id,
         query=workflow.json(),
+        status=RequestStatus.PENDING,
     )
-
-    # TODO: find a separator; for the moment use "\"
-    message = MESSAGE_SEPARATOR.join(
-        [str(request_id), "workflow", workflow.json()]
-    )
-
-    broker_channel.basic_publish(
-        exchange="",
-        routing_key="query_queue",
-        body=message,
-        properties=pika.BasicProperties(
-            delivery_mode=2,  # make message persistent
-        ),
-    )
-    broker_conn.close()
     return request_id

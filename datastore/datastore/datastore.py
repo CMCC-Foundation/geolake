@@ -1,4 +1,5 @@
 """Module for catalog management classes and functions"""
+
 from __future__ import annotations
 
 import os
@@ -102,7 +103,10 @@ class Datastore(metaclass=Singleton):
                 catalog_entry = self.catalog(CACHE_DIR=self.cache_dir)[
                     dataset_id
                 ][product_id]
-                if hasattr(catalog_entry, "metadata_caching") and not catalog_entry.metadata_caching:
+                if (
+                    hasattr(catalog_entry, "metadata_caching")
+                    and not catalog_entry.metadata_caching
+                ):
                     self._LOG.info(
                         "`metadata_caching` for product %s.%s set to `False`",
                         dataset_id,
@@ -110,16 +114,14 @@ class Datastore(metaclass=Singleton):
                     )
                     continue
                 try:
-                    self.cache[dataset_id][
-                        product_id
-                    ] = catalog_entry.read()
+                    self.cache[dataset_id][product_id] = catalog_entry.read()
                 except ValueError:
                     self._LOG.error(
                         "failed to load cache for `%s.%s`",
                         dataset_id,
                         product_id,
                         exc_info=True,
-                    ) 
+                    )
                 except NotImplementedError:
                     pass
 
@@ -392,8 +394,9 @@ class Datastore(metaclass=Singleton):
         # NOTE: we always use catalog directly and single product cache
         self._LOG.debug("loading product...")
         # NOTE: for estimation we use cached products
-        kube = self.get_cached_product_or_read(dataset_id, product_id, 
-                                               query=query)
+        kube = self.get_cached_product_or_read(
+            dataset_id, product_id, query=query
+        )
         return Datastore._process_query(kube, geoquery, False).nbytes
 
     @log_execution_time(_LOG)
@@ -425,7 +428,9 @@ class Datastore(metaclass=Singleton):
             try:
                 kube = kube.filter(**query.filters)
             except ValueError as err:
-                Datastore._LOG.warning("could not filter by one of the key: %s", err)
+                Datastore._LOG.warning(
+                    "could not filter by one of the key: %s", err
+                )
         if isinstance(kube, Delayed) and compute:
             kube = kube.compute()
         if query.variable:

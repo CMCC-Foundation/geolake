@@ -1,4 +1,5 @@
 """The module contains models related to the authentication and authorization"""
+
 from starlette.authentication import SimpleUser
 
 

@@ -10,8 +10,7 @@ log = get_dds_logger(__name__)
 
 
 def assert_product_exists(func):
-    """Decorator for convenient checking if product is defined in the catalog
-    """
+    """Decorator for convenient checking if product is defined in the catalog"""
     sig = signature(func)
     assert_parameters_are_defined(
         sig, required_parameters=[("dataset_id", str), ("product_id", str)]

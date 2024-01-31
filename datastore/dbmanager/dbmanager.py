@@ -197,14 +197,12 @@ class DBManager(metaclass=Singleton):
                 user_id=user_id, api_key=api_key, contact_name=contact_name
             )
             if roles_names:
-                user.roles.extend(
-                    [
-                        session.query(Role)
-                        .where(Role.role_name == role_name)
-                        .all()[0]  # NOTE: role_name is unique in the database
-                        for role_name in roles_names
-                    ]
-                )
+                user.roles.extend([
+                    session.query(Role)
+                    .where(Role.role_name == role_name)
+                    .all()[0]  # NOTE: role_name is unique in the database
+                    for role_name in roles_names
+                ])
             session.add(user)
             session.commit()
             return user

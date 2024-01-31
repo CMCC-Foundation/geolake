@@ -95,14 +95,12 @@ def persist_datacube(
     else:
         var_names = list(kube.fields.keys())
         if len(kube) == 1:
-            path = "_".join(
-                [
-                    var_names[0],
-                    message.dataset_id,
-                    message.product_id,
-                    message.request_id,
-                ]
-            )
+            path = "_".join([
+                var_names[0],
+                message.dataset_id,
+                message.product_id,
+                message.request_id,
+            ])
         else:
             path = "_".join(
                 [message.dataset_id, message.product_id, message.request_id]
@@ -139,7 +137,9 @@ def persist_dataset(
     def _get_attr_comb(dataframe_item, attrs):
         return "_".join([dataframe_item[attr_name] for attr_name in attrs])
 
-    def _persist_single_datacube(dataframe_item, base_path, format, format_args=None):
+    def _persist_single_datacube(
+        dataframe_item, base_path, format, format_args=None
+    ):
         if not format_args:
             format_args = {}
         dcube = dataframe_item[dset.DATACUBE_COL]
@@ -153,24 +153,20 @@ def persist_dataset(
         attr_str = _get_attr_comb(dataframe_item, dset._Dataset__attrs)
         var_names = list(dcube.fields.keys())
         if len(dcube) == 1:
-            path = "_".join(
-                [
-                    var_names[0],
-                    message.dataset_id,
-                    message.product_id,
-                    attr_str,
-                    message.request_id,
-                ]
-            )
+            path = "_".join([
+                var_names[0],
+                message.dataset_id,
+                message.product_id,
+                attr_str,
+                message.request_id,
+            ])
         else:
-            path = "_".join(
-                [
-                    message.dataset_id,
-                    message.product_id,
-                    attr_str,
-                    message.request_id,
-                ]
-            )
+            path = "_".join([
+                message.dataset_id,
+                message.product_id,
+                attr_str,
+                message.request_id,
+            ])
         match format:
             case "netcdf":
                 full_path = os.path.join(base_path, f"{path}.nc")
@@ -194,7 +190,11 @@ def persist_dataset(
     else:
         format = "netcdf"
     datacubes_paths = dset.data.apply(
-        _persist_single_datacube, base_path=base_path, format=format, format_args=format_args, axis=1
+        _persist_single_datacube,
+        base_path=base_path,
+        format=format,
+        format_args=format_args,
+        axis=1,
     )
     paths = datacubes_paths[~datacubes_paths.isna()]
     if len(paths) == 0:

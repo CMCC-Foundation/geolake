@@ -1,4 +1,5 @@
 """Module with access/authentication functions"""
+
 from typing import Optional
 
 from utils.api_logging import get_dds_logger

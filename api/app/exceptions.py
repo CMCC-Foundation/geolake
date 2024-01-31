@@ -1,4 +1,5 @@
 """Module with DDS exceptions definitions"""
+
 from typing import Optional
 
 from fastapi import HTTPException
@@ -181,15 +182,17 @@ class EmptyDatasetError(BaseDDSException):
         )
         super().__init__(self.msg)
 
+
 class ProductRetrievingError(BaseDDSException):
     """Retrieving of the product failed."""
 
-    msg: str = "Retrieving of the product '{dataset_id}.{product_id}' failed with the status {status}"
+    msg: str = (
+        "Retrieving of the product '{dataset_id}.{product_id}' failed with the"
+        " status {status}"
+    )
 
     def __init__(self, dataset_id, product_id, status):
         self.msg = self.msg.format(
-            dataset_id=dataset_id,
-            product_id=product_id,
-            status=status
+            dataset_id=dataset_id, product_id=product_id, status=status
         )
         super().__init__(self.msg)
