@@ -13,6 +13,7 @@ theme:
   - content.tooltips
   - content.code.annotate
   - content.code.copy
+  - announce.dismiss
   - content.code.select
   icon:
     repo: fontawesome/brands/github-alt
@@ -26,6 +27,7 @@ use_directory_urls: false
 nav:
 - GeoLake: index.md
 - References:
+  - client.md
   - queries.md
   - Drivers:
     - base.md
@@ -43,3 +45,12 @@ plugins:
     handlers:
       python:
         paths: [drivers, executor, api, datastore]
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences        
