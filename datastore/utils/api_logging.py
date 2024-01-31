@@ -3,11 +3,11 @@ from typing import Literal
 import logging as default_logging
 
 
-def get_dds_logger(
+def get_geolake_logger(
     name: str,
     level: Literal["debug", "info", "warning", "error", "critical"] = "info",
 ):
-    """Get DDS logger with the expected format, handlers and formatter.
+    """Get GeoLake logger with the expected format, handlers and formatter.
 
     Parameters
     ----------

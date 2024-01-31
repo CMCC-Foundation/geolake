@@ -1,11 +1,10 @@
-"""Main module with dekube-dds API endpoints defined"""
+"""Main module with dekube-geolake API endpoints defined"""
 __version__ = "2.0"
 import os
-from typing import Optional
 
 from datetime import datetime
 
-from fastapi import FastAPI, HTTPException, Request, status, Query
+from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.authentication import AuthenticationMiddleware
 from starlette.authentication import requires
@@ -18,18 +17,17 @@ from aioprometheus import (
 )
 from aioprometheus.asgi.starlette import metrics
 
-from geoquery.geoquery import GeoQuery
-from geoquery.task import TaskList
-from geoquery.geoquery import GeoQuery
+from intake_geokube.queries.workflow import Workflow
+from intake_geokube.queries.geoquery import GeoQuery
 
-from utils.api_logging import get_dds_logger
+from utils.api_logging import get_geolake_logger
 import exceptions as exc
 from endpoint_handlers import (
     dataset_handler,
     file_handler,
     request_handler,
 )
-from auth.backend import DDSAuthenticationBackend
+from auth.backend import GeoLakeAuthenticationBackend
 from callbacks import all_onstartup_callbacks
 from encoders import extend_json_encoders
 from const import venv, tags
@@ -50,14 +48,14 @@ def map_to_geoquery(
                      format_args=format_kwargs, format=format)    
     return query
 
-logger = get_dds_logger(__name__)
+logger = get_geolake_logger(__name__)
 
 # ======== JSON encoders extension ========= #
 extend_json_encoders()
 
 app = FastAPI(
-    title="geokube-dds API",
-    description="REST API for geokube-dds",
+    title="geokube-geolake API",
+    description="REST API for geokube-geolake",
     version=__version__,
     contact={
         "name": "geokube Contributors",
@@ -73,7 +71,7 @@ app = FastAPI(
 
 # ======== Authentication backend ========= #
 app.add_middleware(
-    AuthenticationMiddleware, backend=DDSAuthenticationBackend()
+    AuthenticationMiddleware, backend=GeoLakeAuthenticationBackend()
 )
 
 # ======== CORS ========= #
@@ -105,27 +103,11 @@ app.state.api_http_requests_total = Counter(
     "api_http_requests_total", "Total number of requests"
 )
 
-
 # ======== Endpoints definitions ========= #
 @app.get("/", tags=[tags.BASIC])
-async def dds_info():
-    """Return current version of the DDS API"""
-    return f"DDS API {__version__}"
-
-
-@app.get("/datasets", tags=[tags.DATASET])
-@timer(
-    app.state.api_request_duration_seconds, labels={"route": "GET /datasets"}
-)
-async def get_datasets(request: Request):
-    """List all products eligible for a user defined by user_token"""
-    app.state.api_http_requests_total.inc({"route": "GET /datasets"})
-    try:
-        return dataset_handler.get_datasets(
-            user_roles_names=request.auth.scopes
-        )
-    except exc.BaseDDSException as err:
-        raise err.wrap_around_http_exception() from err
+async def geolake_info():
+    """Return current version of the GeoLake API."""
+    return f"GeoLake API {__version__}"
 
 
 @app.get("/datasets/{dataset_id}", tags=[tags.DATASET])
@@ -137,7 +119,15 @@ async def get_first_product_details(
     request: Request,
     dataset_id: str,
 ):
-    """Get details for the 1st product of the dataset"""
+    """Get details for the 1st product of the dataset.
+    
+    Parameters
+    ----------
+    request : `Request`
+        A request object
+    dataset_id : `str`
+        ID of the dataset
+    """
     app.state.api_http_requests_total.inc(
         {"route": "GET /datasets/{dataset_id}"}
     )
@@ -146,7 +136,7 @@ async def get_first_product_details(
             user_roles_names=request.auth.scopes,
             dataset_id=dataset_id,
         )
-    except exc.BaseDDSException as err:
+    except exc.BaseGeoLakeException as err:
         raise err.wrap_around_http_exception() from err
 
 
@@ -160,7 +150,17 @@ async def get_product_details(
     dataset_id: str,
     product_id: str,
 ):
-    """Get details for the requested product if user is authorized"""
+    """Get details for the requested product if user is authorized.
+    
+    Parameters
+    ----------
+    request : `Request`
+        A request object
+    dataset_id : `str`
+        ID of the dataset
+    product_id : `str` 
+        ID of the product
+    """
     app.state.api_http_requests_total.inc(
         {"route": "GET /datasets/{dataset_id}/{product_id}"}
     )
@@ -170,7 +170,7 @@ async def get_product_details(
             dataset_id=dataset_id,
             product_id=product_id,
         )
-    except exc.BaseDDSException as err:
+    except exc.BaseGeoLakeException as err:
         raise err.wrap_around_http_exception() from err
 
 @app.get("/datasets/{dataset_id}/{product_id}/map", tags=[tags.DATASET])
@@ -197,6 +197,35 @@ async def get_map(
     # subset_crs: str | None = Query(..., alias="subset-crs"),
     # bbox_crs: str | None = Query(..., alias="bbox-crs"),
 ):
+    """Get map of the requested product if user is authorized.
+    
+    Parameters
+    ----------
+    request : `Request`
+        A request object
+    dataset_id : `str`
+        ID of the dataset
+    product_id : `str`
+        ID of the product
+    width : `int`
+        Width of the map in pixels
+    height : `int`
+        Height of the map in pixels
+    layers : `str`
+        Comma-separated list of layer names
+    format : `str`
+        Format of the map
+    time : `datetime`
+        Time of the data for map generation
+    transparent : `bool`
+        Whether the map should be transparent
+    bgcolor : `str`
+        Background color of the map
+    bbox : `str`
+        Bounding box of the map
+    crs : `str`
+        Coordinate reference system of the map
+    """
     
     app.state.api_http_requests_total.inc(
         {"route": "GET /datasets/{dataset_id}/{product_id}/map"}
@@ -220,7 +249,7 @@ async def get_map(
             product_id=product_id,
             query=query
         )
-    except exc.BaseDDSException as err:
+    except exc.BaseGeoLakeException as err:
         raise err.wrap_around_http_exception() from err
 
 @app.get("/datasets/{dataset_id}/{product_id}/items/{feature_id}", tags=[tags.DATASET])
@@ -242,7 +271,23 @@ async def get_feature(
     # subset_crs: str | None = Query(..., alias="subset-crs"),
     # bbox_crs: str | None = Query(..., alias="bbox-crs"),
 ):
-    
+    """Get feature of the requested product if user is authorized.
+
+    Parameters
+    ----------
+    request : `Request`
+        A request object
+    dataset_id : `str`
+        ID of the dataset
+    product_id : `str`
+        ID of the product
+    time : `datetime`
+        Time of the data for map generation
+    bbox : `str`
+        Bounding box of the map
+    crs : `str`
+        Coordinate reference system of the map
+    """
     app.state.api_http_requests_total.inc(
         {"route": "GET /datasets/{dataset_id}/{product_id}/items/{feature_id}"}
     )
@@ -265,8 +310,30 @@ async def get_feature(
             product_id=product_id,
             query=query
         )
+    except exc.BaseGeoLakeException as err:
+        raise err.wrap_around_http_exception() from err
+
+
+@app.get("/datasets", tags=[tags.DATASET])
+@timer(
+    app.state.api_request_duration_seconds, labels={"route": "GET /datasets"}
+)
+async def get_datasets(request: Request):
+    """List all products eligible for a user defined by user_token.
+    
+    Parameters
+    ----------
+    request : `Request`
+        A request object
+    """
+    app.state.api_http_requests_total.inc({"route": "GET /datasets"})
+    try:
+        return dataset_handler.get_datasets(
+            user_roles_names=request.auth.scopes
+        )
     except exc.BaseDDSException as err:
         raise err.wrap_around_http_exception() from err
+
 
 @app.get("/datasets/{dataset_id}/{product_id}/metadata", tags=[tags.DATASET])
 @timer(
@@ -278,7 +345,17 @@ async def get_metadata(
     dataset_id: str,
     product_id: str,
 ):
-    """Get metadata of the given product"""
+    """Get metadata of the given product.
+    
+    Parameters
+    ----------
+    request : `Request`
+        A request object
+    dataset_id : `str`
+        ID of the dataset
+    product_id : `str`
+        ID of the product
+    """
     app.state.api_http_requests_total.inc(
         {"route": "GET /datasets/{dataset_id}/{product_id}/metadata"}
     )
@@ -286,7 +363,7 @@ async def get_metadata(
         return dataset_handler.get_metadata(
             dataset_id=dataset_id, product_id=product_id
         )
-    except exc.BaseDDSException as err:
+    except exc.BaseGeoLakeException as err:
         raise err.wrap_around_http_exception() from err
 
 
@@ -302,7 +379,21 @@ async def estimate(
     query: GeoQuery,
     unit: str = None,
 ):
-    """Estimate the resulting size of the query"""
+    """Estimate the resulting size of the query.
+    
+    Parameters
+    ----------
+    request : `Request`
+        A request object
+    dataset_id : `str`
+        ID of the dataset
+    product_id : `str`
+        ID of the product
+    query : `GeoQuery`
+        Query to be estimated
+    unit : `str`
+        Unit of the estimated size
+    """
     app.state.api_http_requests_total.inc(
         {"route": "POST /datasets/{dataset_id}/{product_id}/estimate"}
     )
@@ -313,7 +404,7 @@ async def estimate(
             query=query,
             unit=unit,
         )
-    except exc.BaseDDSException as err:
+    except exc.BaseGeoLakeException as err:
         raise err.wrap_around_http_exception() from err
 
 
@@ -329,7 +420,19 @@ async def query(
     product_id: str,
     query: GeoQuery,
 ):
-    """Schedule the job of data retrieve"""
+    """Schedule the job of data retrieve.
+    
+    Parameters
+    ----------
+    request : `Request`
+        A request object
+    dataset_id : `str`
+        ID of the dataset
+    product_id : `str`
+        ID of the product
+    query : `GeoQuery`
+        Query to be executed
+    """
     app.state.api_http_requests_total.inc(
         {"route": "POST /datasets/{dataset_id}/{product_id}/execute"}
     )
@@ -340,7 +443,7 @@ async def query(
             product_id=product_id,
             query=query,
         )
-    except exc.BaseDDSException as err:
+    except exc.BaseGeoLakeException as err:
         raise err.wrap_around_http_exception() from err
 
 
@@ -352,16 +455,24 @@ async def query(
 @requires([scopes.AUTHENTICATED])
 async def workflow(
     request: Request,
-    tasks: TaskList,
+    tasks: Workflow,
 ):
-    """Schedule the job of workflow processing"""
+    """Schedule the job of workflow processing.
+    
+    Parameters
+    ----------
+    request : `Request`
+        A request object
+    tasks : `Workflow`
+        Workflow to be executed
+    """
     app.state.api_http_requests_total.inc({"route": "POST /datasets/workflow"})
     try:
         return dataset_handler.run_workflow(
             user_id=request.user.id,
             workflow=tasks,
         )
-    except exc.BaseDDSException as err:
+    except exc.BaseGeoLakeException as err:
         raise err.wrap_around_http_exception() from err
 
 
@@ -373,11 +484,17 @@ async def workflow(
 async def get_requests(
     request: Request,
 ):
-    """Get all requests for the user"""
+    """Get all requests for the user.
+    
+    Parameters
+    ----------
+    request : `Request`
+        A request object
+    """
     app.state.api_http_requests_total.inc({"route": "GET /requests"})
     try:
         return request_handler.get_requests(request.user.id)
-    except exc.BaseDDSException as err:
+    except exc.BaseGeoLakeException as err:
         raise err.wrap_around_http_exception() from err
 
 
@@ -391,7 +508,15 @@ async def get_request_status(
     request: Request,
     request_id: int,
 ):
-    """Get status of the request without authentication"""
+    """Get status of the request without authentication.
+    
+    Parameters
+    ----------
+    request : `Request`
+        A request object
+    request_id : `int`
+        ID of the request
+    """
     app.state.api_http_requests_total.inc(
         {"route": "GET /requests/{request_id}/status"}
     )
@@ -399,7 +524,7 @@ async def get_request_status(
         return request_handler.get_request_status(
             user_id=request.user.id, request_id=request_id
         )
-    except exc.BaseDDSException as err:
+    except exc.BaseGeoLakeException as err:
         raise err.wrap_around_http_exception() from err
 
 
@@ -413,7 +538,15 @@ async def get_request_resulting_size(
     request: Request,
     request_id: int,
 ):
-    """Get size of the file being the result of the request"""
+    """Get size of the file being the result of the request.
+    
+    Parameters
+    ----------
+    request : `Request`
+        A request object
+    request_id : `int`
+        ID of the request
+    """
     app.state.api_http_requests_total.inc(
         {"route": "GET /requests/{request_id}/size"}
     )
@@ -421,7 +554,7 @@ async def get_request_resulting_size(
         return request_handler.get_request_resulting_size(
             request_id=request_id
         )
-    except exc.BaseDDSException as err:
+    except exc.BaseGeoLakeException as err:
         raise err.wrap_around_http_exception() from err
 
 
@@ -435,13 +568,21 @@ async def get_request_uri(
     request: Request,
     request_id: int,
 ):
-    """Get download URI for the request"""
+    """Get download URI for the request.
+    
+    Parameters
+    ----------
+    request : `Request`
+        A request object
+    request_id : `int`
+        ID of the request
+    """
     app.state.api_http_requests_total.inc(
         {"route": "GET /requests/{request_id}/uri"}
     )
     try:
         return request_handler.get_request_uri(request_id=request_id)
-    except exc.BaseDDSException as err:
+    except exc.BaseGeoLakeException as err:
         raise err.wrap_around_http_exception() from err
 
 
@@ -455,13 +596,21 @@ async def download_request_result(
     request: Request,
     request_id: int,
 ):
-    """Download result of the request"""
+    """Download result of the request.
+    
+    Parameters
+    ----------
+    request : `Request`
+        A request object
+    request_id : `int`
+        ID of the request
+    """
     app.state.api_http_requests_total.inc(
         {"route": "GET /download/{request_id}"}
     )
     try:
         return file_handler.download_request_result(request_id=request_id)
-    except exc.BaseDDSException as err:
+    except exc.BaseGeoLakeException as err:
         raise err.wrap_around_http_exception() from err
     except FileNotFoundError as err:
         raise HTTPException(

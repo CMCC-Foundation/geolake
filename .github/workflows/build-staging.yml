@@ -1,0 +1,77 @@
+name: Build Docker images for geolake components and push to the repository
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.x"
+    - name: Install build
+      run: >-
+        python3 -m
+        pip install
+        build
+        --user
+    - name: Build a binary wheel and a source for drivers
+      run: python3 -m build ./drivers    
+    - name: Set Docker image tag name
+      run: echo "TAG=$(date +'%Y.%m.%d.%H.%M')" >> $GITHUB_ENV
+    - name: Login to Scaleway Container Registry
+      uses: docker/login-action@v2
+      with:
+        username: nologin
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        registry: ${{ vars.DOCKER_REGISTRY }}
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2     
+    - name: Build and push drivers
+      uses: docker/build-push-action@v4
+      with:
+        context: ./drivers
+        file: ./drivers/Dockerfile
+        push: true
+        build-args: |
+          REGISTRY=${{ vars.DOCKER_REGISTRY  }}
+        tags: | 
+          ${{ vars.DOCKER_REGISTRY }}/geolake-drivers:${{ env.TAG }}  
+          ${{ vars.DOCKER_REGISTRY }}/geolake-drivers:latest             
+    - name: Build and push datastore component
+      uses: docker/build-push-action@v4
+      with:
+        context: ./datastore
+        file: ./datastore/Dockerfile
+        push: true
+        build-args: |
+          REGISTRY=${{ vars.DOCKER_REGISTRY  }}
+        tags: | 
+          ${{ vars.DOCKER_REGISTRY }}/geolake-datastore:${{ env.TAG }}  
+          ${{ vars.DOCKER_REGISTRY }}/geolake-datastore:latest    
+    - name: Build and push api component
+      uses: docker/build-push-action@v4
+      with:
+        context: ./api
+        file: ./api/Dockerfile
+        push: true
+        build-args: |
+          REGISTRY=${{ vars.DOCKER_REGISTRY  }}
+        tags: | 
+          ${{ vars.DOCKER_REGISTRY }}/geolake-api:${{ env.TAG }}  
+          ${{ vars.DOCKER_REGISTRY }}/geolake-api:latest 
+    - name: Build and push executor component
+      uses: docker/build-push-action@v4
+      with:
+        context: ./executor
+        file: ./executor/Dockerfile
+        push: true
+        build-args: |
+          REGISTRY=${{ vars.DOCKER_REGISTRY  }}
+        tags: | 
+          ${{ vars.DOCKER_REGISTRY }}/geolake-executor:${{ env.TAG }}  
+          ${{ vars.DOCKER_REGISTRY }}/geolake-executor:latest                           

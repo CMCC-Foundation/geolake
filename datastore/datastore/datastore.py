@@ -8,7 +8,7 @@ import json
 import intake
 from dask.delayed import Delayed
 
-from geoquery.geoquery import GeoQuery
+from intake_geokube.queries.geoquery import GeoQuery
 
 from geokube.core.datacube import DataCube
 from geokube.core.dataset import Dataset
@@ -81,7 +81,7 @@ class Datastore(metaclass=Singleton):
             )
             return self.catalog(CACHE_DIR=self.cache_dir)[dataset_id][
                 product_id
-            ].get(geoquery=query, compute=False).read_chunked()
+            ].process(query=query)
         return self.cache[dataset_id][product_id]
 
     @log_execution_time(_LOG)
@@ -102,7 +102,7 @@ class Datastore(metaclass=Singleton):
                 catalog_entry = self.catalog(CACHE_DIR=self.cache_dir)[
                     dataset_id
                 ][product_id]
-                if not catalog_entry.metadata_caching:
+                if hasattr(catalog_entry, "metadata_caching") and not catalog_entry.metadata_caching:
                     self._LOG.info(
                         "`metadata_caching` for product %s.%s set to `False`",
                         dataset_id,
@@ -112,7 +112,7 @@ class Datastore(metaclass=Singleton):
                 try:
                     self.cache[dataset_id][
                         product_id
-                    ] = catalog_entry.read_chunked()
+                    ] = catalog_entry.read()
                 except ValueError:
                     self._LOG.error(
                         "failed to load cache for `%s.%s`",
@@ -120,6 +120,8 @@ class Datastore(metaclass=Singleton):
                         product_id,
                         exc_info=True,
                     ) 
+                except NotImplementedError:
+                    pass
 
     @log_execution_time(_LOG)
     def dataset_list(self) -> list:
@@ -358,8 +360,7 @@ class Datastore(metaclass=Singleton):
         self._LOG.debug("loading product...")
         kube = self.catalog(CACHE_DIR=self.cache_dir)[dataset_id][
             product_id
-        ].get(geoquery=geoquery, compute=compute).process_with_query()
-        self._LOG.debug("original kube len: %s", len(kube))
+        ].process(query=geoquery)
         return kube
 
     @log_execution_time(_LOG)
@@ -393,7 +394,6 @@ class Datastore(metaclass=Singleton):
         # NOTE: for estimation we use cached products
         kube = self.get_cached_product_or_read(dataset_id, product_id, 
                                                query=query)
-        self._LOG.debug("original kube len: %s", len(kube))
         return Datastore._process_query(kube, geoquery, False).nbytes
 
     @log_execution_time(_LOG)
@@ -426,7 +426,6 @@ class Datastore(metaclass=Singleton):
                 kube = kube.filter(**query.filters)
             except ValueError as err:
                 Datastore._LOG.warning("could not filter by one of the key: %s", err)
-            Datastore._LOG.debug("resulting kube len: %s", len(kube))
         if isinstance(kube, Delayed) and compute:
             kube = kube.compute()
         if query.variable:

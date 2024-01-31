@@ -1,0 +1,85 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "geolake-drivers"
+description = "opengeokube GeoLake driver."
+requires-python = ">=3.10"
+readme = "README.md"
+license = {file = "LICENSE"}
+dynamic = ["version"]
+authors = [
+    {name = "Jakub Walczak"},
+    {name = "Marco Mancini"},
+    {name = "Mirko Stojiljkovic"},
+    {name = "Valentina Scardigno"},
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Web Environment",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Atmospheric Science",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Topic :: Software Development :: Libraries",
+]
+dependencies = [
+    "dateparser",
+    "intake",
+    "pydantic",
+    "tqdm",
+    "streamz@git+https://github.com/python-streamz/streamz.git",
+    "paho-mqtt"
+]
+[project.entry-points."intake.drivers"]
+netcdf_driver = "intake_geokube.netcdf.driver:NetCdfDriver"
+sentinel_driver = "intake_geokube.sentinel.driver:SentinelDriver"
+iot_driver = "intake_geokube.iot.driver:IotDriver"
+wrf_driver = "intake_geokube.wrf.driver:WrfDriver"
+
+[tool.setuptools.dynamic]
+version = {attr = "intake_geokube.version.__version__"}
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+exclude = ["examples*"]
+
+[tool.pydocstyle]
+
+[tool.pylint.'MESSAGES CONTROL']
+disable = "too-many-arguments,too-many-instance-attributes,too-few-public-methods,duplicate-code"
+
+
+[tool.isort]
+profile = "black"
+include_trailing_comma = true
+line_length = 79
+overwrite_in_place = true
+use_parentheses = true
+
+[tool.black]
+line_length = 79
+preview = true
+
+[tool.mypy]
+files = [
+    "intake_geokube", "."
+]
+exclude = ["tests/"]
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::DeprecationWarning"
+]

@@ -1,11 +1,11 @@
 """Modules with functions realizing logic for requests-related endpoints"""
 from dbmanager.dbmanager import DBManager
 
-from utils.api_logging import get_dds_logger
+from utils.api_logging import get_geolake_logger
 from utils.metrics import log_execution_time
 import exceptions as exc
 
-log = get_dds_logger(__name__)
+log = get_geolake_logger(__name__)
 
 
 @log_execution_time(log)

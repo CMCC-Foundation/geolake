@@ -1,0 +1,3167 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="GeoLake - an environment for managing and processing geospatial data">
+      
+      
+      
+      
+        <link rel="prev" href="netcdf.html">
+      
+      
+        <link rel="next" href="iot.html">
+      
+      
+      <link rel="icon" href="img/favicon.svg">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.4">
+    
+    
+      
+        <title>Sentinel - GeoLake</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.50c56a3b.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="amber">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#drivers.intake_geokube.sentinel.driver" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="index.html" title="GeoLake" class="md-header__button md-logo" aria-label="GeoLake" data-md-component="logo">
+      
+  <img src="img/favicon.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            GeoLake
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Sentinel
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="amber"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/CMCC-Foundation/geolake" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M186.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1zM480 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2zm-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3zm-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    CMCC-Foundation/geolake
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="index.html" title="GeoLake" class="md-nav__button md-logo" aria-label="GeoLake" data-md-component="logo">
+      
+  <img src="img/favicon.svg" alt="logo">
+
+    </a>
+    GeoLake
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/CMCC-Foundation/geolake" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M186.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1zM480 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2zm-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3zm-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    CMCC-Foundation/geolake
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="index.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    GeoLake
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    References
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            References
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="queries.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Queries
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Drivers
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            Drivers
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="base.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Base
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="netcdf.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Netcdf
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Sentinel
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="sentinel.html" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Sentinel
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.driver" class="md-nav__link">
+    <span class="md-ellipsis">
+      driver
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.driver.SentinelDriver" class="md-nav__link">
+    <span class="md-ellipsis">
+      SentinelDriver
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="SentinelDriver">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.driver.SentinelDriver.load" class="md-nav__link">
+    <span class="md-ellipsis">
+      load
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.driver.SentinelDriver.process" class="md-nav__link">
+    <span class="md-ellipsis">
+      process
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="process">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.driver.SentinelDriver.process--returns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Returns
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.driver.SentinelDriver.process--examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Examples
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.driver.SentinelDriver.read" class="md-nav__link">
+    <span class="md-ellipsis">
+      read
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.driver.preprocess_sentinel" class="md-nav__link">
+    <span class="md-ellipsis">
+      preprocess_sentinel
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="preprocess_sentinel">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.driver.preprocess_sentinel--parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parameters
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.driver.preprocess_sentinel--returns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Returns
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.driver.unzip_and_clear" class="md-nav__link">
+    <span class="md-ellipsis">
+      unzip_and_clear
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.odata_builder" class="md-nav__link">
+    <span class="md-ellipsis">
+      odata_builder
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.odata_builder.HttpMethod" class="md-nav__link">
+    <span class="md-ellipsis">
+      HttpMethod
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="HttpMethod">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.odata_builder.HttpMethod.method_name" class="md-nav__link">
+    <span class="md-ellipsis">
+      method_name
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.odata_builder.ODataRequest" class="md-nav__link">
+    <span class="md-ellipsis">
+      ODataRequest
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ODataRequest">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.odata_builder.ODataRequest.download" class="md-nav__link">
+    <span class="md-ellipsis">
+      download
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="download">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.odata_builder.ODataRequest.download--parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parameters
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.odata_builder.ODataRequest.query" class="md-nav__link">
+    <span class="md-ellipsis">
+      query
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="query">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.odata_builder.ODataRequest.query--parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parameters
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.odata_builder.ODataRequest.query--returns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Returns
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.odata_builder.ODataRequest.with_callback" class="md-nav__link">
+    <span class="md-ellipsis">
+      with_callback
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="with_callback">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.odata_builder.ODataRequest.with_callback--parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parameters
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.odata_builder.ODataRequestBuilder" class="md-nav__link">
+    <span class="md-ellipsis">
+      ODataRequestBuilder
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ODataRequestBuilder">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.odata_builder.ODataRequestBuilder.new" class="md-nav__link">
+    <span class="md-ellipsis">
+      new
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.odata_builder.datetime_to_isoformat" class="md-nav__link">
+    <span class="md-ellipsis">
+      datetime_to_isoformat
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="datetime_to_isoformat">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.odata_builder.datetime_to_isoformat--parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parameters
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.odata_builder.datetime_to_isoformat--returns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Returns
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.auth" class="md-nav__link">
+    <span class="md-ellipsis">
+      auth
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.auth.SentinelAuth" class="md-nav__link">
+    <span class="md-ellipsis">
+      SentinelAuth
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="SentinelAuth">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.auth.SentinelAuth.__call__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __call__
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="iot.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Iot
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="wrf.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wrf
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="datastore.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Datastore
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Api
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="executor.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Executor
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="about.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    About
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.driver" class="md-nav__link">
+    <span class="md-ellipsis">
+      driver
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.driver.SentinelDriver" class="md-nav__link">
+    <span class="md-ellipsis">
+      SentinelDriver
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="SentinelDriver">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.driver.SentinelDriver.load" class="md-nav__link">
+    <span class="md-ellipsis">
+      load
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.driver.SentinelDriver.process" class="md-nav__link">
+    <span class="md-ellipsis">
+      process
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="process">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.driver.SentinelDriver.process--returns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Returns
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.driver.SentinelDriver.process--examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Examples
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.driver.SentinelDriver.read" class="md-nav__link">
+    <span class="md-ellipsis">
+      read
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.driver.preprocess_sentinel" class="md-nav__link">
+    <span class="md-ellipsis">
+      preprocess_sentinel
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="preprocess_sentinel">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.driver.preprocess_sentinel--parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parameters
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.driver.preprocess_sentinel--returns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Returns
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.driver.unzip_and_clear" class="md-nav__link">
+    <span class="md-ellipsis">
+      unzip_and_clear
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.odata_builder" class="md-nav__link">
+    <span class="md-ellipsis">
+      odata_builder
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.odata_builder.HttpMethod" class="md-nav__link">
+    <span class="md-ellipsis">
+      HttpMethod
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="HttpMethod">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.odata_builder.HttpMethod.method_name" class="md-nav__link">
+    <span class="md-ellipsis">
+      method_name
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.odata_builder.ODataRequest" class="md-nav__link">
+    <span class="md-ellipsis">
+      ODataRequest
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ODataRequest">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.odata_builder.ODataRequest.download" class="md-nav__link">
+    <span class="md-ellipsis">
+      download
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="download">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.odata_builder.ODataRequest.download--parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parameters
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.odata_builder.ODataRequest.query" class="md-nav__link">
+    <span class="md-ellipsis">
+      query
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="query">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.odata_builder.ODataRequest.query--parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parameters
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.odata_builder.ODataRequest.query--returns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Returns
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.odata_builder.ODataRequest.with_callback" class="md-nav__link">
+    <span class="md-ellipsis">
+      with_callback
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="with_callback">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.odata_builder.ODataRequest.with_callback--parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parameters
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.odata_builder.ODataRequestBuilder" class="md-nav__link">
+    <span class="md-ellipsis">
+      ODataRequestBuilder
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ODataRequestBuilder">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.odata_builder.ODataRequestBuilder.new" class="md-nav__link">
+    <span class="md-ellipsis">
+      new
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.odata_builder.datetime_to_isoformat" class="md-nav__link">
+    <span class="md-ellipsis">
+      datetime_to_isoformat
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="datetime_to_isoformat">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.odata_builder.datetime_to_isoformat--parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parameters
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.odata_builder.datetime_to_isoformat--returns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Returns
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.auth" class="md-nav__link">
+    <span class="md-ellipsis">
+      auth
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.auth.SentinelAuth" class="md-nav__link">
+    <span class="md-ellipsis">
+      SentinelAuth
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="SentinelAuth">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#drivers.intake_geokube.sentinel.auth.SentinelAuth.__call__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __call__
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  <h1>Sentinel</h1>
+
+<div class="doc doc-object doc-module">
+
+
+
+<a id="drivers.intake_geokube.sentinel.driver"></a>
+  <div class="doc doc-contents first">
+  
+      <p>Geokube driver for sentinel data.</p>
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="drivers.intake_geokube.sentinel.driver.SentinelDriver" class="doc doc-heading">
+          <code>SentinelDriver</code>
+
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+          <p class="doc doc-class-bases">
+            Bases: <code><a class="autorefs autorefs-internal" title="drivers.intake_geokube.base.AbstractBaseDriver" href="base.html#drivers.intake_geokube.base.AbstractBaseDriver">AbstractBaseDriver</a></code></p>
+
+  
+      <p>Driver class for sentinel data.</p>
+
+            <details class="quote">
+              <summary>Source code in <code>drivers/intake_geokube/sentinel/driver.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span>
+<span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span>
+<span class="normal">287</span>
+<span class="normal">288</span>
+<span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span>
+<span class="normal">297</span>
+<span class="normal">298</span>
+<span class="normal">299</span>
+<span class="normal">300</span>
+<span class="normal">301</span>
+<span class="normal">302</span>
+<span class="normal">303</span>
+<span class="normal">304</span>
+<span class="normal">305</span>
+<span class="normal">306</span>
+<span class="normal">307</span>
+<span class="normal">308</span>
+<span class="normal">309</span>
+<span class="normal">310</span>
+<span class="normal">311</span>
+<span class="normal">312</span>
+<span class="normal">313</span>
+<span class="normal">314</span>
+<span class="normal">315</span>
+<span class="normal">316</span>
+<span class="normal">317</span>
+<span class="normal">318</span>
+<span class="normal">319</span>
+<span class="normal">320</span>
+<span class="normal">321</span>
+<span class="normal">322</span>
+<span class="normal">323</span>
+<span class="normal">324</span>
+<span class="normal">325</span>
+<span class="normal">326</span>
+<span class="normal">327</span>
+<span class="normal">328</span>
+<span class="normal">329</span>
+<span class="normal">330</span>
+<span class="normal">331</span>
+<span class="normal">332</span>
+<span class="normal">333</span>
+<span class="normal">334</span>
+<span class="normal">335</span>
+<span class="normal">336</span>
+<span class="normal">337</span>
+<span class="normal">338</span>
+<span class="normal">339</span>
+<span class="normal">340</span>
+<span class="normal">341</span>
+<span class="normal">342</span>
+<span class="normal">343</span>
+<span class="normal">344</span>
+<span class="normal">345</span>
+<span class="normal">346</span>
+<span class="normal">347</span>
+<span class="normal">348</span>
+<span class="normal">349</span>
+<span class="normal">350</span>
+<span class="normal">351</span>
+<span class="normal">352</span>
+<span class="normal">353</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">SentinelDriver</span><span class="p">(</span><span class="n">AbstractBaseDriver</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Driver class for sentinel data.&quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;sentinel_driver&quot;</span>
+    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;0.1b0&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">zippattern</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">zippath</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">username</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">password</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">sentinel_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">mapping</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">xarray_kwargs</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">url</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zippattern</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">zippattern</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zippath</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">zippath</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type_</span> <span class="o">=</span> <span class="nb">type</span>
+        <span class="n">_validate_path_and_pattern</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">zippath</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">zippattern</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">auth</span><span class="p">:</span> <span class="n">SentinelAuth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_credentials</span><span class="p">(</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">get_temp_dir</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sentinel_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">sentinel_timeout</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mapping</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">mapping</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xarray_kwargs</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">xarray_kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
+
+    <span class="k">def</span> <span class="nf">_get_credentials</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">username</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">password</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SentinelAuth</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">username</span> <span class="ow">and</span> <span class="n">password</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">SentinelAuth</span><span class="p">(</span>
+                <span class="n">username</span><span class="o">=</span><span class="n">username</span><span class="p">,</span>
+                <span class="n">password</span><span class="o">=</span><span class="n">password</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;getting credentials from environmental variables...&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="s2">&quot;SENTINEL_USERNAME&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span>
+            <span class="ow">or</span> <span class="s2">&quot;SENTINEL_PASSWORD&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span>
+        <span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="s2">&quot;missing at least of of the mandatory environmental variables:&quot;</span>
+                <span class="s2">&quot; [&#39;SENTINEL_USERNAME&#39;, &#39;SENTINEL_PASSWORD&#39;]&quot;</span>
+            <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
+                <span class="s2">&quot;missing at least of of the mandatory environmental variables:&quot;</span>
+                <span class="s2">&quot; [&#39;SENTINEL_USERNAME&#39;, &#39;SENTINEL_PASSWORD&#39;]&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">SentinelAuth</span><span class="p">(</span>
+            <span class="n">username</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;SENTINEL_USERNAME&quot;</span><span class="p">],</span>
+            <span class="n">password</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;SENTINEL_PASSWORD&quot;</span><span class="p">],</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_force_sentinel_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">builder</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;forcing sentinel type: </span><span class="si">%s</span><span class="s2">...&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">type_</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">builder</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">_SentinelKeys</span><span class="o">.</span><span class="n">TYPE</span><span class="p">,</span> <span class="n">containing</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">type_</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_filter_by_sentinel_attrs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">builder</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="n">GeoQuery</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;filtering by sentinel attributes...&quot;</span><span class="p">)</span>
+        <span class="n">path_filter_names</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">parsed</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">parsed</span> <span class="ow">in</span> <span class="n">string</span><span class="o">.</span><span class="n">Formatter</span><span class="p">()</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zippattern</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">parsed</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">query</span><span class="o">.</span><span class="n">filters</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">builder</span>
+        <span class="n">sentinel_filter_names</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">query</span><span class="o">.</span><span class="n">filters</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="o">-</span> <span class="n">path_filter_names</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">sf</span> <span class="ow">in</span> <span class="n">sentinel_filter_names</span><span class="p">:</span>
+            <span class="n">builder</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">filter_attr</span><span class="p">(</span><span class="n">sf</span><span class="p">,</span> <span class="n">query</span><span class="o">.</span><span class="n">filters</span><span class="p">[</span><span class="n">sf</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">builder</span>
+
+    <span class="k">def</span> <span class="nf">_build_odata_from_geoquery</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="n">GeoQuery</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ODataRequest</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;validating geoquery...&quot;</span><span class="p">)</span>
+        <span class="n">_validate_geoquery_for_sentinel</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;constructing odata request...&quot;</span><span class="p">)</span>
+        <span class="n">builder</span> <span class="o">=</span> <span class="n">ODataRequestBuilder</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;product_id&quot;</span> <span class="ow">in</span> <span class="n">query</span><span class="o">.</span><span class="n">filters</span><span class="p">:</span>
+            <span class="n">builder</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="n">_SentinelKeys</span><span class="o">.</span><span class="n">UUID</span><span class="p">,</span> <span class="n">eq</span><span class="o">=</span><span class="n">query</span><span class="o">.</span><span class="n">filters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;product_id&quot;</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="n">builder</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filter_by_sentinel_attrs</span><span class="p">(</span><span class="n">builder</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">)</span>
+        <span class="n">builder</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_force_sentinel_type</span><span class="p">(</span><span class="n">builder</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">query</span><span class="o">.</span><span class="n">time</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">query</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="n">timecombo_start</span><span class="p">,</span> <span class="n">timecombo_end</span> <span class="o">=</span> <span class="n">_timecombo_to_day_range</span><span class="p">(</span><span class="n">query</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;filtering by timecombo: [</span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">] &quot;</span><span class="p">,</span> <span class="n">timecombo_start</span><span class="p">,</span> <span class="n">timecombo_end</span><span class="p">)</span>
+                <span class="n">builder</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">filter_date</span><span class="p">(</span>
+                    <span class="n">_SentinelKeys</span><span class="o">.</span><span class="n">SENSING_TIME</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="n">timecombo_start</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="n">timecombo_end</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">query</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;filtering by slice: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">query</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+                <span class="n">builder</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">filter_date</span><span class="p">(</span>
+                    <span class="n">_SentinelKeys</span><span class="o">.</span><span class="n">SENSING_TIME</span><span class="p">,</span>
+                    <span class="n">ge</span><span class="o">=</span><span class="n">query</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">start</span><span class="p">,</span>
+                    <span class="n">le</span><span class="o">=</span><span class="n">query</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">stop</span><span class="p">,</span>
+                <span class="p">)</span>
+        <span class="k">if</span> <span class="n">query</span><span class="o">.</span><span class="n">area</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;filering by polygon&quot;</span><span class="p">)</span>
+            <span class="n">polygon</span> <span class="o">=</span> <span class="n">_bounding_box_to_polygon</span><span class="p">(</span><span class="n">query</span><span class="o">.</span><span class="n">area</span><span class="p">)</span>
+            <span class="n">builder</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">intersect_polygon</span><span class="p">(</span><span class="n">polygon</span><span class="o">=</span><span class="n">polygon</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">query</span><span class="o">.</span><span class="n">location</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;filering by location&quot;</span><span class="p">)</span>
+            <span class="n">point</span> <span class="o">=</span> <span class="n">_location_to_valid_point</span><span class="p">(</span><span class="n">query</span><span class="o">.</span><span class="n">location</span><span class="p">)</span>
+            <span class="n">builder</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">intersect_point</span><span class="p">(</span><span class="n">point</span><span class="o">=</span><span class="n">point</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">builder</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_prepare_dataset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dataset</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">attrs_keys</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">_get_attrs_keys_from_pattern</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zippattern</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">zippath</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;processsing file </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+            <span class="n">file_no_tmp_dir</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">removeprefix</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_dir</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="p">)</span>
+            <span class="n">attr</span> <span class="o">=</span> <span class="n">reverse_format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zippattern</span><span class="p">,</span> <span class="n">file_no_tmp_dir</span><span class="p">)</span>
+            <span class="n">attr</span><span class="p">[</span><span class="n">Dataset</span><span class="o">.</span><span class="n">FILES_COL</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="p">]</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">attr</span><span class="p">)</span>
+        <span class="c1"># NOTE: eventually, join files if there are several for the same attrs</span>
+        <span class="c1"># combintation</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">attrs_keys</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">agg</span><span class="p">({</span><span class="n">Dataset</span><span class="o">.</span><span class="n">FILES_COL</span><span class="p">:</span> <span class="nb">sum</span><span class="p">})</span>
+        <span class="p">)</span>
+        <span class="n">datacubes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">ind</span><span class="p">,</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+            <span class="n">load</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">names</span><span class="p">,</span> <span class="n">ind</span><span class="p">))</span>
+            <span class="n">load</span><span class="p">[</span><span class="n">Dataset</span><span class="o">.</span><span class="n">FILES_COL</span><span class="p">]</span> <span class="o">=</span> <span class="n">files</span>
+            <span class="n">load</span><span class="p">[</span><span class="n">Dataset</span><span class="o">.</span><span class="n">DATACUBE_COL</span><span class="p">]</span> <span class="o">=</span> <span class="n">dask</span><span class="o">.</span><span class="n">delayed</span><span class="p">(</span><span class="n">open_datacube</span><span class="p">)(</span>
+                <span class="n">path</span><span class="o">=</span><span class="n">files</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+                <span class="n">id_pattern</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">mapping</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mapping</span><span class="p">,</span>
+                <span class="n">metadata_caching</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">xarray_kwargs</span><span class="p">,</span>
+                <span class="n">preprocess</span><span class="o">=</span><span class="n">preprocess_sentinel</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">datacubes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">load</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">datacubes</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NoReturn</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read sentinel data.&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s2">&quot;reading metadata is not supported for sentinel data&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NoReturn</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load sentinel data.&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s2">&quot;loading entire product is not supported for sentinel data&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="n">GeoQuery</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dataset</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Process sentinel data according to the `query`.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        cube : `geokube.Dataset`</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        ```python</span>
+<span class="sd">        &gt;&gt;&gt; data = catalog[&#39;sentinel&#39;][&#39;prod_name&#39;].process(query)</span>
+<span class="sd">        ```</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;builder odata request based on passed geoquery...&quot;</span><span class="p">)</span>
+        <span class="n">req</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_odata_from_geoquery</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;downloading data...&quot;</span><span class="p">)</span>
+        <span class="n">req</span><span class="o">.</span><span class="n">download</span><span class="p">(</span>
+            <span class="n">target_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_dir</span><span class="p">,</span>
+            <span class="n">auth</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">auth</span><span class="p">,</span>
+            <span class="n">timeout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sentinel_timeout</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;unzipping and removing archives...&quot;</span><span class="p">)</span>
+        <span class="n">unzip_and_clear</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_dir</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;preparing geokube.Dataset...&quot;</span><span class="p">)</span>
+        <span class="n">dataset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_dataset</span><span class="p">()</span>
+        <span class="n">dataset</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_process_geokube_dataset</span><span class="p">(</span>
+            <span class="n">dataset</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span> <span class="n">compute</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">dataset</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="drivers.intake_geokube.sentinel.driver.SentinelDriver.load" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">load</span><span class="p">()</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Load sentinel data.</p>
+
+          <details class="quote">
+            <summary>Source code in <code>drivers/intake_geokube/sentinel/driver.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">319</span>
+<span class="normal">320</span>
+<span class="normal">321</span>
+<span class="normal">322</span>
+<span class="normal">323</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NoReturn</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load sentinel data.&quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+        <span class="s2">&quot;loading entire product is not supported for sentinel data&quot;</span>
+    <span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="drivers.intake_geokube.sentinel.driver.SentinelDriver.process" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">process</span><span class="p">(</span><span class="n">query</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Process sentinel data according to the <code>query</code>.</p>
+<h5 id="drivers.intake_geokube.sentinel.driver.SentinelDriver.process--returns">Returns</h5>
+<p>cube : <code>geokube.Dataset</code></p>
+<h5 id="drivers.intake_geokube.sentinel.driver.SentinelDriver.process--examples">Examples</h5>
+<pre><code class="language-python">&gt;&gt;&gt; data = catalog['sentinel']['prod_name'].process(query)
+</code></pre>
+
+          <details class="quote">
+            <summary>Source code in <code>drivers/intake_geokube/sentinel/driver.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">325</span>
+<span class="normal">326</span>
+<span class="normal">327</span>
+<span class="normal">328</span>
+<span class="normal">329</span>
+<span class="normal">330</span>
+<span class="normal">331</span>
+<span class="normal">332</span>
+<span class="normal">333</span>
+<span class="normal">334</span>
+<span class="normal">335</span>
+<span class="normal">336</span>
+<span class="normal">337</span>
+<span class="normal">338</span>
+<span class="normal">339</span>
+<span class="normal">340</span>
+<span class="normal">341</span>
+<span class="normal">342</span>
+<span class="normal">343</span>
+<span class="normal">344</span>
+<span class="normal">345</span>
+<span class="normal">346</span>
+<span class="normal">347</span>
+<span class="normal">348</span>
+<span class="normal">349</span>
+<span class="normal">350</span>
+<span class="normal">351</span>
+<span class="normal">352</span>
+<span class="normal">353</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="n">GeoQuery</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dataset</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Process sentinel data according to the `query`.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    cube : `geokube.Dataset`</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    ```python</span>
+<span class="sd">    &gt;&gt;&gt; data = catalog[&#39;sentinel&#39;][&#39;prod_name&#39;].process(query)</span>
+<span class="sd">    ```</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;builder odata request based on passed geoquery...&quot;</span><span class="p">)</span>
+    <span class="n">req</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_odata_from_geoquery</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;downloading data...&quot;</span><span class="p">)</span>
+    <span class="n">req</span><span class="o">.</span><span class="n">download</span><span class="p">(</span>
+        <span class="n">target_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_dir</span><span class="p">,</span>
+        <span class="n">auth</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">auth</span><span class="p">,</span>
+        <span class="n">timeout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sentinel_timeout</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;unzipping and removing archives...&quot;</span><span class="p">)</span>
+    <span class="n">unzip_and_clear</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_dir</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;preparing geokube.Dataset...&quot;</span><span class="p">)</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_dataset</span><span class="p">()</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_process_geokube_dataset</span><span class="p">(</span>
+        <span class="n">dataset</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span> <span class="n">compute</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">dataset</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="drivers.intake_geokube.sentinel.driver.SentinelDriver.read" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">read</span><span class="p">()</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Read sentinel data.</p>
+
+          <details class="quote">
+            <summary>Source code in <code>drivers/intake_geokube/sentinel/driver.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">313</span>
+<span class="normal">314</span>
+<span class="normal">315</span>
+<span class="normal">316</span>
+<span class="normal">317</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NoReturn</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read sentinel data.&quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+        <span class="s2">&quot;reading metadata is not supported for sentinel data&quot;</span>
+    <span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+
+</div>
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 id="drivers.intake_geokube.sentinel.driver.preprocess_sentinel" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">preprocess_sentinel</span><span class="p">(</span><span class="n">dset</span><span class="p">)</span></code>
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Preprocessing function for sentinel data.</p>
+<h4 id="drivers.intake_geokube.sentinel.driver.preprocess_sentinel--parameters">Parameters</h4>
+<p>dset :  xarray.Dataset
+    xarray.Dataset to be preprocessed</p>
+<h4 id="drivers.intake_geokube.sentinel.driver.preprocess_sentinel--returns">Returns</h4>
+<p>ds : xarray.Dataset
+    Preprocessed xarray.Dataset</p>
+
+          <details class="quote">
+            <summary>Source code in <code>drivers/intake_geokube/sentinel/driver.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">preprocess_sentinel</span><span class="p">(</span><span class="n">dset</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Preprocessing function for sentinel data.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dset :  xarray.Dataset</span>
+<span class="sd">        xarray.Dataset to be preprocessed</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ds : xarray.Dataset</span>
+<span class="sd">        Preprocessed xarray.Dataset</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">crs</span> <span class="o">=</span> <span class="n">CRS</span><span class="o">.</span><span class="n">from_cf</span><span class="p">(</span><span class="n">dset</span><span class="p">[</span><span class="s2">&quot;spatial_ref&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">)</span>
+    <span class="n">transformer</span> <span class="o">=</span> <span class="n">Transformer</span><span class="o">.</span><span class="n">from_crs</span><span class="p">(</span>
+        <span class="n">crs_from</span><span class="o">=</span><span class="n">crs</span><span class="p">,</span> <span class="n">crs_to</span><span class="o">=</span><span class="n">GeographicCRS</span><span class="p">(),</span> <span class="n">always_xy</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+    <span class="n">x_vals</span><span class="p">,</span> <span class="n">y_vals</span> <span class="o">=</span> <span class="n">dset</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(),</span> <span class="n">dset</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+    <span class="n">lon_vals</span><span class="p">,</span> <span class="n">lat_vals</span> <span class="o">=</span> <span class="n">transformer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">x_vals</span><span class="p">,</span> <span class="n">y_vals</span><span class="p">))</span>  <span class="c1"># type: ignore[call-overload] # pylint: disable=unpacking-non-sequence</span>
+    <span class="n">source_path</span> <span class="o">=</span> <span class="n">dset</span><span class="o">.</span><span class="n">encoding</span><span class="p">[</span><span class="s2">&quot;source&quot;</span><span class="p">]</span>
+    <span class="n">sensing_time</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">source_path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="p">)[</span><span class="o">-</span><span class="mi">6</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span>
+        <span class="s2">&quot;_&quot;</span>
+    <span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">time</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">([</span><span class="n">sensing_time</span><span class="p">])</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+    <span class="n">dset</span> <span class="o">=</span> <span class="n">dset</span><span class="o">.</span><span class="n">assign_coords</span><span class="p">({</span>
+        <span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">time</span><span class="p">,</span>
+        <span class="s2">&quot;latitude&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">),</span> <span class="n">lat_vals</span><span class="p">),</span>
+        <span class="s2">&quot;longitude&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">),</span> <span class="n">lon_vals</span><span class="p">),</span>
+    <span class="p">})</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="s2">&quot;band_data&quot;</span><span class="p">:</span> <span class="n">_get_field_name_from_path</span><span class="p">(</span><span class="n">source_path</span><span class="p">)})</span>
+    <span class="n">expanded_timedim_dataarrays</span> <span class="o">=</span> <span class="p">{</span><span class="n">var_name</span><span class="p">:</span> <span class="n">dset</span><span class="p">[</span><span class="n">var_name</span><span class="p">]</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">var_name</span> <span class="ow">in</span> <span class="n">dset</span><span class="o">.</span><span class="n">data_vars</span><span class="p">}</span>
+    <span class="n">dset</span> <span class="o">=</span> <span class="n">dset</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">expanded_timedim_dataarrays</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">dset</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 id="drivers.intake_geokube.sentinel.driver.unzip_and_clear" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">unzip_and_clear</span><span class="p">(</span><span class="n">target</span><span class="p">)</span></code>
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Unzip ZIP archives in 'target' dir and remove archive.</p>
+
+          <details class="quote">
+            <summary>Source code in <code>drivers/intake_geokube/sentinel/driver.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">unzip_and_clear</span><span class="p">(</span><span class="n">target</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Unzip ZIP archives in &#39;target&#39; dir and remove archive.&quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">target</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;directory &#39;</span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2">&#39; does not exist&quot;</span>
+    <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">target</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">file</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.zip&quot;</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">prod_id</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">target_prod</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">prod_id</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">target_prod</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">file</span><span class="p">))</span> <span class="k">as</span> <span class="n">archive</span><span class="p">:</span>
+                <span class="n">archive</span><span class="o">.</span><span class="n">extractall</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">target_prod</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">BadZipFile</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;downloaded ZIP archive is invalid&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">err</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">file</span><span class="p">))</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-module">
+
+
+
+<a id="drivers.intake_geokube.sentinel.odata_builder"></a>
+  <div class="doc doc-contents first">
+  
+      <p>Module with OData API classes definitions.</p>
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="drivers.intake_geokube.sentinel.odata_builder.HttpMethod" class="doc doc-heading">
+          <code>HttpMethod</code>
+
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+          <p class="doc doc-class-bases">
+            Bases: <code><span title="enum.Enum">Enum</span></code></p>
+
+  
+      <p>Enum with HTTP methods.</p>
+
+            <details class="quote">
+              <summary>Source code in <code>drivers/intake_geokube/sentinel/odata_builder.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span>
+<span class="normal">59</span>
+<span class="normal">60</span>
+<span class="normal">61</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">HttpMethod</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Enum with HTTP methods.&quot;&quot;&quot;</span>
+
+    <span class="n">GET</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">POST</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">method_name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get name of the HTTP method.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="drivers.intake_geokube.sentinel.odata_builder.HttpMethod.method_name" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">method_name</span><span class="p">:</span> <span class="nb">str</span></code>
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Get name of the HTTP method.</p>
+  </div>
+
+</div>
+
+
+
+
+
+  </div>
+
+  </div>
+
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="drivers.intake_geokube.sentinel.odata_builder.ODataRequest" class="doc doc-heading">
+          <code>ODataRequest</code>
+
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+
+  
+      <p>OData request object.</p>
+
+            <details class="quote">
+              <summary>Source code in <code>drivers/intake_geokube/sentinel/odata_builder.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">ODataRequest</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;OData request object.&quot;&quot;&quot;</span>
+
+    <span class="n">_ALL_HTTP_CODES</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">_DOWNLOAD_PATTERN</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;https://zipper.dataspace.copernicus.eu&quot;</span>
+        <span class="s2">&quot;/odata/v1/Products(</span><span class="si">{pid}</span><span class="s2">)/$value&quot;</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">odata</span><span class="p">:</span> <span class="n">_ODataEntity</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request_params</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">odata</span> <span class="o">=</span> <span class="n">odata</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_convert_filter_param</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_convert_order_param</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_convert_order_param</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s2">&quot;orderby&quot;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">request_params</span><span class="p">[</span><span class="s2">&quot;orderby&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s2">&quot;orderby&quot;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_convert_filter_param</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">param</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s2">&quot;filter&quot;</span><span class="p">])):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">param</span><span class="p">:</span>
+                <span class="n">param</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s2">&quot;filter&quot;</span><span class="p">][</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">param</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">param</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;filter&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s2">&quot;filter&quot;</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">param</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">param</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">conj</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request_params</span><span class="p">[</span><span class="s2">&quot;filter&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">param</span>
+
+    <span class="k">def</span> <span class="nf">_query</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">headers</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">auth</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">requests</span><span class="o">.</span><span class="n">Response</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">params</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">url</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;?&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">url</span><span class="si">}</span><span class="s2">?&quot;</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">request_params</span><span class="p">:</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="sa">f</span><span class="s2">&quot;$</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">value</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">request_params</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">}</span>
+        <span class="k">match</span> <span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">method</span><span class="p">:</span>
+            <span class="k">case</span> <span class="n">HttpMethod</span><span class="o">.</span><span class="n">GET</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">url</span><span class="p">,</span>
+                    <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
+                    <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span>
+                    <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">case</span> <span class="n">HttpMethod</span><span class="o">.</span><span class="n">POST</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">url</span><span class="p">,</span>
+                    <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">body</span><span class="p">,</span>
+                    <span class="n">auth</span><span class="o">=</span><span class="n">auth</span><span class="p">,</span>
+                    <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;method </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">method</span><span class="si">}</span><span class="s2"> is not supported&quot;</span>
+                <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">with_callback</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">callback</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">requests</span><span class="o">.</span><span class="n">Response</span><span class="p">],</span> <span class="n">Any</span><span class="p">],</span>
+        <span class="n">http_code</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ODataRequest&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add callbacks for request response.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        callback : callable</span>
+<span class="sd">            A callback function taking just a single argument,</span>
+<span class="sd">            i.e `requests.Response` object</span>
+<span class="sd">        http_code : int</span>
+<span class="sd">            HTTP code for which callback should be used.</span>
+<span class="sd">            If not passed, callback will be executed for all codes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">http_code</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">http_code</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">callbacks</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;callback for HTTP code </span><span class="si">{</span><span class="n">http_code</span><span class="si">}</span><span class="s2"> will be overwritten&quot;</span>
+                <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">callbacks</span><span class="p">[</span><span class="n">http_code</span><span class="p">]</span> <span class="o">=</span> <span class="n">callback</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">callbacks</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_ALL_HTTP_CODES</span><span class="p">]</span> <span class="o">=</span> <span class="n">callback</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">query</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">headers</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">auth</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Query data based on the built request.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        headers : dict, optional</span>
+<span class="sd">            Headers passed to HTTP request</span>
+<span class="sd">        auth : Any, optional</span>
+<span class="sd">            Authorization object or tuple (&lt;username&gt;,&lt;pass&gt;) for basic authentication</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        res : Any</span>
+<span class="sd">            Value returned from the appropriate callback or `requests.Response` object otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query</span><span class="p">(</span><span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="n">auth</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">callbacks</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">callbacks</span><span class="p">[</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">](</span><span class="n">response</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ALL_HTTP_CODES</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">callbacks</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">callbacks</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_ALL_HTTP_CODES</span><span class="p">](</span><span class="n">response</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">response</span>
+
+    <span class="k">def</span> <span class="nf">download</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">target_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">headers</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">auth</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Download requested data to `target_dir`.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        target_dir : str</span>
+<span class="sd">            Path to the directory where files should be downloaded</span>
+<span class="sd">        headers : dict, optional</span>
+<span class="sd">            Headers passed to HTTP request</span>
+<span class="sd">        auth : Any, optional</span>
+<span class="sd">            Authorization object or tuple (&lt;username&gt;,&lt;pass&gt;) for basic</span>
+<span class="sd">            authentication</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">target_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query</span><span class="p">(</span><span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="n">auth</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
+        <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">callbacks</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">callbacks</span><span class="p">[</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">](</span><span class="n">response</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ALL_HTTP_CODES</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">callbacks</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">callbacks</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_ALL_HTTP_CODES</span><span class="p">](</span><span class="n">response</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s2">&quot;value&quot;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;no product found for the request&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">auth</span><span class="p">,</span> <span class="n">SentinelAuth</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;expected authentication of the type &#39;</span><span class="si">{</span><span class="n">SentinelAuth</span><span class="si">}</span><span class="s2">&#39; but&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot; passed &#39;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">auth</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+            <span class="p">)</span>
+        <span class="k">for</span> <span class="n">pid</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;Id&quot;</span><span class="p">]):</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_DOWNLOAD_PATTERN</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pid</span><span class="o">=</span><span class="n">pid</span><span class="p">),</span>
+                <span class="n">stream</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">auth</span><span class="o">=</span><span class="n">auth</span><span class="p">,</span>
+                <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+            <span class="n">create_zip_from_response</span><span class="p">(</span>
+                <span class="n">response</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">target_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pid</span><span class="si">}</span><span class="s2">.zip&quot;</span><span class="p">)</span>
+            <span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="drivers.intake_geokube.sentinel.odata_builder.ODataRequest.download" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">download</span><span class="p">(</span><span class="n">target_dir</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Download requested data to <code>target_dir</code>.</p>
+<h5 id="drivers.intake_geokube.sentinel.odata_builder.ODataRequest.download--parameters">Parameters</h5>
+<p>target_dir : str
+    Path to the directory where files should be downloaded
+headers : dict, optional
+    Headers passed to HTTP request
+auth : Any, optional
+    Authorization object or tuple (<username>,<pass>) for basic
+    authentication</p>
+
+          <details class="quote">
+            <summary>Source code in <code>drivers/intake_geokube/sentinel/odata_builder.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">download</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">target_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">headers</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">auth</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Download requested data to `target_dir`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    target_dir : str</span>
+<span class="sd">        Path to the directory where files should be downloaded</span>
+<span class="sd">    headers : dict, optional</span>
+<span class="sd">        Headers passed to HTTP request</span>
+<span class="sd">    auth : Any, optional</span>
+<span class="sd">        Authorization object or tuple (&lt;username&gt;,&lt;pass&gt;) for basic</span>
+<span class="sd">        authentication</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">target_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query</span><span class="p">(</span><span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="n">auth</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
+    <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">callbacks</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">callbacks</span><span class="p">[</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">](</span><span class="n">response</span><span class="p">)</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ALL_HTTP_CODES</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">callbacks</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">callbacks</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_ALL_HTTP_CODES</span><span class="p">](</span><span class="n">response</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s2">&quot;value&quot;</span><span class="p">])</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;no product found for the request&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">auth</span><span class="p">,</span> <span class="n">SentinelAuth</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;expected authentication of the type &#39;</span><span class="si">{</span><span class="n">SentinelAuth</span><span class="si">}</span><span class="s2">&#39; but&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot; passed &#39;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">auth</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+        <span class="p">)</span>
+    <span class="k">for</span> <span class="n">pid</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;Id&quot;</span><span class="p">]):</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_DOWNLOAD_PATTERN</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pid</span><span class="o">=</span><span class="n">pid</span><span class="p">),</span>
+            <span class="n">stream</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">auth</span><span class="o">=</span><span class="n">auth</span><span class="p">,</span>
+            <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+        <span class="n">create_zip_from_response</span><span class="p">(</span>
+            <span class="n">response</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">target_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pid</span><span class="si">}</span><span class="s2">.zip&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="drivers.intake_geokube.sentinel.odata_builder.ODataRequest.query" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">query</span><span class="p">(</span><span class="n">headers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Query data based on the built request.</p>
+<h5 id="drivers.intake_geokube.sentinel.odata_builder.ODataRequest.query--parameters">Parameters</h5>
+<p>headers : dict, optional
+    Headers passed to HTTP request
+auth : Any, optional
+    Authorization object or tuple (<username>,<pass>) for basic authentication</p>
+<h5 id="drivers.intake_geokube.sentinel.odata_builder.ODataRequest.query--returns">Returns</h5>
+<p>res : Any
+    Value returned from the appropriate callback or <code>requests.Response</code> object otherwise</p>
+
+          <details class="quote">
+            <summary>Source code in <code>drivers/intake_geokube/sentinel/odata_builder.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">query</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">headers</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">auth</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Query data based on the built request.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    headers : dict, optional</span>
+<span class="sd">        Headers passed to HTTP request</span>
+<span class="sd">    auth : Any, optional</span>
+<span class="sd">        Authorization object or tuple (&lt;username&gt;,&lt;pass&gt;) for basic authentication</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    res : Any</span>
+<span class="sd">        Value returned from the appropriate callback or `requests.Response` object otherwise</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query</span><span class="p">(</span><span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="n">auth</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">callbacks</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">callbacks</span><span class="p">[</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">](</span><span class="n">response</span><span class="p">)</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ALL_HTTP_CODES</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">callbacks</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">callbacks</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_ALL_HTTP_CODES</span><span class="p">](</span><span class="n">response</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">response</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="drivers.intake_geokube.sentinel.odata_builder.ODataRequest.with_callback" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">with_callback</span><span class="p">(</span><span class="n">callback</span><span class="p">,</span> <span class="n">http_code</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Add callbacks for request response.</p>
+<h5 id="drivers.intake_geokube.sentinel.odata_builder.ODataRequest.with_callback--parameters">Parameters</h5>
+<p>callback : callable
+    A callback function taking just a single argument,
+    i.e <code>requests.Response</code> object
+http_code : int
+    HTTP code for which callback should be used.
+    If not passed, callback will be executed for all codes.</p>
+
+          <details class="quote">
+            <summary>Source code in <code>drivers/intake_geokube/sentinel/odata_builder.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">with_callback</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">callback</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">requests</span><span class="o">.</span><span class="n">Response</span><span class="p">],</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">http_code</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ODataRequest&quot;</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Add callbacks for request response.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    callback : callable</span>
+<span class="sd">        A callback function taking just a single argument,</span>
+<span class="sd">        i.e `requests.Response` object</span>
+<span class="sd">    http_code : int</span>
+<span class="sd">        HTTP code for which callback should be used.</span>
+<span class="sd">        If not passed, callback will be executed for all codes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">http_code</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">http_code</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">callbacks</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;callback for HTTP code </span><span class="si">{</span><span class="n">http_code</span><span class="si">}</span><span class="s2"> will be overwritten&quot;</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">callbacks</span><span class="p">[</span><span class="n">http_code</span><span class="p">]</span> <span class="o">=</span> <span class="n">callback</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">odata</span><span class="o">.</span><span class="n">callbacks</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_ALL_HTTP_CODES</span><span class="p">]</span> <span class="o">=</span> <span class="n">callback</span>
+    <span class="k">return</span> <span class="bp">self</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="drivers.intake_geokube.sentinel.odata_builder.ODataRequestBuilder" class="doc doc-heading">
+          <code>ODataRequestBuilder</code>
+
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+          <p class="doc doc-class-bases">
+            Bases: <code><span title="drivers.intake_geokube.sentinel.odata_builder._ODataOperation">_ODataOperation</span></code></p>
+
+  
+      <p>OData API request builder.</p>
+
+            <details class="quote">
+              <summary>Source code in <code>drivers/intake_geokube/sentinel/odata_builder.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">563</span>
+<span class="normal">564</span>
+<span class="normal">565</span>
+<span class="normal">566</span>
+<span class="normal">567</span>
+<span class="normal">568</span>
+<span class="normal">569</span>
+<span class="normal">570</span>
+<span class="normal">571</span>
+<span class="normal">572</span>
+<span class="normal">573</span>
+<span class="normal">574</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">ODataRequestBuilder</span><span class="p">(</span>
+    <span class="n">_ODataOperation</span>
+<span class="p">):</span>  <span class="c1"># pylint: disable=too-few-public-methods</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;OData API request builder.&quot;&quot;&quot;</span>
+
+    <span class="n">_BASE_PATTERN</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{url}</span><span class="s2">/Products&quot;</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">new</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_ODataOperation</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Start building OData request.&quot;&quot;&quot;</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_BASE_PATTERN</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">url</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">_ODataOperation</span><span class="p">(</span><span class="n">_ODataEntity</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">url</span><span class="p">))</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="drivers.intake_geokube.sentinel.odata_builder.ODataRequestBuilder.new" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">new</span><span class="p">(</span><span class="n">url</span><span class="p">)</span></code>
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Start building OData request.</p>
+
+          <details class="quote">
+            <summary>Source code in <code>drivers/intake_geokube/sentinel/odata_builder.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">570</span>
+<span class="normal">571</span>
+<span class="normal">572</span>
+<span class="normal">573</span>
+<span class="normal">574</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+<span class="k">def</span> <span class="nf">new</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_ODataOperation</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Start building OData request.&quot;&quot;&quot;</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_BASE_PATTERN</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">url</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">_ODataOperation</span><span class="p">(</span><span class="n">_ODataEntity</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">url</span><span class="p">))</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+
+</div>
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 id="drivers.intake_geokube.sentinel.odata_builder.datetime_to_isoformat" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">datetime_to_isoformat</span><span class="p">(</span><span class="n">date</span><span class="p">)</span></code>
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Convert string of datetime object to ISO datetime string.</p>
+<h4 id="drivers.intake_geokube.sentinel.odata_builder.datetime_to_isoformat--parameters">Parameters</h4>
+<p>data : <code>str</code> or <code>datetime</code></p>
+<h4 id="drivers.intake_geokube.sentinel.odata_builder.datetime_to_isoformat--returns">Returns</h4>
+<p>date_str : str
+    A ISO-compliant datetime format</p>
+
+          <details class="quote">
+            <summary>Source code in <code>drivers/intake_geokube/sentinel/odata_builder.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">datetime_to_isoformat</span><span class="p">(</span><span class="n">date</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">datetime</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert string of datetime object to ISO datetime string.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data : `str` or `datetime`</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    date_str : str</span>
+<span class="sd">        A ISO-compliant datetime format</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">([</span><span class="n">date</span><span class="p">])</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;cannot parse &#39;</span><span class="si">{</span><span class="n">date</span><span class="si">}</span><span class="s2">&#39; to datetime&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">exc</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="n">datetime</span><span class="p">):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;type &#39;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">date</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; is not supported&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">Z&quot;</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-module">
+
+
+
+<a id="drivers.intake_geokube.sentinel.auth"></a>
+  <div class="doc doc-contents first">
+  
+      <p>Module with auth utils for accessing sentinel data.</p>
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="drivers.intake_geokube.sentinel.auth.SentinelAuth" class="doc doc-heading">
+          <code>SentinelAuth</code>
+
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+          <p class="doc doc-class-bases">
+            Bases: <code><span title="requests.auth.AuthBase">AuthBase</span></code></p>
+
+  
+      <p>Class ewith authentication for accessing sentinel data.</p>
+
+            <details class="quote">
+              <summary>Source code in <code>drivers/intake_geokube/sentinel/auth.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">SentinelAuth</span><span class="p">(</span><span class="n">AuthBase</span><span class="p">):</span>  <span class="c1"># pylint: disable=too-few-public-methods</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class ewith authentication for accessing sentinel data.&quot;&quot;&quot;</span>
+
+    <span class="n">_SENTINEL_AUTH_URL</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+        <span class="s2">&quot;SENTINEL_AUTH_URL&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">username</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">password</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">username</span> <span class="o">=</span> <span class="n">username</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">password</span> <span class="o">=</span> <span class="n">password</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_get_access_token</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">username</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">password</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;client_id&quot;</span><span class="p">:</span> <span class="s2">&quot;cdse-public&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;username&quot;</span><span class="p">:</span> <span class="n">username</span><span class="p">,</span>
+            <span class="s2">&quot;password&quot;</span><span class="p">:</span> <span class="n">password</span><span class="p">,</span>
+            <span class="s2">&quot;grant_type&quot;</span><span class="p">:</span> <span class="s2">&quot;password&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+                <span class="bp">cls</span><span class="o">.</span><span class="n">_SENTINEL_AUTH_URL</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">10</span>
+            <span class="p">)</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;Access token creation failed. Reponse from the server was:&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+        <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s2">&quot;access_token&quot;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add authorization header.&quot;&quot;&quot;</span>
+        <span class="n">token</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_access_token</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">username</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">password</span><span class="p">)</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;Authorization&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Bearer </span><span class="si">{</span><span class="n">token</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="n">request</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="drivers.intake_geokube.sentinel.auth.SentinelAuth.__call__" class="doc doc-heading">
+          <code class="highlight language-python"><span class="fm">__call__</span><span class="p">(</span><span class="n">request</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Add authorization header.</p>
+
+          <details class="quote">
+            <summary>Source code in <code>drivers/intake_geokube/sentinel/auth.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add authorization header.&quot;&quot;&quot;</span>
+    <span class="n">token</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_access_token</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">username</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">password</span><span class="p">)</span>
+    <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;Authorization&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Bearer </span><span class="si">{</span><span class="n">token</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">return</span> <span class="n">request</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+
+</div>
+
+
+
+
+  </div>
+
+  </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": ".", "features": ["search.suggest", "search.highlight", "content.tooltips", "content.code.annotate", "content.code.copy", "content.code.select"], "search": "assets/javascripts/workers/search.c011b7c0.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="assets/javascripts/bundle.7389ff0e.min.js"></script>
+      
+    
+  </body>
+</html>

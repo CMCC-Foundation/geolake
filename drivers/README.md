@@ -1,2 +1,2 @@
-# intake-geokube
+# geolake-drivers
 GeoKube plugin for Intake

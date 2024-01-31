@@ -1,0 +1,56 @@
+site_name: GeoLake
+site_description: GeoLake - an environment for managing and processing geospatial data
+theme:
+  name: material
+  palette:
+  - media: '(prefers-color-scheme: light)'
+    scheme: default
+    primary: blue grey
+    accent: amber
+  features:
+  - search.suggest
+  - search.highlight
+  - content.tooltips
+  - content.code.annotate
+  - content.code.copy
+  - announce.dismiss
+  - content.code.select
+  icon:
+    repo: fontawesome/brands/github-alt
+  logo: img/favicon.svg
+  favicon: img/favicon.svg
+  language: en
+repo_name: CMCC-Foundation/geolake
+repo_url: https://github.com/CMCC-Foundation/geolake
+edit_uri: ''
+use_directory_urls: false
+nav:
+- GeoLake: index.md
+- References:
+  - client.md
+  - queries.md
+  - Drivers:
+    - base.md
+    - netcdf.md
+    - sentinel.md
+    - iot.md
+    - wrf.md
+  - datastore.md
+  - api.md
+  - executor.md
+- about.md
+
+plugins:
+- mkdocstrings:
+    handlers:
+      python:
+        paths: [drivers, executor, api, datastore]
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences        

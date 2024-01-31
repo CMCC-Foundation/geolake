@@ -5,8 +5,8 @@ import logging
 
 import networkx as nx
 from geokube.core.datacube import DataCube
-from geoquery.geoquery import GeoQuery
-from geoquery.task import TaskList
+from intake_geokube.queries.geoquery import GeoQuery
+from intake_geokube.queries.workflow import Workflow as WorkflowModel
 from datastore.datastore import Datastore
 
 AggregationFunctionName = (
@@ -62,7 +62,7 @@ class Workflow:
         self.is_verified = False
 
     @classmethod
-    def from_tasklist(cls, task_list: TaskList) -> "Workflow":
+    def from_tasklist(cls, task_list: WorkflowModel) -> "Workflow":
         workflow = cls()
         for task in task_list.tasks:
             match task.op:

@@ -1,6 +1,5 @@
 """Geokube driver for sentinel data."""
 
-from collections import defaultdict
 from multiprocessing.util import get_temp_dir
 import os
 import dask
@@ -20,7 +19,6 @@ from geokube import open_datacube
 from geokube.core.dataset import Dataset
 
 from .base import GeokubeSource
-from .geoquery import GeoQuery
 
 SENSING_TIME_ATTR: str = "sensing_time"
 FILE: str = "files"

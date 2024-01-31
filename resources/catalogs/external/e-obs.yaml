@@ -1,0 +1,27 @@
+metadata:
+  description: >-
+     E-OBS is a daily gridded land-only observational dataset over Europe. The blended time series from the station network of the European Climate Assessment & Dataset (ECA&D) project form the basis for the E-OBS gridded dataset. All station data are sourced directly from the European National Meteorological and Hydrological Services (NMHSs) or other data holding institutions. For a considerable number of countries the number of stations used is the complete national network and therefore much more dense than the station network that is routinely shared among NMHSs (which is the basis of other gridded datasets). The density of stations gradually increases through collaborations with NMHSs within European research contracts. Initially, in 2008, this gridded dataset was developed to provide validation for the suite of Europe-wide climate model simulations produced as part of the European Union ENSEMBLES project. While E-OBS remains an important dataset for model validation, it is also used more generally for monitoring the climate across Europe, particularly with regard to the assessment of the magnitude and frequency of daily extremes. The position of E-OBS is unique in Europe because of the relatively high spatial horizontal grid spacing, the daily resolution of the dataset, the provision of multiple variables and the length of the dataset. Finally, the station data on which E-OBS is based are available through the ECA&D webpages (where the owner of the data has given permission to do so). In these respects it contrasts with other datasets. The dataset is daily, meaning the observations cover 24 hours per time step. The exact 24-hour period can be different per region. The reason for this is that some data providers measure between midnight to midnight while others might measure from morning to morning. Since E-OBS is an observational dataset, no attempts have been made to adjust time series for this 24-hour offset. It is made sure, where known, that the largest part of the measured 24-hour period corresponds to the day attached to the time step in E-OBS (and ECA&D).
+  contact: geolake-support@cmcc.it
+  label: E-OBS daily gridded meteorological data for Europe from 1950 to present
+  image: https://diasfiles.cmccos.it/images/e-obs.png
+  doi: https://doi.org/10.24381/cds.151d3ec6
+  license:
+    name: E-OBS Product License
+    url: https://www.ecad.eu/documents/ECAD_datapolicy.pdf
+  publication_date: 2020-08-01
+
+
+sources:
+  ensemble:
+    description: E-OBS Ensemble Dataset
+    driver: geokube_netcdf
+    role: admin
+    args:
+      pattern: 'e-obs-ensemble-{ensemble}-var_{var}-resolution_{resolution}-version_{version}.0e.nc'
+      path: '/code/app/resources/netcdfs/e-obs-ensemble-mean-var_*.nc'
+      id_pattern: '{__geolakeapi_name}'
+      delay_read_cubes: false
+      metadata_caching: true
+      metadata_cache_path: 'e-obs.cache'
+
+
