@@ -49,3 +49,47 @@ c.retrieve(  # (3)!
 10.  You can specify format. Currently only **netcdf** is supported (or **zip** in case of any netCDF files).
 11.  If a dataset has some custom attributes, you can specify them in the query.
 12.  At the end, you specify the name of the downloaded file.
+
+## Selecting bounding area
+To select bounding area, you need to specify north and south values for latitude and west and east - for longitude:
+
+``` { .python .annotate .copy }
+import geolake
+
+c = geolake.Client() 
+
+c.retrieve( 
+    "era5-single-levels", 
+    "reanalysis", 
+    { 
+        "area": {"north": 47.2, "south": 36.5, "west": -6.5, "east": 18.5},
+        "format": "netcdf", 
+    }, 
+    "select_by_area_result.nc", 
+)
+```
+
+## Subsetting by time combo
+Geolake supports selecting particular hours, days, months, and years. To do so,
+specify a dictionary for `"time"` key in the following way:
+
+``` { .python .annotate .copy }
+import geolake
+
+c = geolake.Client() 
+
+c.retrieve( 
+    "era5-single-levels", 
+    "reanalysis", 
+    { 
+        "time": {
+            "year": [2002, 2003],
+            "month": [10, 11],
+            "day": [1, 2, 3, 31],
+            "hour": ["12:00"],
+        },
+        "format": "netcdf", 
+    }, 
+    "select_by_timecombo_result.nc", 
+)
+```
