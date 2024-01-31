@@ -106,7 +106,7 @@ app.state.api_http_requests_total = Counter(
 # ======== Endpoints definitions ========= #
 @app.get("/", tags=[tags.BASIC])
 async def geolake_info():
-    """Return current version of the GeoLake API"""
+    """Return current version of the GeoLake API."""
     return f"GeoLake API {__version__}"
 
 
@@ -119,7 +119,15 @@ async def get_first_product_details(
     request: Request,
     dataset_id: str,
 ):
-    """Get details for the 1st product of the dataset"""
+    """Get details for the 1st product of the dataset.
+    
+    Parameters
+    ----------
+    request : `Request`
+        A request object
+    dataset_id : `str`
+        ID of the dataset
+    """
     app.state.api_http_requests_total.inc(
         {"route": "GET /datasets/{dataset_id}"}
     )
@@ -142,7 +150,17 @@ async def get_product_details(
     dataset_id: str,
     product_id: str,
 ):
-    """Get details for the requested product if user is authorized"""
+    """Get details for the requested product if user is authorized.
+    
+    Parameters
+    ----------
+    request : `Request`
+        A request object
+    dataset_id : `str`
+        ID of the dataset
+    product_id : `str` 
+        ID of the product
+    """
     app.state.api_http_requests_total.inc(
         {"route": "GET /datasets/{dataset_id}/{product_id}"}
     )
@@ -179,6 +197,35 @@ async def get_map(
     # subset_crs: str | None = Query(..., alias="subset-crs"),
     # bbox_crs: str | None = Query(..., alias="bbox-crs"),
 ):
+    """Get map of the requested product if user is authorized.
+    
+    Parameters
+    ----------
+    request : `Request`
+        A request object
+    dataset_id : `str`
+        ID of the dataset
+    product_id : `str`
+        ID of the product
+    width : `int`
+        Width of the map in pixels
+    height : `int`
+        Height of the map in pixels
+    layers : `str`
+        Comma-separated list of layer names
+    format : `str`
+        Format of the map
+    time : `datetime`
+        Time of the data for map generation
+    transparent : `bool`
+        Whether the map should be transparent
+    bgcolor : `str`
+        Background color of the map
+    bbox : `str`
+        Bounding box of the map
+    crs : `str`
+        Coordinate reference system of the map
+    """
     
     app.state.api_http_requests_total.inc(
         {"route": "GET /datasets/{dataset_id}/{product_id}/map"}
@@ -224,7 +271,23 @@ async def get_feature(
     # subset_crs: str | None = Query(..., alias="subset-crs"),
     # bbox_crs: str | None = Query(..., alias="bbox-crs"),
 ):
-    
+    """Get feature of the requested product if user is authorized.
+
+    Parameters
+    ----------
+    request : `Request`
+        A request object
+    dataset_id : `str`
+        ID of the dataset
+    product_id : `str`
+        ID of the product
+    time : `datetime`
+        Time of the data for map generation
+    bbox : `str`
+        Bounding box of the map
+    crs : `str`
+        Coordinate reference system of the map
+    """
     app.state.api_http_requests_total.inc(
         {"route": "GET /datasets/{dataset_id}/{product_id}/items/{feature_id}"}
     )
@@ -250,49 +313,19 @@ async def get_feature(
     except exc.BaseGeoLakeException as err:
         raise err.wrap_around_http_exception() from err
 
-# ======== CORS ========= #
-cors_kwargs: dict[str, str | list[str]]
-if venv.ALLOWED_CORS_ORIGINS_REGEX in os.environ:
-    cors_kwargs = {
-        "allow_origin_regex": os.environ[venv.ALLOWED_CORS_ORIGINS_REGEX]
-    }
-else:
-    cors_kwargs = {"allow_origins": ["*"]}
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    **cors_kwargs,
-)
-
-
-# ======== Prometheus metrics ========= #
-app.add_middleware(MetricsMiddleware)
-app.add_route("/metrics", metrics)
-
-app.state.api_request_duration_seconds = Summary(
-    "api_request_duration_seconds", "Requests duration"
-)
-app.state.api_http_requests_total = Counter(
-    "api_http_requests_total", "Total number of requests"
-)
-
-
-# ======== Endpoints definitions ========= #
-@app.get("/", tags=[tags.BASIC])
-async def dds_info():
-    """Return current version of the DDS API"""
-    return f"DDS API {__version__}"
-
 
 @app.get("/datasets", tags=[tags.DATASET])
 @timer(
     app.state.api_request_duration_seconds, labels={"route": "GET /datasets"}
 )
 async def get_datasets(request: Request):
-    """List all products eligible for a user defined by user_token"""
+    """List all products eligible for a user defined by user_token.
+    
+    Parameters
+    ----------
+    request : `Request`
+        A request object
+    """
     app.state.api_http_requests_total.inc({"route": "GET /datasets"})
     try:
         return dataset_handler.get_datasets(
@@ -312,7 +345,17 @@ async def get_metadata(
     dataset_id: str,
     product_id: str,
 ):
-    """Get metadata of the given product"""
+    """Get metadata of the given product.
+    
+    Parameters
+    ----------
+    request : `Request`
+        A request object
+    dataset_id : `str`
+        ID of the dataset
+    product_id : `str`
+        ID of the product
+    """
     app.state.api_http_requests_total.inc(
         {"route": "GET /datasets/{dataset_id}/{product_id}/metadata"}
     )
@@ -336,7 +379,21 @@ async def estimate(
     query: GeoQuery,
     unit: str = None,
 ):
-    """Estimate the resulting size of the query"""
+    """Estimate the resulting size of the query.
+    
+    Parameters
+    ----------
+    request : `Request`
+        A request object
+    dataset_id : `str`
+        ID of the dataset
+    product_id : `str`
+        ID of the product
+    query : `GeoQuery`
+        Query to be estimated
+    unit : `str`
+        Unit of the estimated size
+    """
     app.state.api_http_requests_total.inc(
         {"route": "POST /datasets/{dataset_id}/{product_id}/estimate"}
     )
@@ -363,7 +420,19 @@ async def query(
     product_id: str,
     query: GeoQuery,
 ):
-    """Schedule the job of data retrieve"""
+    """Schedule the job of data retrieve.
+    
+    Parameters
+    ----------
+    request : `Request`
+        A request object
+    dataset_id : `str`
+        ID of the dataset
+    product_id : `str`
+        ID of the product
+    query : `GeoQuery`
+        Query to be executed
+    """
     app.state.api_http_requests_total.inc(
         {"route": "POST /datasets/{dataset_id}/{product_id}/execute"}
     )
@@ -388,7 +457,15 @@ async def workflow(
     request: Request,
     tasks: Workflow,
 ):
-    """Schedule the job of workflow processing"""
+    """Schedule the job of workflow processing.
+    
+    Parameters
+    ----------
+    request : `Request`
+        A request object
+    tasks : `Workflow`
+        Workflow to be executed
+    """
     app.state.api_http_requests_total.inc({"route": "POST /datasets/workflow"})
     try:
         return dataset_handler.run_workflow(
@@ -407,7 +484,13 @@ async def workflow(
 async def get_requests(
     request: Request,
 ):
-    """Get all requests for the user"""
+    """Get all requests for the user.
+    
+    Parameters
+    ----------
+    request : `Request`
+        A request object
+    """
     app.state.api_http_requests_total.inc({"route": "GET /requests"})
     try:
         return request_handler.get_requests(request.user.id)
@@ -425,7 +508,15 @@ async def get_request_status(
     request: Request,
     request_id: int,
 ):
-    """Get status of the request without authentication"""
+    """Get status of the request without authentication.
+    
+    Parameters
+    ----------
+    request : `Request`
+        A request object
+    request_id : `int`
+        ID of the request
+    """
     app.state.api_http_requests_total.inc(
         {"route": "GET /requests/{request_id}/status"}
     )
@@ -447,7 +538,15 @@ async def get_request_resulting_size(
     request: Request,
     request_id: int,
 ):
-    """Get size of the file being the result of the request"""
+    """Get size of the file being the result of the request.
+    
+    Parameters
+    ----------
+    request : `Request`
+        A request object
+    request_id : `int`
+        ID of the request
+    """
     app.state.api_http_requests_total.inc(
         {"route": "GET /requests/{request_id}/size"}
     )
@@ -469,7 +568,15 @@ async def get_request_uri(
     request: Request,
     request_id: int,
 ):
-    """Get download URI for the request"""
+    """Get download URI for the request.
+    
+    Parameters
+    ----------
+    request : `Request`
+        A request object
+    request_id : `int`
+        ID of the request
+    """
     app.state.api_http_requests_total.inc(
         {"route": "GET /requests/{request_id}/uri"}
     )
@@ -489,7 +596,15 @@ async def download_request_result(
     request: Request,
     request_id: int,
 ):
-    """Download result of the request"""
+    """Download result of the request.
+    
+    Parameters
+    ----------
+    request : `Request`
+        A request object
+    request_id : `int`
+        ID of the request
+    """
     app.state.api_http_requests_total.inc(
         {"route": "GET /download/{request_id}"}
     )
