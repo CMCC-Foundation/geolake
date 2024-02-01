@@ -11,3 +11,8 @@ sources:
     driver: yaml_file_cat
     args:
       path: '{{ CATALOG_DIR }}/era5_downscaled.yaml'
+  
+  thi:
+    driver: yaml_file_cat
+    args:
+      path: '{{ CATALOG_DIR }}/thi.yaml'
