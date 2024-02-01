@@ -1,19 +1,18 @@
 version: "3"
 services:
   api:
-    build: 
-      context: ./
-      dockerfile: ./api/Dockerfile
+    image: local/geolake-api:latest
     ports:
       - "8080:80"
     depends_on:
+      - datastore
       - broker
       - db
     links:
       - broker
       - db
     environment:
-      CATALOG_PATH: /code/app/resources/catalogs/catalog.yaml
+      CATALOG_PATH: /catalog/catalog.yaml
       POSTGRES_DB: dds
       POSTGRES_USER: dds
       POSTGRES_PASSWORD: dds
@@ -21,11 +20,9 @@ services:
       POSTGRES_PORT: 5432       
     volumes:
       - downloads:/downloads:ro 
-    command: ["./wait-for-it.sh", "broker:5672", "--",  "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]
+    command: ["./../wait-for-it.sh", "broker:5672", "--",  "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]
   executor:
-    build: 
-      context: ./
-      dockerfile: ./executor/Dockerfile
+    image: local/geolake-executor:latest
     depends_on:
       - broker
       - db
@@ -37,14 +34,20 @@ services:
     environment:
       EXECUTOR_TYPES: query,info,estimate
       CATALOG_PATH: /code/app/resources/catalogs/catalog.yaml
-      POSTGRES_DB: dds
-      POSTGRES_USER: dds
-      POSTGRES_PASSWORD: dds
+      POSTGRES_DB: geolake
+      POSTGRES_USER: geolake
+      POSTGRES_PASSWORD: geolake
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432 
     volumes:
       - downloads:/downloads:rw  
-    command: ["./wait-for-it.sh", "broker:5672", "--", "python", "./app/main.py"]
+    command: ["./../wait-for-it.sh", "broker:5672", "--", "python", "./app/main.py"]
+  datastore:
+    image: local/geolake-datastore:latest
+    depends_on:
+      - drivers
+  drivers:
+    image: local/geolake-drivers:latest
   broker:
     image: rabbitmq:3
   db:
@@ -55,31 +58,12 @@ services:
     ports:
       - 5432:5432
     environment:
-      POSTGRES_DB: dds
-      POSTGRES_USER: dds
-      POSTGRES_PASSWORD: dds
+      POSTGRES_DB: geolake
+      POSTGRES_USER: geolake
+      POSTGRES_PASSWORD: geolake
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
-  web:
-    build: 
-      context: ./
-      dockerfile: ./web/Dockerfile
-    ports:
-      - "8080:80"
-    depends_on:
-      - db
-    links:
-      - db
-    environment:
-      CATALOG_PATH: /code/app/resources/catalogs/catalog.yaml
-      POSTGRES_DB: dds
-      POSTGRES_USER: dds
-      POSTGRES_PASSWORD: dds
-      POSTGRES_HOST: db
-      POSTGRES_PORT: 5432       
-    volumes:
-      - downloads:/downloads:ro 
-    command: ["./wait-for-it.sh", "broker:5672", "--",  "uvicorn", "web.main:app", "--host", "0.0.0.0", "--port", "80"]      
 
 volumes:
   downloads:
+  catalog:
