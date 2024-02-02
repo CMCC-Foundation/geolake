@@ -334,6 +334,68 @@ async def get_feature(
         )
     except exc.BaseDDSException as err:
         raise err.wrap_around_http_exception() from err
+    
+@app.get("/datasets/{dataset_id}/{product_id}/{filters:path}/items/{feature_id}", tags=[tags.DATASET])
+@timer(
+    app.state.api_request_duration_seconds,
+    labels={"route": "GET /datasets/{dataset_id}/{product_id}/items/{feature_id}"},
+)
+async def get_feature_with_filters(
+    request: Request,
+    dataset_id: str,
+    product_id: str,
+    feature_id: str,
+    filters: str,
+# OGC feature parameters
+    time: datetime | None = None,
+    bbox: str | None = None, # minx, miny, maxx, maxy (minlon, minlat, maxlon, maxlat)
+    crs: str | None = None, 
+# OGC map parameters
+    # subset: str | None = None,
+    # subset_crs: str | None = Query(..., alias="subset-crs"),
+    # bbox_crs: str | None = Query(..., alias="bbox-crs"),
+):
+    filters_vals = filters.split("/")      
+
+    try:
+        product_info = dataset_handler.get_product_details(
+            user_roles_names=request.auth.scopes,
+            dataset_id=dataset_id,
+            product_id=product_id,
+        )
+    except exc.BaseDDSException as err:
+        raise err.wrap_around_http_exception() from err
+    
+    filters_keys = product_info['metadata']['filters']
+    filters_dict = {}
+    for i in range(0, len(filters_vals)):
+        filters_dict[filters_keys[i]['name']] = filters_vals[i]
+    
+    app.state.api_http_requests_total.inc(
+        {"route": "GET /datasets/{dataset_id}/{product_id}/items/{feature_id}"}
+    )
+    # query should be the OGC query
+    # feature OGC parameters to GeoQuery
+    # variable: Optional[Union[str, List[str]]]
+    # time: Optional[Union[Dict[str, str], Dict[str, List[str]]]]
+    # area: Optional[Dict[str, float]]
+    # location: Optional[Dict[str, Union[float, List[float]]]]
+    # vertical: Optional[Union[float, List[float], Dict[str, float]]]
+    # filters: Optional[Dict]
+    # format: Optional[str]
+
+    query = map_to_geoquery(variables=[feature_id], filters=filters_dict, bbox=bbox, time=time, 
+                            format="geojson")
+    try:
+        return dataset_handler.sync_query(
+            user_id=request.user.id,
+            dataset_id=dataset_id,
+            product_id=product_id,
+            query=query
+        )
+    except exc.BaseDDSException as err:
+        raise err.wrap_around_http_exception() from err
+    
 
 @app.get("/datasets/{dataset_id}/{product_id}/metadata", tags=[tags.DATASET])
 @timer(
