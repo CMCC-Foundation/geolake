@@ -50,7 +50,7 @@ class Datastore(metaclass=Singleton):
 
     @log_execution_time(_LOG)
     def get_cached_product_or_read(
-        self, dataset_id: str, product_id: str
+        self, dataset_id: str, product_id: str, query: GeoQuery | None = None
     ) -> DataCube | Dataset:
         """Get product from the cache instead of loading files indicated in
         the catalog if `metadata_caching` set to `True`.
@@ -81,19 +81,21 @@ class Datastore(metaclass=Singleton):
             )
             return self.catalog(CACHE_DIR=self.cache_dir)[dataset_id][
                 product_id
-            ].read_chunked()
+            ].get(geoquery=query, compute=False).read_chunked()
         return self.cache[dataset_id][product_id]
 
     @log_execution_time(_LOG)
-    def _load_cache(self):
-        if self.cache is None:
+    def _load_cache(self, datasets: list[str] | None = None):
+        if self.cache is None or datasets is None:
             self.cache = {}
-        for i, dataset_id in enumerate(self.dataset_list()):
+            datasets = self.dataset_list()
+
+        for i, dataset_id in enumerate(datasets):
             self._LOG.info(
                 "loading cache for `%s` (%d/%d)",
                 dataset_id,
                 i + 1,
-                len(self.dataset_list()),
+                len(datasets),
             )
             self.cache[dataset_id] = {}
             for product_id in self.product_list(dataset_id):
@@ -117,7 +119,7 @@ class Datastore(metaclass=Singleton):
                         dataset_id,
                         product_id,
                         exc_info=True,
-                    )
+                    ) 
 
     @log_execution_time(_LOG)
     def dataset_list(self) -> list:
@@ -356,9 +358,9 @@ class Datastore(metaclass=Singleton):
         self._LOG.debug("loading product...")
         kube = self.catalog(CACHE_DIR=self.cache_dir)[dataset_id][
             product_id
-        ].read_chunked()
+        ].get(geoquery=geoquery, compute=compute).process_with_query()
         self._LOG.debug("original kube len: %s", len(kube))
-        return Datastore._process_query(kube, geoquery, compute)
+        return kube
 
     @log_execution_time(_LOG)
     def estimate(
@@ -389,7 +391,8 @@ class Datastore(metaclass=Singleton):
         # NOTE: we always use catalog directly and single product cache
         self._LOG.debug("loading product...")
         # NOTE: for estimation we use cached products
-        kube = self.get_cached_product_or_read(dataset_id, product_id)
+        kube = self.get_cached_product_or_read(dataset_id, product_id, 
+                                               query=query)
         self._LOG.debug("original kube len: %s", len(kube))
         return Datastore._process_query(kube, geoquery, False).nbytes
 
@@ -419,7 +422,10 @@ class Datastore(metaclass=Singleton):
     def _process_query(kube, query: GeoQuery, compute: None | bool = False):
         if isinstance(kube, Dataset):
             Datastore._LOG.debug("filtering with: %s", query.filters)
-            kube = kube.filter(**query.filters)
+            try:
+                kube = kube.filter(**query.filters)
+            except ValueError as err:
+                Datastore._LOG.warning("could not filter by one of the key: %s", err)
             Datastore._LOG.debug("resulting kube len: %s", len(kube))
         if isinstance(kube, Delayed) and compute:
             kube = kube.compute()
@@ -434,33 +440,9 @@ class Datastore(metaclass=Singleton):
             kube = kube.locations(**query.location)
         if query.time:
             Datastore._LOG.debug("subsetting by time...")
-            kube = kube.sel(
-                **{
-                    "time": Datastore._maybe_convert_dict_slice_to_slice(
-                        query.time
-                    )
-                }
-            )
+            kube = kube.sel(time=query.time)
         if query.vertical:
             Datastore._LOG.debug("subsetting by vertical...")
-            if isinstance(
-                vertical := Datastore._maybe_convert_dict_slice_to_slice(
-                    query.vertical
-                ),
-                slice,
-            ):
-                method = None
-            else:
-                method = "nearest"
-            kube = kube.sel(vertical=vertical, method=method)
+            method = None if isinstance(query.vertical, slice) else "nearest"
+            kube = kube.sel(vertical=query.vertical, method=method)
         return kube.compute() if compute else kube
-
-    @staticmethod
-    def _maybe_convert_dict_slice_to_slice(dict_vals):
-        if "start" in dict_vals or "stop" in dict_vals:
-            return slice(
-                dict_vals.get("start"),
-                dict_vals.get("stop"),
-                dict_vals.get("step"),
-            )
-        return dict_vals

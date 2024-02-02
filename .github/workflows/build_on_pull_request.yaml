@@ -5,7 +5,8 @@ on:
     types: [opened, synchronize]
   workflow_dispatch:
 jobs:
-  build:
+  build-push:
+    name: build docker images geolake components and push to container registry 
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -20,7 +21,7 @@ jobs:
         build
         --user
     - name: Build a binary wheel and a source for drivers
-      run: python3 -m build ./drivers    
+      run: python3 -m build ./drivers
     - name: Set Docker image tag name
       run: echo "TAG=$(date +'%Y.%m.%d.%H.%M')" >> $GITHUB_ENV
     - name: Login to Scaleway Container Registry

@@ -39,7 +39,6 @@ jobs:
         push: true
         build-args: |
           REGISTRY=${{ vars.GEOKUBE_REGISTRY  }}
-          TAG=v0.2a6
         tags: | 
           ${{ vars.GEOLAKE_REGISTRY }}/geolake-drivers:${{ env.RELEASE_TAG }}  
     - name: Build and push datastore component

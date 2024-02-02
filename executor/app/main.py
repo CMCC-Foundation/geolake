@@ -110,6 +110,7 @@ def persist_datacube(
     kube._properties["history"] = get_history_message()
     if isinstance(message.content, GeoQuery):
         format = message.content.format
+        format_args = message.content.format_args
     else:
         format = "netcdf"
     match format:
@@ -119,6 +120,12 @@ def persist_datacube(
         case "geojson":
             full_path = os.path.join(base_path, f"{path}.json")
             kube.to_geojson(full_path)
+        case "png":
+            full_path = os.path.join(base_path, f"{path}.png")
+            kube.to_image(full_path, **format_args)
+        case "jpeg":
+            full_path = os.path.join(base_path, f"{path}.jpg")
+            kube.to_image(full_path, **format_args)
         case _:
             raise ValueError(f"format `{format}` is not supported")
     return full_path
@@ -132,7 +139,9 @@ def persist_dataset(
     def _get_attr_comb(dataframe_item, attrs):
         return "_".join([dataframe_item[attr_name] for attr_name in attrs])
 
-    def _persist_single_datacube(dataframe_item, base_path, format):
+    def _persist_single_datacube(dataframe_item, base_path, format, format_args=None):
+        if not format_args:
+            format_args = {}
         dcube = dataframe_item[dset.DATACUBE_COL]
         if isinstance(dcube, Delayed):
             dcube = dcube.compute()
@@ -169,14 +178,21 @@ def persist_dataset(
             case "geojson":
                 full_path = os.path.join(base_path, f"{path}.json")
                 dcube.to_geojson(full_path)
+            case "png":
+                full_path = os.path.join(base_path, f"{path}.png")
+                dcube.to_image(full_path, **format_args)
+            case "jpeg":
+                full_path = os.path.join(base_path, f"{path}.jpg")
+                dcube.to_image(full_path, **format_args)
         return full_path
 
     if isinstance(message.content, GeoQuery):
         format = message.content.format
+        format_args = message.content.format_args
     else:
         format = "netcdf"
     datacubes_paths = dset.data.apply(
-        _persist_single_datacube, base_path=base_path, format=format, axis=1
+        _persist_single_datacube, base_path=base_path, format=format, format_args=format_args, axis=1
     )
     paths = datacubes_paths[~datacubes_paths.isna()]
     if len(paths) == 0:

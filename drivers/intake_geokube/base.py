@@ -1,7 +1,11 @@
 # from . import __version__
+from dask.delayed import Delayed
 from intake.source.base import DataSource, Schema
 from geokube.core.datacube import DataCube
 from geokube.core.dataset import Dataset
+
+from .geoquery import GeoQuery
+
 
 
 class GeokubeSource(DataSource):
@@ -10,6 +14,13 @@ class GeokubeSource(DataSource):
     version = "0.1a0"
     container = "geokube"
     partition_access = True
+    geoquery: GeoQuery | None
+    compute: bool
+
+    def __init__(self, metadata, geoquery: GeoQuery = None, compute: bool = False):
+        super().__init__(metadata=metadata)
+        self.geoquery = geoquery
+        self.compute = compute
 
     def _get_schema(self):
         """Make schema object, which embeds goekube fields metadata"""
@@ -56,9 +67,8 @@ class GeokubeSource(DataSource):
 
     def read_chunked(self):
         """Return a lazy geokube object"""
-        self._load_metadata()
-        return self._kube
-
+        return self.read()
+    
     def read_partition(self, i):
         """Fetch one chunk of data at tuple index i"""
         raise NotImplementedError
@@ -76,3 +86,25 @@ class GeokubeSource(DataSource):
         """Delete open file from memory"""
         self._kube = None
         self._schema = None
+
+    def process_with_query(self):
+        self.read_chunked()
+        if not self.geoquery:
+            return self._kube.compute() if self.compute else self._kube
+        if isinstance(self._kube, Dataset):
+            self._kube = self._kube.filter(**self.geoquery.filters)
+        if isinstance(self._kube, Delayed) and self.compute:
+            self._kube = self._kube.compute()
+        if self.geoquery.variable:
+            self._kube = self._kube[self.geoquery.variable]
+        if self.geoquery.area:
+            self._kube = self._kube.geobbox(**self.geoquery.area)
+        if self.geoquery.location:
+            self._kube = self._kube.locations(**self.geoquery.location)
+        if self.geoquery.time:
+            self._kube = self._kube.sel(time=self.geoquery.time)
+        if self.geoquery.vertical:
+            method = None if isinstance(self.geoquery.vertical, slice) else "nearest"
+            self._kube = self._kube.sel(vertical=self.geoquery.vertical, method=method)
+        return self._kube.compute() if self.compute else self._kube                
+ 

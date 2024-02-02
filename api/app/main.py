@@ -3,7 +3,9 @@ __version__ = "0.1.0"
 import os
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException, Request, status
+from datetime import datetime
+
+from fastapi import FastAPI, HTTPException, Request, status, Query
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.authentication import AuthenticationMiddleware
 from starlette.authentication import requires
@@ -18,6 +20,7 @@ from aioprometheus.asgi.starlette import metrics
 
 from geoquery.geoquery import GeoQuery
 from geoquery.task import TaskList
+from geoquery.geoquery import GeoQuery
 
 from utils.api_logging import get_dds_logger
 import exceptions as exc
@@ -31,6 +34,21 @@ from callbacks import all_onstartup_callbacks
 from encoders import extend_json_encoders
 from const import venv, tags
 from auth import scopes
+
+def map_to_geoquery(
+        variables: list[str],
+        format: str,
+        bbox: str | None = None, # minx, miny, maxx, maxy (minlon, minlat, maxlon, maxlat)
+        time: datetime | None = None,
+        **format_kwargs
+) -> GeoQuery:
+
+    bbox_ = [float(x) for x in bbox.split(',')]
+    area = { 'west': bbox_[0], 'south': bbox_[1], 'east': bbox_[2], 'north': bbox_[3],  }
+    time_ = { 'year': time.year, 'month': time.month, 'day': time.day, 'hour': time.hour}
+    query = GeoQuery(variable=variables, time=time_, area=area, 
+                     format_args=format_kwargs, format=format)    
+    return query
 
 logger = get_dds_logger(__name__)
 
@@ -155,6 +173,100 @@ async def get_product_details(
     except exc.BaseDDSException as err:
         raise err.wrap_around_http_exception() from err
 
+@app.get("/datasets/{dataset_id}/{product_id}/map", tags=[tags.DATASET])
+@timer(
+    app.state.api_request_duration_seconds,
+    labels={"route": "GET /datasets/{dataset_id}/{product_id}"},
+)
+async def get_map(
+    request: Request,
+    dataset_id: str,
+    product_id: str,
+# OGC WMS parameters
+    width: int,
+    height: int,
+    layers: str | None = None,
+    format: str | None = 'png',
+    time: datetime | None = None,
+    transparent: bool | None = 'true',
+    bgcolor: str | None = 'FFFFFF',
+    bbox: str | None = None, # minx, miny, maxx, maxy (minlon, minlat, maxlon, maxlat)
+    crs: str | None = None, 
+# OGC map parameters
+    # subset: str | None = None,
+    # subset_crs: str | None = Query(..., alias="subset-crs"),
+    # bbox_crs: str | None = Query(..., alias="bbox-crs"),
+):
+    
+    app.state.api_http_requests_total.inc(
+        {"route": "GET /datasets/{dataset_id}/{product_id}/map"}
+    )
+    # query should be the OGC query
+    # map OGC parameters to GeoQuery
+    # variable: Optional[Union[str, List[str]]]
+    # time: Optional[Union[Dict[str, str], Dict[str, List[str]]]]
+    # area: Optional[Dict[str, float]]
+    # location: Optional[Dict[str, Union[float, List[float]]]]
+    # vertical: Optional[Union[float, List[float], Dict[str, float]]]
+    # filters: Optional[Dict]
+    # format: Optional[str]
+    query = map_to_geoquery(variables=layers, bbox=bbox, time=time, 
+                            format="png", width=width, height=height, 
+                            transparent=transparent, bgcolor=bgcolor)
+    try:
+        return dataset_handler.sync_query(
+            user_id=request.user.id,
+            dataset_id=dataset_id,
+            product_id=product_id,
+            query=query
+        )
+    except exc.BaseDDSException as err:
+        raise err.wrap_around_http_exception() from err
+
+@app.get("/datasets/{dataset_id}/{product_id}/items/{feature_id}", tags=[tags.DATASET])
+@timer(
+    app.state.api_request_duration_seconds,
+    labels={"route": "GET /datasets/{dataset_id}/{product_id}/items/{feature_id}"},
+)
+async def get_feature(
+    request: Request,
+    dataset_id: str,
+    product_id: str,
+    feature_id: str,
+# OGC feature parameters
+    time: datetime | None = None,
+    bbox: str | None = None, # minx, miny, maxx, maxy (minlon, minlat, maxlon, maxlat)
+    crs: str | None = None, 
+# OGC map parameters
+    # subset: str | None = None,
+    # subset_crs: str | None = Query(..., alias="subset-crs"),
+    # bbox_crs: str | None = Query(..., alias="bbox-crs"),
+):
+    
+    app.state.api_http_requests_total.inc(
+        {"route": "GET /datasets/{dataset_id}/{product_id}/items/{feature_id}"}
+    )
+    # query should be the OGC query
+    # feature OGC parameters to GeoQuery
+    # variable: Optional[Union[str, List[str]]]
+    # time: Optional[Union[Dict[str, str], Dict[str, List[str]]]]
+    # area: Optional[Dict[str, float]]
+    # location: Optional[Dict[str, Union[float, List[float]]]]
+    # vertical: Optional[Union[float, List[float], Dict[str, float]]]
+    # filters: Optional[Dict]
+    # format: Optional[str]
+
+    query = map_to_geoquery(variables=[feature_id], bbox=bbox, time=time, 
+                            format="geojson")
+    try:
+        return dataset_handler.sync_query(
+            user_id=request.user.id,
+            dataset_id=dataset_id,
+            product_id=product_id,
+            query=query
+        )
+    except exc.BaseDDSException as err:
+        raise err.wrap_around_http_exception() from err
 
 @app.get("/datasets/{dataset_id}/{product_id}/metadata", tags=[tags.DATASET])
 @timer(
@@ -222,7 +334,7 @@ async def query(
         {"route": "POST /datasets/{dataset_id}/{product_id}/execute"}
     )
     try:
-        return dataset_handler.query(
+        return dataset_handler.async_query(
             user_id=request.user.id,
             dataset_id=dataset_id,
             product_id=product_id,
