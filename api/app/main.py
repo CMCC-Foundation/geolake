@@ -396,7 +396,6 @@ async def get_feature_with_filters(
     except exc.BaseDDSException as err:
         raise err.wrap_around_http_exception() from err
     
-
 @app.get("/datasets/{dataset_id}/{product_id}/metadata", tags=[tags.DATASET])
 @timer(
     app.state.api_request_duration_seconds,
