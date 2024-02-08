@@ -37,18 +37,22 @@ from auth import scopes
 
 def map_to_geoquery(
         variables: list[str],
-        filters: Optional[Dict],
         format: str,
         bbox: str | None = None, # minx, miny, maxx, maxy (minlon, minlat, maxlon, maxlat)
         time: datetime | None = None,
+        filters: Optional[Dict] = None,
         **format_kwargs
 ) -> GeoQuery:
 
     bbox_ = [float(x) for x in bbox.split(',')]
     area = { 'west': bbox_[0], 'south': bbox_[1], 'east': bbox_[2], 'north': bbox_[3],  }
     time_ = { 'year': time.year, 'month': time.month, 'day': time.day, 'hour': time.hour}
-    query = GeoQuery(variable=variables, time=time_, area=area, filters=filters,
-                     format_args=format_kwargs, format=format)    
+    if filters:
+        query = GeoQuery(variable=variables, time=time_, area=area, filters=filters,
+                        format_args=format_kwargs, format=format)   
+    else: 
+        query = GeoQuery(variable=variables, time=time_, area=area,
+                        format_args=format_kwargs, format=format) 
     return query
 
 logger = get_dds_logger(__name__)
@@ -249,21 +253,25 @@ async def get_map_with_filters(
     # subset_crs: str | None = Query(..., alias="subset-crs"),
     # bbox_crs: str | None = Query(..., alias="bbox-crs"),
 ):
-    filters_vals = filters.split("/")      
+    filters_vals = filters.split("/")       
 
-    try:
-        product_info = dataset_handler.get_product_details(
-            user_roles_names=request.auth.scopes,
-            dataset_id=dataset_id,
-            product_id=product_id,
-        )
-    except exc.BaseDDSException as err:
-        raise err.wrap_around_http_exception() from err
+    if dataset_id == 'rs-indices':
+        filters_dict = {'pasture': filters_vals[0]}
     
-    filters_keys = product_info['metadata']['filters']
-    filters_dict = {}
-    for i in range(0, len(filters_vals)):
-        filters_dict[filters_keys[i]['name']] = filters_vals[i]
+    else:
+        try:
+            product_info = dataset_handler.get_product_details(
+                user_roles_names=request.auth.scopes,
+                dataset_id=dataset_id,
+                product_id=product_id,
+            )
+        except exc.BaseDDSException as err:
+            raise err.wrap_around_http_exception() from err
+        
+        filters_keys = product_info['metadata']['filters']
+        filters_dict = {}
+        for i in range(0, len(filters_vals)):
+            filters_dict[filters_keys[i]['name']] = filters_vals[i]
     
     app.state.api_http_requests_total.inc(
         {"route": "GET /datasets/{dataset_id}/{product_id}/map"}
@@ -277,7 +285,7 @@ async def get_map_with_filters(
     # vertical: Optional[Union[float, List[float], Dict[str, float]]]
     # filters: Optional[Dict]
     # format: Optional[str]
-    query = map_to_geoquery(variables=layers, filters=filters_dict, bbox=bbox, time=time, 
+    query = map_to_geoquery(variables=layers, bbox=bbox, time=time, filters=filters_dict,
                             format="png", width=width, height=height, 
                             transparent=transparent, bgcolor=bgcolor)
     try:
@@ -355,21 +363,25 @@ async def get_feature_with_filters(
     # subset_crs: str | None = Query(..., alias="subset-crs"),
     # bbox_crs: str | None = Query(..., alias="bbox-crs"),
 ):
-    filters_vals = filters.split("/")      
+    filters_vals = filters.split("/")     
 
-    try:
-        product_info = dataset_handler.get_product_details(
-            user_roles_names=request.auth.scopes,
-            dataset_id=dataset_id,
-            product_id=product_id,
-        )
-    except exc.BaseDDSException as err:
-        raise err.wrap_around_http_exception() from err
+    if dataset_id == 'rs-indices':
+        filters_dict = {'pasture': filters_vals[0]}
     
-    filters_keys = product_info['metadata']['filters']
-    filters_dict = {}
-    for i in range(0, len(filters_vals)):
-        filters_dict[filters_keys[i]['name']] = filters_vals[i]
+    else: 
+        try:
+            product_info = dataset_handler.get_product_details(
+                user_roles_names=request.auth.scopes,
+                dataset_id=dataset_id,
+                product_id=product_id,
+            )
+        except exc.BaseDDSException as err:
+            raise err.wrap_around_http_exception() from err
+        
+        filters_keys = product_info['metadata']['filters']
+        filters_dict = {}
+        for i in range(0, len(filters_vals)):
+            filters_dict[filters_keys[i]['name']] = filters_vals[i]
     
     app.state.api_http_requests_total.inc(
         {"route": "GET /datasets/{dataset_id}/{product_id}/items/{feature_id}"}
@@ -384,7 +396,7 @@ async def get_feature_with_filters(
     # filters: Optional[Dict]
     # format: Optional[str]
 
-    query = map_to_geoquery(variables=[feature_id], filters=filters_dict, bbox=bbox, time=time, 
+    query = map_to_geoquery(variables=[feature_id], bbox=bbox, time=time, filters=filters_dict, 
                             format="geojson")
     try:
         return dataset_handler.sync_query(
