@@ -16,3 +16,8 @@ sources:
     driver: yaml_file_cat
     args:
       path: '{{ CATALOG_DIR }}/thi.yaml'
+  
+  rs-indices:
+    driver: yaml_file_cat
+    args:
+      path: '{{ CATALOG_DIR }}/RS_indices.yaml'
