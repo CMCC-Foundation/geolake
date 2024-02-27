@@ -1,7 +1,7 @@
 """Main module with dekube-dds API endpoints defined"""
 __version__ = "2.0"
 import os
-from typing import Optional
+from typing import Optional, Dict
 
 from datetime import datetime
 
@@ -40,14 +40,19 @@ def map_to_geoquery(
         format: str,
         bbox: str | None = None, # minx, miny, maxx, maxy (minlon, minlat, maxlon, maxlat)
         time: datetime | None = None,
+        filters: Optional[Dict] = None,
         **format_kwargs
 ) -> GeoQuery:
 
     bbox_ = [float(x) for x in bbox.split(',')]
     area = { 'west': bbox_[0], 'south': bbox_[1], 'east': bbox_[2], 'north': bbox_[3],  }
     time_ = { 'year': time.year, 'month': time.month, 'day': time.day, 'hour': time.hour}
-    query = GeoQuery(variable=variables, time=time_, area=area, 
-                     format_args=format_kwargs, format=format)    
+    if filters:
+        query = GeoQuery(variable=variables, time=time_, area=area, filters=filters,
+                        format_args=format_kwargs, format=format)   
+    else: 
+        query = GeoQuery(variable=variables, time=time_, area=area,
+                        format_args=format_kwargs, format=format) 
     return query
 
 logger = get_dds_logger(__name__)
@@ -185,6 +190,7 @@ async def get_map(
 # OGC WMS parameters
     width: int,
     height: int,
+    dpi: int | None = 100,
     layers: str | None = None,
     format: str | None = 'png',
     time: datetime | None = None,
@@ -212,7 +218,78 @@ async def get_map(
     # format: Optional[str]
     query = map_to_geoquery(variables=layers, bbox=bbox, time=time, 
                             format="png", width=width, height=height, 
-                            transparent=transparent, bgcolor=bgcolor)
+                            transparent=transparent, bgcolor=bgcolor, dpi=dpi)
+    try:
+        return dataset_handler.sync_query(
+            user_id=request.user.id,
+            dataset_id=dataset_id,
+            product_id=product_id,
+            query=query
+        )
+    except exc.BaseDDSException as err:
+        raise err.wrap_around_http_exception() from err
+
+@app.get("/datasets/{dataset_id}/{product_id}/{filters:path}/map", tags=[tags.DATASET])
+@timer(
+    app.state.api_request_duration_seconds,
+    labels={"route": "GET /datasets/{dataset_id}/{product_id}"},
+)
+async def get_map_with_filters(
+    request: Request,
+    dataset_id: str,
+    product_id: str,
+    filters: str,
+# OGC WMS parameters
+    width: int,
+    height: int,
+    dpi: int | None = 100,
+    layers: str | None = None,
+    format: str | None = 'png',
+    time: datetime | None = None,
+    transparent: bool | None = 'true',
+    bgcolor: str | None = 'FFFFFF',
+    bbox: str | None = None, # minx, miny, maxx, maxy (minlon, minlat, maxlon, maxlat)
+    crs: str | None = None, 
+# OGC map parameters
+    # subset: str | None = None,
+    # subset_crs: str | None = Query(..., alias="subset-crs"),
+    # bbox_crs: str | None = Query(..., alias="bbox-crs"),
+):
+    filters_vals = filters.split("/")       
+
+    if dataset_id == 'rs-indices':
+        filters_dict = {'pasture': filters_vals[0]}
+    
+    else:
+        try:
+            product_info = dataset_handler.get_product_details(
+                user_roles_names=request.auth.scopes,
+                dataset_id=dataset_id,
+                product_id=product_id,
+            )
+        except exc.BaseDDSException as err:
+            raise err.wrap_around_http_exception() from err
+        
+        filters_keys = product_info['metadata']['filters']
+        filters_dict = {}
+        for i in range(0, len(filters_vals)):
+            filters_dict[filters_keys[i]['name']] = filters_vals[i]
+    
+    app.state.api_http_requests_total.inc(
+        {"route": "GET /datasets/{dataset_id}/{product_id}/map"}
+    )
+    # query should be the OGC query
+    # map OGC parameters to GeoQuery
+    # variable: Optional[Union[str, List[str]]]
+    # time: Optional[Union[Dict[str, str], Dict[str, List[str]]]]
+    # area: Optional[Dict[str, float]]
+    # location: Optional[Dict[str, Union[float, List[float]]]]
+    # vertical: Optional[Union[float, List[float], Dict[str, float]]]
+    # filters: Optional[Dict]
+    # format: Optional[str]
+    query = map_to_geoquery(variables=layers, bbox=bbox, time=time, filters=filters_dict,
+                            format="png", width=width, height=height, 
+                            transparent=transparent, bgcolor=bgcolor, dpi=dpi)
     try:
         return dataset_handler.sync_query(
             user_id=request.user.id,
@@ -267,7 +344,73 @@ async def get_feature(
         )
     except exc.BaseDDSException as err:
         raise err.wrap_around_http_exception() from err
+    
+@app.get("/datasets/{dataset_id}/{product_id}/{filters:path}/items/{feature_id}", tags=[tags.DATASET])
+@timer(
+    app.state.api_request_duration_seconds,
+    labels={"route": "GET /datasets/{dataset_id}/{product_id}/items/{feature_id}"},
+)
+async def get_feature_with_filters(
+    request: Request,
+    dataset_id: str,
+    product_id: str,
+    feature_id: str,
+    filters: str,
+# OGC feature parameters
+    time: datetime | None = None,
+    bbox: str | None = None, # minx, miny, maxx, maxy (minlon, minlat, maxlon, maxlat)
+    crs: str | None = None, 
+# OGC map parameters
+    # subset: str | None = None,
+    # subset_crs: str | None = Query(..., alias="subset-crs"),
+    # bbox_crs: str | None = Query(..., alias="bbox-crs"),
+):
+    filters_vals = filters.split("/")     
 
+    if dataset_id == 'rs-indices':
+        filters_dict = {'pasture': filters_vals[0]}
+    
+    else: 
+        try:
+            product_info = dataset_handler.get_product_details(
+                user_roles_names=request.auth.scopes,
+                dataset_id=dataset_id,
+                product_id=product_id,
+            )
+        except exc.BaseDDSException as err:
+            raise err.wrap_around_http_exception() from err
+        
+        filters_keys = product_info['metadata']['filters']
+        filters_dict = {}
+        for i in range(0, len(filters_vals)):
+            filters_dict[filters_keys[i]['name']] = filters_vals[i]
+    
+    app.state.api_http_requests_total.inc(
+        {"route": "GET /datasets/{dataset_id}/{product_id}/items/{feature_id}"}
+    )
+    # query should be the OGC query
+    # feature OGC parameters to GeoQuery
+    # variable: Optional[Union[str, List[str]]]
+    # time: Optional[Union[Dict[str, str], Dict[str, List[str]]]]
+    # area: Optional[Dict[str, float]]
+    # location: Optional[Dict[str, Union[float, List[float]]]]
+    # vertical: Optional[Union[float, List[float], Dict[str, float]]]
+    # filters: Optional[Dict]
+    # format: Optional[str]
+
+    query = map_to_geoquery(variables=[feature_id], bbox=bbox, time=time, filters=filters_dict, 
+                            format="geojson")
+    try:
+        return dataset_handler.sync_query(
+            user_id=request.user.id,
+            dataset_id=dataset_id,
+            product_id=product_id,
+            query=query
+        )
+    except exc.BaseDDSException as err:
+        raise err.wrap_around_http_exception() from err
+    
+    
 @app.get("/datasets/{dataset_id}/{product_id}/metadata", tags=[tags.DATASET])
 @timer(
     app.state.api_request_duration_seconds,
