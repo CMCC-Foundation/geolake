@@ -190,7 +190,7 @@ async def get_map(
 # OGC WMS parameters
     width: int,
     height: int,
-    dpi: int | None = 1,
+    dpi: int | None = 100,
     layers: str | None = None,
     format: str | None = 'png',
     time: datetime | None = None,
@@ -242,7 +242,7 @@ async def get_map_with_filters(
 # OGC WMS parameters
     width: int,
     height: int,
-    dpi: int | None = 1,
+    dpi: int | None = 100,
     layers: str | None = None,
     format: str | None = 'png',
     time: datetime | None = None,
