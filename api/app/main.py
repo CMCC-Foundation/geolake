@@ -217,7 +217,7 @@ async def get_map(
     # format: Optional[str]
     query = map_to_geoquery(variables=layers, bbox=bbox, time=time, 
                             format="png", width=width, height=height, 
-                            transparent=transparent, bgcolor=bgcolor)
+                            transparent=transparent, bgcolor=bgcolor, dpi=1)
     try:
         return dataset_handler.sync_query(
             user_id=request.user.id,
@@ -287,7 +287,7 @@ async def get_map_with_filters(
     # format: Optional[str]
     query = map_to_geoquery(variables=layers, bbox=bbox, time=time, filters=filters_dict,
                             format="png", width=width, height=height, 
-                            transparent=transparent, bgcolor=bgcolor)
+                            transparent=transparent, bgcolor=bgcolor, dpi=1)
     try:
         return dataset_handler.sync_query(
             user_id=request.user.id,
