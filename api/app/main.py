@@ -196,6 +196,7 @@ async def get_map(
     time: datetime | None = None,
     transparent: bool | None = 'true',
     bgcolor: str | None = 'FFFFFF',
+    cmap: str | None = 'RdBu_r',
     bbox: str | None = None, # minx, miny, maxx, maxy (minlon, minlat, maxlon, maxlat)
     crs: str | None = None, 
 # OGC map parameters
@@ -218,7 +219,7 @@ async def get_map(
     # format: Optional[str]
     query = map_to_geoquery(variables=layers, bbox=bbox, time=time, 
                             format="png", width=width, height=height, 
-                            transparent=transparent, bgcolor=bgcolor, dpi=dpi)
+                            transparent=transparent, bgcolor=bgcolor, dpi=dpi, cmap=cmap)
     try:
         return dataset_handler.sync_query(
             user_id=request.user.id,
@@ -248,6 +249,7 @@ async def get_map_with_filters(
     time: datetime | None = None,
     transparent: bool | None = 'true',
     bgcolor: str | None = 'FFFFFF',
+    cmap: str | None = 'RdBu_r',
     bbox: str | None = None, # minx, miny, maxx, maxy (minlon, minlat, maxlon, maxlat)
     crs: str | None = None, 
 # OGC map parameters
@@ -289,7 +291,7 @@ async def get_map_with_filters(
     # format: Optional[str]
     query = map_to_geoquery(variables=layers, bbox=bbox, time=time, filters=filters_dict,
                             format="png", width=width, height=height, 
-                            transparent=transparent, bgcolor=bgcolor, dpi=dpi)
+                            transparent=transparent, bgcolor=bgcolor, dpi=dpi, cmap=cmap)
     try:
         return dataset_handler.sync_query(
             user_id=request.user.id,
