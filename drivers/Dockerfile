@@ -1,5 +1,6 @@
 ARG REGISTRY=rg.fr-par.scw.cloud/geokube
-ARG TAG=v0.2.6b1
+# ARG TAG=v0.2.6b1
+ARG TAG=latest
 FROM $REGISTRY/geokube:$TAG
 RUN conda install -c conda-forge --yes --freeze-installed intake=0.6.6
 RUN conda clean -afy
