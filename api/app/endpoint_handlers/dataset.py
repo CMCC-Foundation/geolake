@@ -3,7 +3,9 @@ import os
 import pika
 from typing import Optional
 
-from dbmanager.dbmanager import DBManager
+from fastapi.responses import FileResponse
+
+from dbmanager.dbmanager import DBManager, RequestStatus
 from geoquery.geoquery import GeoQuery
 from geoquery.task import TaskList
 from datastore.datastore import Datastore, DEFAULT_MAX_REQUEST_SIZE_GB
@@ -18,11 +20,17 @@ import exceptions as exc
 from api_utils import make_bytes_readable_dict
 from validation import assert_product_exists
 
+from . import request
 
 log = get_dds_logger(__name__)
 data_store = Datastore()
 
 MESSAGE_SEPARATOR = os.environ["MESSAGE_SEPARATOR"]
+
+def _is_etimate_enabled(dataset_id, product_id):
+    if dataset_id in ("sentinel-2",):
+        return False
+    return True
 
 
 @log_execution_time(log)
@@ -213,7 +221,7 @@ def estimate(
 
 @log_execution_time(log)
 @assert_product_exists
-def query(
+def async_query(
     user_id: str,
     dataset_id: str,
     product_id: str,
@@ -250,21 +258,22 @@ def query(
 
     """
     log.debug("geoquery: %s", query)
-    estimated_size = estimate(dataset_id, product_id, query, "GB").get("value")
-    allowed_size = data_store.product_metadata(dataset_id, product_id).get(
-        "maximum_query_size_gb", DEFAULT_MAX_REQUEST_SIZE_GB
-    )
-    if estimated_size > allowed_size:
-        raise exc.MaximumAllowedSizeExceededError(
-            dataset_id=dataset_id,
-            product_id=product_id,
-            estimated_size_gb=estimated_size,
-            allowed_size_gb=allowed_size,
+    if _is_etimate_enabled(dataset_id, product_id):
+        estimated_size = estimate(dataset_id, product_id, query, "GB").get("value")
+        allowed_size = data_store.product_metadata(dataset_id, product_id).get(
+            "maximum_query_size_gb", DEFAULT_MAX_REQUEST_SIZE_GB
         )
-    if estimated_size == 0.0:
-        raise exc.EmptyDatasetError(
-            dataset_id=dataset_id, product_id=product_id
-        )
+        if estimated_size > allowed_size:
+            raise exc.MaximumAllowedSizeExceededError(
+                dataset_id=dataset_id,
+                product_id=product_id,
+                estimated_size_gb=estimated_size,
+                allowed_size_gb=allowed_size,
+            )
+        if estimated_size == 0.0:
+            raise exc.EmptyDatasetError(
+                dataset_id=dataset_id, product_id=product_id
+            )
     broker_conn = pika.BlockingConnection(
         pika.ConnectionParameters(
             host=os.getenv("BROKER_SERVICE_HOST", "broker")
@@ -294,6 +303,68 @@ def query(
     )
     broker_conn.close()
     return request_id
+
+@log_execution_time(log)
+@assert_product_exists
+def sync_query(
+    user_id: str,
+    dataset_id: str,
+    product_id: str,
+    query: GeoQuery,
+):
+    """Realize the logic for the endpoint:
+
+    `POST /datasets/{dataset_id}/{product_id}/execute`
+
+    Query the data and return the result of the request.
+
+    Parameters
+    ----------
+    user_id : str
+        ID of the user executing the query
+    dataset_id : str
+        ID of the dataset
+    product_id : str
+        ID of the product
+    query : GeoQuery
+        Query to perform
+
+    Returns
+    -------
+    request_id : int
+        ID of the request
+
+    Raises
+    -------
+    MaximumAllowedSizeExceededError
+        if the allowed size is below the estimated one
+    EmptyDatasetError
+        if estimated size is zero
+
+    """
+    
+    import time
+    request_id = async_query(user_id, dataset_id, product_id, query)
+    status, _ = DBManager().get_request_status_and_reason(request_id)
+    log.debug("sync query: status: %s", status)
+    while status in (RequestStatus.RUNNING, RequestStatus.QUEUED, 
+                     RequestStatus.PENDING):
+        time.sleep(1)
+        status, _ = DBManager().get_request_status_and_reason(request_id)
+        log.debug("sync query: status: %s", status)
+    
+    if status is RequestStatus.DONE:
+        download_details = DBManager().get_download_details_for_request_id(
+                request_id
+        )
+        return FileResponse(
+            path=download_details.location_path,
+            filename=download_details.location_path.split(os.sep)[-1],
+        )
+    raise exc.ProductRetrievingError(
+        dataset_id=dataset_id, 
+        product_id=product_id,
+        status=status.name)
 
 
 @log_execution_time(log)

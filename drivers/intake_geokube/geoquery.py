@@ -1,21 +1,49 @@
 import json
-from typing import Optional, List, Dict, Union, Mapping, Any, TypeVar
+from typing import Optional, List, Dict, Union, Any, TypeVar
 
 from pydantic import BaseModel, root_validator, validator
 
 TGeoQuery = TypeVar("TGeoQuery")
 
+def _maybe_convert_dict_slice_to_slice(dict_vals):
+    if "start" in dict_vals or "stop" in dict_vals:
+        return slice(
+            dict_vals.get("start"),
+            dict_vals.get("stop"),
+            dict_vals.get("step"),
+        )
+    return dict_vals     
 
-class GeoQuery(BaseModel, extra="allow"):
+class _GeoQueryJSONEncoder(json.JSONEncoder):
+
+    def default(self, obj):
+        if isinstance(obj, slice):
+            return {
+                "start": obj.start,
+                "stop": obj.stop,
+                "step": obj.step
+            }
+        return json.JSONEncoder.default(self, obj)
+
+
+class GeoQuery(BaseModel):
     variable: Optional[Union[str, List[str]]]
     # TODO: Check how `time` is to be represented
-    time: Optional[Union[Dict[str, str], Dict[str, List[str]]]]
+    time: Optional[Union[Dict[str, str | None], Dict[str, List[str]]]]
     area: Optional[Dict[str, float]]
     location: Optional[Dict[str, Union[float, List[float]]]]
     vertical: Optional[Union[float, List[float], Dict[str, float]]]
     filters: Optional[Dict]
     format: Optional[str]
     format_args: Optional[Dict]
+
+    class Config:
+        extra = "allow"
+        json_encoders = {slice: lambda s: {
+                "start": s.start,
+                "stop": s.stop,
+                "step": s.step
+            }}    
 
     # TODO: Check if we are going to allow the vertical coordinates inside both
     # `area`/`location` nad `vertical`
@@ -33,16 +61,26 @@ class GeoQuery(BaseModel, extra="allow"):
     def build_filters(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         if "filters" in values:
             return values
-        filters = {k: v for k, v in values.items() if k not in cls.__fields__}
+        filters = {k: _maybe_convert_dict_slice_to_slice(v) for k, v in values.items() if k not in cls.__fields__}
         values = {k: v for k, v in values.items() if k in cls.__fields__}
         values["filters"] = filters
         return values
 
-    @validator("vertical")
+    @validator("time", always=True)
+    def match_time_dict(cls, value):
+        if isinstance(value, dict):
+            assert any([k in value for k in ("start", "stop", "year", "month", "day", "hour")]), "Missing dictionary key"
+            if "start" in value or "stop" in value:
+                return _maybe_convert_dict_slice_to_slice(value)
+        return value    
+    
+
+    @validator("vertical", always=True)
     def match_vertical_dict(cls, value):
         if isinstance(value, dict):
             assert "start" in value, "Missing 'start' key"
             assert "stop" in value, "Missing 'stop' key"
+            return _maybe_convert_dict_slice_to_slice(value)
         return value
 
     def original_query_json(self):
@@ -53,8 +91,8 @@ class GeoQuery(BaseModel, extra="allow"):
         # NOTE: skip empty values to make query representation
         # shorter and more elegant
         res = dict(filter(lambda item: item[1] is not None, res.items()))
-        return json.dumps(res)
-
+        return json.dumps(res, cls=_GeoQueryJSONEncoder)
+    
     @classmethod
     def parse(
         cls, load: TGeoQuery | dict | str | bytes | bytearray

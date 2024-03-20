@@ -13,11 +13,12 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/geokube/intake-geokube",
     packages=setuptools.find_packages(),
-    install_requires=["intake", "pytest"],
+    install_requires=["intake", "pytest", "pydantic<2.0.0"],
     entry_points={
         "intake.drivers": [
             "geokube_netcdf = intake_geokube.netcdf:NetCDFSource",
             "cmcc_wrf_geokube = intake_geokube.wrf:CMCCWRFSource",
+            "cmcc_sentinel_geokube = intake_geokube.sentinel:CMCCSentinelSource"
         ]
     },
     classifiers=[
