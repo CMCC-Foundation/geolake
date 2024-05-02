@@ -1,6 +1,6 @@
 ARG REGISTRY=rg.fr-par.scw.cloud/geolake
 ARG TAG=latest
-FROM geolake-drivers:$TAG
+FROM $REGISTRY/geolake-drivers:$TAG
 
 COPY requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt    
