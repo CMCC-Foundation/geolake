@@ -12,3 +12,4 @@ COPY ./utils /app/utils
 COPY ./tests /app/tests
 COPY ./wait-for-it.sh /
 
+WORKDIR /
