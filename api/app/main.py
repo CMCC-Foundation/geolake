@@ -2,7 +2,7 @@
 __version__ = "2.0"
 import os
 from typing import Optional, Dict
-
+from geokube.core.coord_system import TransverseMercator, GeogCS
 from datetime import datetime
 
 from fastapi import FastAPI, HTTPException, Request, status, Query
@@ -220,9 +220,19 @@ async def get_map(
     # vertical: Optional[Union[float, List[float], Dict[str, float]]]
     # filters: Optional[Dict]
     # format: Optional[str]
-    query = map_to_geoquery(variables=layers, bbox=bbox, time=time, 
-                            format="png", width=width, height=height, 
-                            transparent=transparent, bgcolor=bgcolor, dpi=dpi, cmap=cmap)
+
+    if crs == "3857":
+        airy1830 = GeogCS(6377563.396, 6356256.909)
+        osgb = TransverseMercator(49, -2, 400000, -100000, 0.9996012717, ellipsoid=airy1830)
+        query = map_to_geoquery(variables=layers, bbox=bbox, time=time,
+                                format="png", width=width, height=height,
+                                transparent=transparent, bgcolor=bgcolor,
+                                dpi=dpi, cmap=cmap, projection=osgb)
+    else:
+        query = map_to_geoquery(variables=layers, bbox=bbox, time=time,
+                                format="png", width=width, height=height,
+                                transparent=transparent, bgcolor=bgcolor,
+                                dpi=dpi, cmap=cmap)
     try:
         return dataset_handler.sync_query(
             user_id=request.user.id,
@@ -292,9 +302,20 @@ async def get_map_with_filters(
     # vertical: Optional[Union[float, List[float], Dict[str, float]]]
     # filters: Optional[Dict]
     # format: Optional[str]
-    query = map_to_geoquery(variables=layers, bbox=bbox, time=time, filters=filters_dict,
-                            format="png", width=width, height=height, 
-                            transparent=transparent, bgcolor=bgcolor, dpi=dpi, cmap=cmap)
+
+    if crs == "3857":
+        airy1830 = GeogCS(6377563.396, 6356256.909)
+        osgb = TransverseMercator(49, -2, 400000, -100000, 0.9996012717, ellipsoid=airy1830)
+        query = map_to_geoquery(variables=layers, bbox=bbox, time=time, filters=filters_dict,
+                                format="png", width=width, height=height,
+                                transparent=transparent, bgcolor=bgcolor,
+                                dpi=dpi, cmap=cmap, projection=osgb)
+    else:
+        query = map_to_geoquery(variables=layers, bbox=bbox, time=time, filters=filters_dict,
+                                format="png", width=width, height=height,
+                                transparent=transparent, bgcolor=bgcolor,
+                                dpi=dpi, cmap=cmap)
+
     try:
         return dataset_handler.sync_query(
             user_id=request.user.id,
