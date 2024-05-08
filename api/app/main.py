@@ -263,7 +263,7 @@ async def get_map_with_filters(
 ):
     filters_vals = filters.split("/")       
 
-    if dataset_id == 'rs-indices':
+    if dataset_id in ['rs-indices', 'pasture']:
         filters_dict = {'pasture': filters_vals[0]}
     
     else:
@@ -376,7 +376,7 @@ async def get_feature_with_filters(
 ):
     filters_vals = filters.split("/")     
 
-    if dataset_id == 'rs-indices':
+    if dataset_id in ['rs-indices', 'pasture']:
         filters_dict = {'pasture': filters_vals[0]}
     
     else: 
