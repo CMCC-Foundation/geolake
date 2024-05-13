@@ -1,5 +1,5 @@
-"""Main module with dekube-dds API endpoints defined"""
-__version__ = "2.0"
+"""Main module with geolake API endpoints defined"""
+__version__ = "0.1.0"
 import os
 from typing import Optional, Dict
 from datetime import datetime
@@ -66,12 +66,12 @@ logger = get_dds_logger(__name__)
 extend_json_encoders()
 
 app = FastAPI(
-    title="geokube-dds API",
-    description="REST API for geokube-dds",
+    title="geolake API",
+    description="REST API for geolake",
     version=__version__,
     contact={
-        "name": "geokube Contributors",
-        "email": "geokube@googlegroups.com",
+        "name": "geolake Contributors",
+        "email": "geolake@googlegroups.com",
     },
     license_info={
         "name": "Apache 2.0",
@@ -118,9 +118,9 @@ app.state.api_http_requests_total = Counter(
 
 # ======== Endpoints definitions ========= #
 @app.get("/", tags=[tags.BASIC])
-async def dds_info():
-    """Return current version of the DDS API"""
-    return f"DDS API {__version__}"
+async def geolake_info():
+    """Return current version of the geolake API"""
+    return f"geolake API {__version__}"
 
 
 @app.get("/datasets", tags=[tags.DATASET])

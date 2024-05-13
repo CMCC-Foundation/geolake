@@ -1,0 +1,51 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: geolake
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Marco
+    family-names: Mancini
+    orcid: 'https://orcid.org/0000-0002-9150-943X'
+  - given-names: Jakub
+    family-names: Walczak
+    orcid: 'https://orcid.org/0000-0002-5632-9484'
+  - given-names: Mirko
+    family-names: Stojiljković
+  - given-names: Valentina
+    family-names: Scardigno
+    orcid: 'https://orcid.org/0000-0002-0123-5368'
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.10598417
+repository-code: 'https://github.com/CMCC-Foundation/geolake'
+abstract: >+
+  geolake is an open source framework for management,
+  storage, and analytics of Earth Science data. geolake
+  implements the concept of a data lake as a central
+  location that holds a large amount of data in its native
+  and raw format. geolake does not impose any schema when
+  ingesting the data, however it provides a unified Data
+  Model and API for geoscientific datasets. The data is kept
+  in the original format and storage, and the in-memory data
+  structure is built on-the-fly for the processing analysis.
+
+  The system has been designed using a cloud-native
+  architecture, based on containerized microservices, that
+  facilitates the development, deployment and maintenance of
+  the system itself. It has been implemented by integrating
+  different open source frameworks, tools and libraries and
+  can be easily deployed using the Kubernetes platform and
+  related tools such as kubectl.
+
+keywords:
+  - python framework
+  - earth science
+  - data analytics
+license: Apache-2.0
+version: 0.1.0
+date-released: '2024-01-29'

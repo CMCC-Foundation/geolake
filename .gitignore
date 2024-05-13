@@ -112,5 +112,3 @@ venv.bak/
 _catalogs/
 _old/
 
-# Netcdf files
-*.nc
