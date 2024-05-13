@@ -48,7 +48,10 @@ def map_to_geoquery(
         area = { 'west': bbox_[0], 'south': bbox_[1], 'east': bbox_[2], 'north': bbox_[3],  }
     else:
         area = None
-    time_ = { 'year': time.year, 'month': time.month, 'day': time.day, 'hour': time.hour}
+    if time:
+        time_ = { 'year': time.year, 'month': time.month, 'day': time.day, 'hour': time.hour}
+    else:
+        time_ = None
     if filters:
         query = GeoQuery(variable=variables, time=time_, area=area, filters=filters,
                         format_args=format_kwargs, format=format)   
