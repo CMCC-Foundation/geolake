@@ -203,7 +203,9 @@ async def get_map(
     bgcolor: str | None = 'FFFFFF',
     cmap: str | None = 'RdBu_r',
     bbox: str | None = None, # minx, miny, maxx, maxy (minlon, minlat, maxlon, maxlat)
-    crs: str | None = None, 
+    crs: str | None = None,
+    vmin: float | None = None,
+    vmax: float | None = None
 # OGC map parameters
     # subset: str | None = None,
     # subset_crs: str | None = Query(..., alias="subset-crs"),
@@ -226,7 +228,8 @@ async def get_map(
     query = map_to_geoquery(variables=layers, bbox=bbox, time=time,
                                 format="png", width=width, height=height,
                                 transparent=transparent, bgcolor=bgcolor,
-                                dpi=dpi, cmap=cmap, projection=crs)
+                                dpi=dpi, cmap=cmap, projection=crs,
+                                vmin=vmin, vmax=vmax)
     try:
         return dataset_handler.sync_query(
             user_id=request.user.id,
@@ -258,7 +261,9 @@ async def get_map_with_filters(
     bgcolor: str | None = 'FFFFFF',
     cmap: str | None = 'RdBu_r',
     bbox: str | None = None, # minx, miny, maxx, maxy (minlon, minlat, maxlon, maxlat)
-    crs: str | None = None, 
+    crs: str | None = None,
+    vmin: float | None = None,
+    vmax: float | None = None
 # OGC map parameters
     # subset: str | None = None,
     # subset_crs: str | None = Query(..., alias="subset-crs"),
@@ -300,7 +305,7 @@ async def get_map_with_filters(
     query = map_to_geoquery(variables=layers, bbox=bbox, time=time, filters=filters_dict,
                                 format="png", width=width, height=height,
                                 transparent=transparent, bgcolor=bgcolor,
-                                dpi=dpi, cmap=cmap, projection=crs)
+                                dpi=dpi, cmap=cmap, projection=crs, vmin=vmin, vmax=vmax)
 
     try:
         return dataset_handler.sync_query(
