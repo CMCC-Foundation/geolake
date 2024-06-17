@@ -126,7 +126,7 @@ def convert_to_dcat_ap(data, url):
     
     # Create dataset and convert the field names to DCAT-AP
     dataset = Dataset(
-        uri=dataset_uri,
+        uri=url,
         title=data.get("dataset", {}).get("metadata", {}).get("label"),
         description=data.get("dataset", {}).get("metadata", {}).get("description"),
         issued=data.get("dataset", {}).get("metadata", {}).get("publication_date"),
