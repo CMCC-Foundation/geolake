@@ -3,3 +3,4 @@ uvicorn
 pika
 sqlalchemy
 aioprometheus
+pyoai==2.5.0

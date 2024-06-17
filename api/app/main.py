@@ -1,10 +1,11 @@
 """Main module with geolake API endpoints defined"""
 __version__ = "0.1.0"
 import os
+import re
 from typing import Optional, Dict
 from datetime import datetime
 
-from fastapi import FastAPI, HTTPException, Request, status, Query
+from fastapi import FastAPI, HTTPException, Request, status, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.authentication import AuthenticationMiddleware
 from starlette.authentication import requires
@@ -33,6 +34,7 @@ from callbacks import all_onstartup_callbacks
 from encoders import extend_json_encoders
 from const import venv, tags
 from auth import scopes
+from oai_dcat import oai_server
 
 def map_to_geoquery(
         variables: list[str],
@@ -627,3 +629,24 @@ async def download_request_result(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="File was not found!"
         ) from err
+
+# Define OAI-PMH endpoint route
+@app.get("/oai/{dataset_id}")
+@app.post("/oai/{dataset_id}")
+async def oai(request: Request, dataset_id: str):
+    params = dict(request.query_params)
+
+    # Add dataset_id to the parameters as "set_", which is a parameter from the OAI-PMH protocol
+    params['set'] = dataset_id
+    params['scopes'] = request.auth.scopes
+
+    # Making sure it uses the dcat_ap metadata prefix
+    if 'metadataPrefix' not in params:
+        params['metadataPrefix'] = 'dcat_ap'
+
+    # handleRequest points the request to the appropriate method in metadata_provider.py
+    response = oai_server.oai_server.handleRequest(params)
+    logger.debug(f"OAI-PMH Response: {response}")
+    # Replace date in datestamp by empty string
+    response = re.sub(b'<datestamp>.*</datestamp>', b'', response)
+    return Response(content=response, media_type="text/xml")
