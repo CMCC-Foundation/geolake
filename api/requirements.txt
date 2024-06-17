@@ -4,3 +4,4 @@ pika
 sqlalchemy
 aioprometheus
 pyoai==2.5.0
+rdflib==7.0.0
