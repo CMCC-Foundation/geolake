@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.DEBUG)
 # Each method in this class is a verb from the OAI-PMH protocol. Only listRecords is used by the data.europa harvester
 class MyMetadataProvider:
     # Method to list records, only method used by data.europa harvester
-    def listRecords(self, metadataPrefix='dcat_ap', from_=None, until=None, set=None, scopes=None):
+    def listRecords(self, metadataPrefix='dcat_ap', from_=None, until=None, set=None):
         logging.debug("Fetching data from API")
         # Fetch data from the dataset endpoint
         # TODO: Refactor to fetch from all endpoints, or get data directly if this code is integrated in the data lake system 
@@ -28,7 +28,7 @@ class MyMetadataProvider:
         '''
         try:
             data = json.dumps(dataset_handler.get_product_details(
-                user_roles_names=scopes,
+                user_roles_names=['public'],
                 dataset_id=set,
             ))
         except exc.BaseDDSException as err:

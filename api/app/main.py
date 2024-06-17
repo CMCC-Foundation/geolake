@@ -638,7 +638,7 @@ async def oai(request: Request, dataset_id: str):
 
     # Add dataset_id to the parameters as "set_", which is a parameter from the OAI-PMH protocol
     params['set'] = dataset_id
-    params['scopes'] = request.auth.scopes
+    # params['scopes'] = request.auth.scopes
 
     # Making sure it uses the dcat_ap metadata prefix
     if 'metadataPrefix' not in params:
