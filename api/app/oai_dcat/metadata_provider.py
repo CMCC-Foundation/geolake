@@ -4,7 +4,7 @@ from lxml import etree
 from lxml.etree import Element
 import main
 import json
-from utils import convert_to_dcat_ap
+from oai_utils import convert_to_dcat_ap
 import logging
 
 import exceptions as exc
