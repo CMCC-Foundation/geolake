@@ -1,6 +1,6 @@
 from oaipmh.server import ServerBase, oai_dc_writer
 from oaipmh.metadata import MetadataRegistry, oai_dc_reader
-import metadata_provider
+from . import metadata_provider
 from lxml.etree import fromstring, tostring
 import logging
 
