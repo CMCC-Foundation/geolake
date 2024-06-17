@@ -27,10 +27,10 @@ class MyMetadataProvider:
         )
         '''
         try:
-            data = json.dumps(dataset_handler.get_product_details(
+            data = dataset_handler.get_product_details(
                 user_roles_names=['public'],
                 dataset_id=set,
-            ))
+            )
         except exc.BaseDDSException as err:
             raise err.wrap_around_http_exception() from err
         
