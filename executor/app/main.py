@@ -126,6 +126,9 @@ def persist_datacube(
         case "jpeg":
             full_path = os.path.join(base_path, f"{path}.jpg")
             kube.to_image(full_path, **format_args)
+        case "csv":
+            full_path = os.path.join(base_path, f"{path}.csv")
+            kube.to_csv(full_path)
         case _:
             raise ValueError(f"format `{format}` is not supported")
     return full_path
