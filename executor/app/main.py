@@ -187,6 +187,9 @@ def persist_dataset(
             case "jpeg":
                 full_path = os.path.join(base_path, f"{path}.jpg")
                 dcube.to_image(full_path, **format_args)
+            case "csv":
+                full_path = os.path.join(base_path, f"{path}.csv")
+                dcube.to_csv(full_path)
         return full_path
 
     if isinstance(message.content, GeoQuery):
