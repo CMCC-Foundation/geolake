@@ -440,9 +440,33 @@ class Datastore(metaclass=Singleton):
             kube = kube.locations(**query.location)
         if query.time:
             Datastore._LOG.debug("subsetting by time...")
-            kube = kube.sel(time=query.time)
+            kube = kube.sel(
+                **{
+                    "time": Datastore._maybe_convert_dict_slice_to_slice(
+                        query.time
+                    )
+                }
+            )
         if query.vertical:
             Datastore._LOG.debug("subsetting by vertical...")
-            method = None if isinstance(query.vertical, slice) else "nearest"
-            kube = kube.sel(vertical=query.vertical, method=method)
+            if isinstance(
+                    vertical := Datastore._maybe_convert_dict_slice_to_slice(
+                        query.vertical
+                    ),
+                    slice,
+            ):
+                method = None
+            else:
+                method = "nearest"
+            kube = kube.sel(vertical=vertical, method=method)
         return kube.compute() if compute else kube
+
+    @staticmethod
+    def _maybe_convert_dict_slice_to_slice(dict_vals):
+        if "start" in dict_vals or "stop" in dict_vals:
+            return slice(
+                dict_vals.get("start"),
+                dict_vals.get("stop"),
+                dict_vals.get("step"),
+            )
+        return dict_vals

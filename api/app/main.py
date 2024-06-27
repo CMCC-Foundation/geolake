@@ -18,7 +18,6 @@ from aioprometheus import (
 )
 from aioprometheus.asgi.starlette import metrics
 
-from geoquery.geoquery import GeoQuery
 from geoquery.task import TaskList
 from geoquery.geoquery import GeoQuery
 
