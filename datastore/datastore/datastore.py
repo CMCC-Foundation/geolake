@@ -358,9 +358,9 @@ class Datastore(metaclass=Singleton):
         self._LOG.debug("loading product...")
         kube = self.catalog(CACHE_DIR=self.cache_dir)[dataset_id][
             product_id
-        ].get(geoquery=geoquery, compute=compute).process_with_query()
+        ].read_chunked()
         self._LOG.debug("original kube len: %s", len(kube))
-        return kube
+        return Datastore._process_query(kube, geoquery, compute)
 
     @log_execution_time(_LOG)
     def estimate(
