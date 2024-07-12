@@ -26,13 +26,20 @@ class MyMetadataProvider:
             f"{BASE_URL}{set}"
         )
         '''
-        try:
-            data = dataset_handler.get_product_details(
-                user_roles_names=['public'],
-                dataset_id=set,
-            )
-        except exc.BaseDDSException as err:
-            raise err.wrap_around_http_exception() from err
+        if set:
+            dataset_url = f"{BASE_URL}/{set}"
+
+            try:
+                data = dataset_handler.get_product_details(
+                    user_roles_names=['public'],
+                    dataset_id=set,
+                )
+            except exc.BaseDDSException as err:
+                raise err.wrap_around_http_exception() from err
+
+        else:
+            dataset_url = BASE_URL
+            data = dataset_handler.get_datasets(user_roles_names=['public'])
         
         logging.debug(f"Fetched data: {data}")
 

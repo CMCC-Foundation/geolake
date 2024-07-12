@@ -5,6 +5,8 @@ import re
 from typing import Optional, Dict
 from datetime import datetime
 
+from api.app.oai_dcat.metadata_provider import BASE_URL
+from api.app.oai_dcat.oai_utils import convert_to_dcat_ap, convert_to_dcat_ap_it
 from fastapi import FastAPI, HTTPException, Request, status, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.authentication import AuthenticationMiddleware
@@ -648,4 +650,33 @@ async def oai(request: Request, dataset_id: str):
     logger.debug(f"OAI-PMH Response: {response}")
     # Replace date in datestamp by empty string
     response = re.sub(b'<datestamp>.*</datestamp>', b'', response)
+    return Response(content=response, media_type="text/xml")
+
+# Define an endpoint for getting all the datasets
+@app.get("/oai")
+@app.post("/oai")
+async def oai_all_datasets(request: Request):
+    params = dict(request.query_params)
+
+    # Making sure it uses the dcat_ap metadata prefix
+    if 'metadataPrefix' not in params:
+        params['metadataPrefix'] = 'dcat_ap'
+
+    # handleRequest points the request to the appropriate method in metadata_provider.py
+    response = oai_server.oai_server.handleRequest(params)
+    logger.debug(f"OAI-PMH Response: {response}")
+    # Replace date in datestamp by empty string
+    response = re.sub(b'<datestamp>.*</datestamp>', b'', response)
+    return Response(content=response, media_type="text/xml")
+
+# Endpoint for generating DCAT-AP IT catalog
+@app.get("/dcatapit")
+async def dcatapit(request: Request):
+    data = dataset_handler.get_datasets(
+            user_roles_names=request.auth.scopes
+        )
+    dcatap_graph = convert_to_dcat_ap(data, BASE_URL)
+    dcatapit_graph = convert_to_dcat_ap_it(dcatap_graph, BASE_URL)
+    response = dcatapit_graph.serialize(format='pretty-xml')
+
     return Response(content=response, media_type="text/xml")

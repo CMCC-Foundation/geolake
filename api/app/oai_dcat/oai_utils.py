@@ -16,6 +16,8 @@ ADMS = Namespace("http://www.w3.org/ns/adms#")
 DQV = Namespace("http://www.w3.org/ns/dqv#")
 SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
 SCHEMA = Namespace("http://schema.org/")
+# Namespace for DCAT-AP IT
+DCATAPIT = Namespace("http://dati.gov.it/onto/dcatapit#")
 
 # Define classes for DCAT-AP entities (Dataset, Distribution and ContactPoint)
 
@@ -37,7 +39,7 @@ class Distribution:
         self.license = license
         self.identifier = identifier
 
-class Dataset:
+class DatasetDCAT:
     def __init__(self, uri, title=None, description=None, issued=None, identifier=None, contact_point=None):
         self.uri = uri
         self.title = title
@@ -54,6 +56,8 @@ class Dataset:
     def to_graph(self, g):
         dataset = URIRef(self.uri)
         g.add((dataset, RDF.type, DCAT.Dataset))
+        logging.debug(f"Adding to graph {g.identifier}: {dataset} a type {DCAT.Dataset}")
+
         if self.title:
             g.add((dataset, DCT.title, Literal(self.title)))
         if self.description:
@@ -66,6 +70,7 @@ class Dataset:
         if self.contact_point:
             contact_bnode = BNode()
             g.add((dataset, DCAT.contactPoint, contact_bnode))
+            g.add((contact_bnode, RDF.type, VCARD.Kind))
             if self.contact_point.name:
                 g.add((contact_bnode, VCARD.fn, Literal(self.contact_point.name)))
             if self.contact_point.email:
@@ -76,6 +81,7 @@ class Dataset:
         for dist in self.distributions:
             distribution_bnode = BNode()
             g.add((dataset, DCAT.distribution, distribution_bnode))
+            g.add((distribution_bnode, RDF.type, DCAT.Distribution))
             if dist.access_url:
                 g.add((distribution_bnode, DCAT.accessURL, URIRef(dist.access_url)))
             if dist.description:
@@ -100,12 +106,56 @@ class Dataset:
                 g.add((distribution_bnode, DCTERMS.identifier, Literal(dist.identifier)))
 
         return g
+    
+# Function to convert to DCAT-AP IT format
+def convert_to_dcat_ap_it(graph, catalog_uri):
+    g = graph
+
+    # Bind DCATAPIT namespace to graph
+    g.bind("dcatapit", DCATAPIT)
+
+    # Create catalog and add it to the graph
+    catalog = URIRef(catalog_uri)
+    g.add((catalog, RDF.type, DCATAPIT.Catalog))
+    g.add((catalog, DCTERMS.title, Literal("Sebastien Catalog")))
+    g.add((catalog, DCTERMS.description, Literal("A catalog of Sebastien datasets")))
+    g.add((catalog, DCTERMS.publisher, URIRef("https://www.cmcc.it/")))
+    g.add((catalog, DCTERMS.modified, Literal("2023-07-09", datatype=DCTERMS.W3CDTF)))
+
+    # Find all datasets in graph
+    for dataset_uri in g.subjects(RDF.type, DCAT.Dataset):
+        # Create dcatapit:Dataset node
+        dcatapit_dataset_node = BNode()
+        g.add((dcatapit_dataset_node, RDF.type, DCATAPIT.Dataset))
+
+        # Wrap existing dataset elements under dcatapit:Dataset
+        for s, p, o in g.triples((dataset_uri, None, None)):
+            g.remove((dataset_uri, p, o))
+            g.add((dcatapit_dataset_node, p, o))
+
+        # Add dcat:dataset relation to the new dcatapit:Dataset node
+        g.add((dataset_uri, DCAT.dataset, dcatapit_dataset_node))
+
+        # Add dcatapit:Dataset to catalog
+        g.add((catalog, DCATAPIT.dataset, dataset_uri))
+
+        # Add mandatory fields with placeholder values
+        g.add((dcatapit_dataset_node, DCAT.theme, URIRef("http://publications.europa.eu/resource/authority/data-theme/AGRI")))
+        g.add((dcatapit_dataset_node, DCTERMS.rightsHolder, URIRef("https://www.cmcc.it/")))
+        g.add((dcatapit_dataset_node, DCTERMS.accrualPeriodicity, URIRef("http://publications.europa.eu/resource/authority/frequency/WEEKLY")))
+
+        # Change Distribution namespace to DCATAPIT
+        for s, p, o in g.triples((dcatapit_dataset_node, DCAT.distribution, None)):
+            g.remove((s, p, o))
+            g.add((s, DCATAPIT.distribution, o))
+            g.add((o, RDF.type, DCATAPIT.Distribution))
+
+    return g
+
+
 
 def convert_to_dcat_ap(data, url):
     logging.debug("Starting convert_to_dcat_ap function")
-
-    # Add the URL to the data
-    data["url"] = url
     
     g = Graph()
 
@@ -122,35 +172,47 @@ def convert_to_dcat_ap(data, url):
     g.bind("schema", SCHEMA)
 
     # Placeholder URI
-    dataset_uri = "http://example.org/dataset/blue-tongue"
+    dataset_uri = url
+
     
-    # Create dataset and convert the field names to DCAT-AP
-    dataset = Dataset(
-        uri=url,
-        title=data.get("dataset", {}).get("metadata", {}).get("label"),
-        description=data.get("dataset", {}).get("metadata", {}).get("description"),
-        issued=data.get("dataset", {}).get("metadata", {}).get("publication_date"),
-        identifier=data.get("dataset", {}).get("metadata", {}).get("id"),
-    )
+    if not isinstance(data, list):
+        data = [data]
 
-    # Create contact point and convert the field names to DCAT-AP
-    contact = data.get("dataset", {}).get("metadata", {}).get("contact")
-    contact_point = ContactPoint(
-        name=contact.get("name"),
-        email=contact.get("email"),
-        webpage=contact.get("webpage"),
-    )
-    dataset.contact_point = contact_point
-
-    # Create distributions and convert the field names to DCAT-AP
-    products = data.get("dataset", {}).get("products", {}).get("monthly", {})
-    distribution = Distribution(
-        access_url=url,
-        description=products.get("description"),
+    for dataset in data:
+        # Check if "dataset" key is present, if it isnt, wrap the dict in it
+        if "dataset" not in dataset:
+            dataset = {"dataset": dataset}
+        
+        # Add the URL to the data
+        dataset["url"] = url    
+        
+        # Create dataset and convert the field names to DCAT-AP
+        metadata = DatasetDCAT(
+            uri=f'{dataset_uri}/{dataset.get("dataset", {}).get("metadata", {}).get("id")}',
+            title=dataset.get("dataset", {}).get("metadata", {}).get("label"),
+            description=dataset.get("dataset", {}).get("metadata", {}).get("description"),
+            issued=dataset.get("dataset", {}).get("metadata", {}).get("publication_date"),
+            identifier=dataset.get("dataset", {}).get("metadata", {}).get("id"),
         )
-    dataset.add_distribution(distribution)
 
-    # Add dataset to graph
-    dataset.to_graph(g)
+        # Create contact point and convert the field names to DCAT-AP
+        contact = dataset.get("dataset", {}).get("metadata", {}).get("contact")
+        contact_point = ContactPoint(
+            name=contact.get("name"),
+            email=contact.get("email"),
+            webpage=contact.get("webpage"),
+        )
+        metadata.contact_point = contact_point
 
+        # Create distributions and convert the field names to DCAT-AP
+        products = dataset.get("dataset", {}).get("products", {}).get("monthly", {})
+        distribution = Distribution(
+            access_url=url,
+            description=products.get("description"),
+        )
+        metadata.add_distribution(distribution)
+
+        # Add dataset to graph
+        metadata.to_graph(g)
+    
     return g
