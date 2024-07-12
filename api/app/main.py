@@ -5,8 +5,8 @@ import re
 from typing import Optional, Dict
 from datetime import datetime
 
-from api.app.oai_dcat.metadata_provider import BASE_URL
-from api.app.oai_dcat.oai_utils import convert_to_dcat_ap, convert_to_dcat_ap_it
+from oai_dcat.metadata_provider import BASE_URL
+from oai_dcat.oai_utils import convert_to_dcat_ap, convert_to_dcat_ap_it
 from fastapi import FastAPI, HTTPException, Request, status, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.authentication import AuthenticationMiddleware
