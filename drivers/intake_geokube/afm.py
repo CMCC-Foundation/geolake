@@ -73,5 +73,5 @@ class CMCCAFMSource(GeokubeSource):
                 **self.xarray_kwargs,
             )
         ds = postprocess_afm(self._kube.to_xarray())
-        self._kube = Datacube.from_xarray(ds)
+        self._kube = DataCube.from_xarray(ds)
         return self._kube
