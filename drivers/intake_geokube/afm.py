@@ -9,9 +9,15 @@ import xarray as xr
 from .base import GeokubeSource
 from geokube import open_datacube, open_dataset
 
+from geokube.core.datacube import DataCube
 
-def preprocess_afm(dset: xr.Dataset) -> xr.Dataset:
-    return dset.to_dataframe().set_index(['lat', 'lon'], append=True).to_xarray()
+
+def postprocess_afm(dset: xr.Dataset) -> xr.Dataset:
+    latitude = dset['lat'].values
+    longitude = dset['lon'].values
+    dset = dset.drop('lat')
+    dset = dset.drop('lon')
+    return dset.expand_dims(dim={"lat": latitude, "lon": longitude}, axis=(1, 0))
 
 
 class CMCCAFMSource(GeokubeSource):
@@ -42,7 +48,7 @@ class CMCCAFMSource(GeokubeSource):
         self.mapping = mapping
         self.xarray_kwargs = {} if xarray_kwargs is None else xarray_kwargs
         self.load_files_on_persistance = load_files_on_persistance
-        self.preprocess = preprocess_afm
+        #self.preprocess = preprocess_afm
         super(CMCCAFMSource, self).__init__(metadata=metadata)
 
     def _open_dataset(self):
@@ -54,7 +60,6 @@ class CMCCAFMSource(GeokubeSource):
                 metadata_cache_path=self.metadata_cache_path,
                 mapping=self.mapping,
                 **self.xarray_kwargs,
-                preprocess=self.preprocess,
             )
         else:
             self._kube = open_dataset(
@@ -66,6 +71,7 @@ class CMCCAFMSource(GeokubeSource):
                 metadata_cache_path=self.metadata_cache_path,
                 mapping=self.mapping,
                 **self.xarray_kwargs,
-                preprocess=self.preprocess,
             )
+        ds = postprocess_afm(self._kube.to_xarray())
+        self._kube = Datacube.from_xarray(ds)
         return self._kube
