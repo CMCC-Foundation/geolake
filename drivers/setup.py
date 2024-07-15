@@ -18,6 +18,7 @@ setuptools.setup(
         "intake.drivers": [
             "geokube_netcdf = intake_geokube.netcdf:NetCDFSource",
             "cmcc_wrf_geokube = intake_geokube.wrf:CMCCWRFSource",
+            "cmcc_afm_geokube = intake_geokube.afm:CMCCAFMSource",
         ]
     },
     classifiers=[
