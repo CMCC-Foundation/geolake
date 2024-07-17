@@ -17,6 +17,7 @@ def postprocess_afm(dset: xr.Dataset) -> xr.Dataset:
     longitude = dset['lon'].values
     dset = dset.drop('lat')
     dset = dset.drop('lon')
+    dset = dset.drop('certainty')
     return dset.expand_dims(dim={"lat": latitude, "lon": longitude}, axis=(1, 0)).sortby('time')
 
 
