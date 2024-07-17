@@ -13,12 +13,13 @@ from geokube.core.datacube import DataCube
 
 
 def postprocess_afm(dset: xr.Dataset) -> xr.Dataset:
-    latitude = dset['lat'].values
-    longitude = dset['lon'].values
-    dset = dset.drop('lat')
-    dset = dset.drop('lon')
-    dset = dset.drop('certainty')
-    return dset.expand_dims(dim={"lat": latitude, "lon": longitude}, axis=(1, 0)).sortby('time')
+    #latitude = dset['lat'].values
+    #longitude = dset['lon'].values
+    #dset = dset.drop('lat')
+    #dset = dset.drop('lon')
+    #dset = dset.drop('certainty')
+    #return dset.expand_dims(dim={"lat": latitude, "lon": longitude}, axis=(1, 0)).sortby('time')
+    return dset.sortby('time')
 
 
 class CMCCAFMSource(GeokubeSource):
@@ -54,7 +55,7 @@ class CMCCAFMSource(GeokubeSource):
 
     def _open_dataset(self):
         self._kube = DataCube.from_xarray(
-            #postprocess_afm(
+            postprocess_afm(
                 open_datacube(
                     path=self.path,
                     id_pattern=self.field_id,
@@ -63,6 +64,6 @@ class CMCCAFMSource(GeokubeSource):
                     mapping=self.mapping,
                     **self.xarray_kwargs,
                 ).to_xarray()
-            #)
+            )
         )
         return self._kube
