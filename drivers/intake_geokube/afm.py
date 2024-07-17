@@ -18,7 +18,7 @@ def postprocess_afm(dset: xr.Dataset) -> xr.Dataset:
     dset = dset.drop('lat')
     dset = dset.drop('lon')
     dset = dset.sortby('time')
-    return dset.expand_dims(dim={"lat": latitude}, axis=0) #, "lon": longitude}, axis=(1, 0))
+    return dset.expand_dims(dim={"lat": latitude}, axis=0).expand_dims(dim={"lon": longitude}, axis=0)
 
 
 class CMCCAFMSource(GeokubeSource):
