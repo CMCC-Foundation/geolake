@@ -54,7 +54,7 @@ class CMCCAFMSource(GeokubeSource):
 
     def _open_dataset(self):
         self._kube = DataCube.from_xarray(
-            postprocess_afm(
+            #postprocess_afm(
                 open_datacube(
                     path=self.path,
                     id_pattern=self.field_id,
@@ -63,6 +63,6 @@ class CMCCAFMSource(GeokubeSource):
                     mapping=self.mapping,
                     **self.xarray_kwargs,
                 ).to_xarray()
-            )
+            #)
         )
         return self._kube
