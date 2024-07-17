@@ -13,11 +13,10 @@ from geokube.core.datacube import DataCube
 
 
 def postprocess_afm(dset: xr.Dataset) -> xr.Dataset:
-    #latitude = dset['lat'].values
-    #longitude = dset['lon'].values
-    #dset = dset.drop('lat')
-    #dset = dset.drop('lon')
-    #dset = dset.drop('certainty')
+    latitude = dset['lat'].values
+    longitude = dset['lon'].values
+    dset = dset.drop('lat')
+    dset = dset.drop('lon')
     #return dset.expand_dims(dim={"lat": latitude, "lon": longitude}, axis=(1, 0)).sortby('time')
     return dset.sortby('time')
 
