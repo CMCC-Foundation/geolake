@@ -17,7 +17,7 @@ def postprocess_afm(dset: xr.Dataset) -> xr.Dataset:
     longitude = dset['lon'].values
     dset = dset.drop('lat')
     dset = dset.drop('lon')
-    return dset.expand_dims(dim={"lat": latitude, "lon": longitude}, axis=(1, 0))
+    return dset.expand_dims(dim={"lat": latitude, "lon": longitude}, axis=(1, 0)).sortby('time')
 
 
 class CMCCAFMSource(GeokubeSource):
@@ -52,26 +52,16 @@ class CMCCAFMSource(GeokubeSource):
         super(CMCCAFMSource, self).__init__(metadata=metadata)
 
     def _open_dataset(self):
-        if self.pattern is None:
-            self._kube = open_datacube(
-                path=self.path,
-                id_pattern=self.field_id,
-                metadata_caching=self.metadata_caching,
-                metadata_cache_path=self.metadata_cache_path,
-                mapping=self.mapping,
-                **self.xarray_kwargs,
+        self._kube = DataCube.from_xarray(
+            postprocess_afm(
+                open_datacube(
+                    path=self.path,
+                    id_pattern=self.field_id,
+                    metadata_caching=self.metadata_caching,
+                    metadata_cache_path=self.metadata_cache_path,
+                    mapping=self.mapping,
+                    **self.xarray_kwargs,
+                ).to_xarray()
             )
-        else:
-            self._kube = open_dataset(
-                path=self.path,
-                pattern=self.pattern,
-                id_pattern=self.field_id,
-                delay_read_cubes=self.delay_read_cubes,
-                metadata_caching=self.metadata_caching,
-                metadata_cache_path=self.metadata_cache_path,
-                mapping=self.mapping,
-                **self.xarray_kwargs,
-            )
-        ds = postprocess_afm(self._kube.to_xarray())
-        self._kube = DataCube.from_xarray(ds)
+        )
         return self._kube
