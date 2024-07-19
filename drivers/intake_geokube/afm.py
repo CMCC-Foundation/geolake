@@ -12,7 +12,7 @@ from geokube import open_datacube, open_dataset
 from geokube.core.datacube import DataCube
 
 
-def postprocess_afm(ds: xr.Dataset) -> xr.Dataset:
+def postprocess_afm(ds: xr.Dataset, post_process_chunks) -> xr.Dataset:
     latitude = ds['lat'].values
     longitude = ds['lon'].values
     # ds = ds.expand_dims(dim={"latitude": latitude, "longitude": longitude}, axis=(1,0))
@@ -23,7 +23,7 @@ def postprocess_afm(ds: xr.Dataset) -> xr.Dataset:
     for dim in ds.dims:
         indexes = {dim: ~deduplicated.get_index(dim).duplicated(keep='first')}
         deduplicated = deduplicated.isel(indexes)
-    return deduplicated.sortby('time').chunk({'time': 24 , 'latitude': 24, 'longitude': 24})
+    return deduplicated.sortby('time').chunk(post_process_chunks)
 
 
 class CMCCAFMSource(GeokubeSource):
@@ -42,6 +42,7 @@ class CMCCAFMSource(GeokubeSource):
             metadata=None,
             mapping: Optional[Mapping[str, Mapping[str, str]]] = None,
             load_files_on_persistance: Optional[bool] = True,
+            postprocess_chunk: Optional = None
     ):
         self._kube = None
         self.path = path
@@ -54,6 +55,7 @@ class CMCCAFMSource(GeokubeSource):
         self.mapping = mapping
         self.xarray_kwargs = {} if xarray_kwargs is None else xarray_kwargs
         self.load_files_on_persistance = load_files_on_persistance
+        self.postprocess_chunk = postprocess_chunk
         # self.preprocess = preprocess_afm
         super(CMCCAFMSource, self).__init__(metadata=metadata)
 
@@ -68,7 +70,8 @@ class CMCCAFMSource(GeokubeSource):
                     mapping=self.mapping,
                     **self.xarray_kwargs,
                     # preprocess=self.preprocess
-                ).to_xarray()
+                ).to_xarray(),
+                self.postprocess_chunk
             )
         )
         return self._kube
