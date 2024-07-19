@@ -11,6 +11,7 @@ from geokube import open_datacube, open_dataset
 
 from geokube.core.datacube import DataCube
 
+_PROJECTION = {"grid_mapping_name": "latitude_longitude"}
 
 def postprocess_afm(ds: xr.Dataset, post_process_chunks) -> xr.Dataset:
     latitude = ds['lat'].values
@@ -23,8 +24,16 @@ def postprocess_afm(ds: xr.Dataset, post_process_chunks) -> xr.Dataset:
     for dim in ds.dims:
         indexes = {dim: ~deduplicated.get_index(dim).duplicated(keep='first')}
         deduplicated = deduplicated.isel(indexes)
-    return deduplicated.sortby('time').chunk(post_process_chunks)
+    return add_projection(deduplicated.sortby('time').chunk(post_process_chunks))
 
+def add_projection(dset: xr.Dataset, **kwargs) -> xr.Dataset:
+    """Add projection information to the dataset"""
+    coords = dset.coords
+    coords["crs"] = xr.DataArray(data=np.array(1), attrs=_PROJECTION)
+    for var in dset.data_vars.values():
+        enc = var.encoding
+        enc["grid_mapping"] = "crs"
+    return dset
 
 class CMCCAFMSource(GeokubeSource):
     name = "cmcc_afm_geokube"
