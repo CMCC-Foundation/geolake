@@ -12,19 +12,18 @@ from geokube import open_datacube, open_dataset
 from geokube.core.datacube import DataCube
 
 
-def preprocess_afm(dset: xr.Dataset) -> xr.Dataset:
-    latitude = dset['lat'].values
-    longitude = dset['lon'].values
-    dset = dset.drop('lat')
-    dset = dset.drop('lon')
-    dset = dset.expand_dims(dim={"latitude": latitude, "longitude": longitude}, axis=(0, 1))
-    return dset
-
-
-def post_process_afm(dset: xr.Dataset) -> xr.Dataset:
-    return dset.reset_index(dims_or_levels=['latitude', 'longitude'], drop=True).sortby('time').chunk(
-        {'time': 50, 'latitude': 50, 'longitude': 50})
-
+def preprocess_afm(ds: xr.Dataset) -> xr.Dataset:
+    latitude = ds['lat'].values
+    longitude = ds['lon'].values
+    # ds = ds.expand_dims(dim={"latitude": latitude, "longitude": longitude}, axis=(1,0))
+    ds = ds.drop('lat')
+    ds = ds.drop('lon')
+    ds = ds.drop('certainty')
+    deduplicated = ds.expand_dims(dim={"latitude": latitude, "longitude": longitude}, axis=(1, 0))
+    for dim in ds.dims:
+        indexes = {dim: ~deduplicated.get_index(dim).duplicated(keep='first')}
+        deduplicated = deduplicated.isel(indexes)
+    return deduplicated
 
 class CMCCAFMSource(GeokubeSource):
     name = "cmcc_afm_geokube"
@@ -58,9 +57,7 @@ class CMCCAFMSource(GeokubeSource):
         super(CMCCAFMSource, self).__init__(metadata=metadata)
 
     def _open_dataset(self):
-        self._kube = DataCube.from_xarray(
-            post_process_afm(
-                open_datacube(
+        self._kube = open_datacube(
                     path=self.path,
                     id_pattern=self.field_id,
                     metadata_caching=self.metadata_caching,
@@ -68,7 +65,5 @@ class CMCCAFMSource(GeokubeSource):
                     mapping=self.mapping,
                     **self.xarray_kwargs,
                     preprocess=self.preprocess
-                ).to_xarray()
-            )
-        )
+                )
         return self._kube
