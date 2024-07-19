@@ -12,7 +12,7 @@ from geokube import open_datacube, open_dataset
 from geokube.core.datacube import DataCube
 
 
-def preprocess_afm(ds: xr.Dataset) -> xr.Dataset:
+def postprocess_afm(ds: xr.Dataset) -> xr.Dataset:
     latitude = ds['lat'].values
     longitude = ds['lon'].values
     # ds = ds.expand_dims(dim={"latitude": latitude, "longitude": longitude}, axis=(1,0))
@@ -23,7 +23,8 @@ def preprocess_afm(ds: xr.Dataset) -> xr.Dataset:
     for dim in ds.dims:
         indexes = {dim: ~deduplicated.get_index(dim).duplicated(keep='first')}
         deduplicated = deduplicated.isel(indexes)
-    return deduplicated
+    return deduplicated.sortby('time').chunk({'time': 50 , 'latitude': 50, 'longitude': 50})
+
 
 class CMCCAFMSource(GeokubeSource):
     name = "cmcc_afm_geokube"
@@ -53,17 +54,21 @@ class CMCCAFMSource(GeokubeSource):
         self.mapping = mapping
         self.xarray_kwargs = {} if xarray_kwargs is None else xarray_kwargs
         self.load_files_on_persistance = load_files_on_persistance
-        self.preprocess = preprocess_afm
+        # self.preprocess = preprocess_afm
         super(CMCCAFMSource, self).__init__(metadata=metadata)
 
     def _open_dataset(self):
-        self._kube = open_datacube(
+        self._kube = DataCube.from_xarray(
+            postprocess_afm(
+                open_datacube(
                     path=self.path,
                     id_pattern=self.field_id,
                     metadata_caching=self.metadata_caching,
                     metadata_cache_path=self.metadata_cache_path,
                     mapping=self.mapping,
                     **self.xarray_kwargs,
-                    preprocess=self.preprocess
-                )
+                    # preprocess=self.preprocess
+                ).to_xarray()
+            )
+        )
         return self._kube
