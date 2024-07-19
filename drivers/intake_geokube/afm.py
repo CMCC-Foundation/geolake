@@ -12,33 +12,32 @@ from geokube import open_datacube, open_dataset
 from geokube.core.datacube import DataCube
 
 
-def postprocess_afm(dset: xr.Dataset) -> xr.Dataset:
+def preprocess_afm(dset: xr.Dataset) -> xr.Dataset:
     latitude = dset['lat'].values
     longitude = dset['lon'].values
     dset = dset.drop('lat')
     dset = dset.drop('lon')
     dset = dset.sortby('time')
-    dset = dset.expand_dims(dim={"lat": latitude}, axis=0)
-    dset = dset.expand_dims(dim={"lon": longitude}, axis=0)
-    return dset
+    dset = dset.expand_dims(dim={"latitude": latitude, "longitude": longitude}, axis=(0, 1))
+    return dset.chunk({'time': 10, 'latitude': 50, 'longitude': 50})
 
 
 class CMCCAFMSource(GeokubeSource):
     name = "cmcc_afm_geokube"
 
     def __init__(
-        self,
-        path: str,
-        pattern: str = None,
-        field_id: str = None,
-        delay_read_cubes: bool = False,
-        metadata_caching: bool = False,
-        metadata_cache_path: str = None,
-        storage_options: dict = None,
-        xarray_kwargs: dict = None,
-        metadata=None,
-        mapping: Optional[Mapping[str, Mapping[str, str]]] = None,
-        load_files_on_persistance: Optional[bool] = True,
+            self,
+            path: str,
+            pattern: str = None,
+            field_id: str = None,
+            delay_read_cubes: bool = False,
+            metadata_caching: bool = False,
+            metadata_cache_path: str = None,
+            storage_options: dict = None,
+            xarray_kwargs: dict = None,
+            metadata=None,
+            mapping: Optional[Mapping[str, Mapping[str, str]]] = None,
+            load_files_on_persistance: Optional[bool] = True,
     ):
         self._kube = None
         self.path = path
@@ -51,20 +50,19 @@ class CMCCAFMSource(GeokubeSource):
         self.mapping = mapping
         self.xarray_kwargs = {} if xarray_kwargs is None else xarray_kwargs
         self.load_files_on_persistance = load_files_on_persistance
-        #self.preprocess = preprocess_afm
+        self.preprocess = preprocess_afm
         super(CMCCAFMSource, self).__init__(metadata=metadata)
 
     def _open_dataset(self):
         self._kube = DataCube.from_xarray(
-            postprocess_afm(
-                open_datacube(
-                    path=self.path,
-                    id_pattern=self.field_id,
-                    metadata_caching=self.metadata_caching,
-                    metadata_cache_path=self.metadata_cache_path,
-                    mapping=self.mapping,
-                    **self.xarray_kwargs,
-                ).to_xarray()
+            open_datacube(
+                path=self.path,
+                id_pattern=self.field_id,
+                metadata_caching=self.metadata_caching,
+                metadata_cache_path=self.metadata_cache_path,
+                mapping=self.mapping,
+                **self.xarray_kwargs,
+                preprocess=self.preprocess
             )
         )
         return self._kube
