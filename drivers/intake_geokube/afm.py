@@ -23,7 +23,7 @@ def postprocess_afm(ds: xr.Dataset) -> xr.Dataset:
     for dim in ds.dims:
         indexes = {dim: ~deduplicated.get_index(dim).duplicated(keep='first')}
         deduplicated = deduplicated.isel(indexes)
-    return deduplicated.sortby('time').chunk({'time': 50 , 'latitude': 50, 'longitude': 50})
+    return deduplicated.sortby('time').chunk({'time': 24 , 'latitude': 24, 'longitude': 24})
 
 
 class CMCCAFMSource(GeokubeSource):
