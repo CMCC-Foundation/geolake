@@ -19,6 +19,7 @@ def preprocess_afm(dset: xr.Dataset) -> xr.Dataset:
     dset = dset.drop('lon')
     dset = dset.sortby('time')
     dset = dset.expand_dims(dim={"latitude": latitude, "longitude": longitude}, axis=(0, 1))
+    dset = dset.reset_index(dims_or_levels=['latitude','longitude','time'],drop=True)
     return dset.chunk({'time': 10, 'latitude': 50, 'longitude': 50})
 
 
