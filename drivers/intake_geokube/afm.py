@@ -17,10 +17,13 @@ def preprocess_afm(dset: xr.Dataset) -> xr.Dataset:
     longitude = dset['lon'].values
     dset = dset.drop('lat')
     dset = dset.drop('lon')
-    dset = dset.sortby('time')
     dset = dset.expand_dims(dim={"latitude": latitude, "longitude": longitude}, axis=(0, 1))
-    dset = dset.reset_index(dims_or_levels=['latitude','longitude','time'],drop=True)
-    return dset.chunk({'time': 10, 'latitude': 50, 'longitude': 50})
+    return dset
+
+
+def post_process_afm(dset: xr.Dataset) -> xr.Dataset:
+    return dset.reset_index(dims_or_levels=['latitude', 'longitude'], drop=True).sortby('time').chunk(
+        {'time': 50, 'latitude': 50, 'longitude': 50})
 
 
 class CMCCAFMSource(GeokubeSource):
@@ -56,14 +59,16 @@ class CMCCAFMSource(GeokubeSource):
 
     def _open_dataset(self):
         self._kube = DataCube.from_xarray(
-            open_datacube(
-                path=self.path,
-                id_pattern=self.field_id,
-                metadata_caching=self.metadata_caching,
-                metadata_cache_path=self.metadata_cache_path,
-                mapping=self.mapping,
-                **self.xarray_kwargs,
-                preprocess=self.preprocess
+            post_process_afm(
+                open_datacube(
+                    path=self.path,
+                    id_pattern=self.field_id,
+                    metadata_caching=self.metadata_caching,
+                    metadata_cache_path=self.metadata_cache_path,
+                    mapping=self.mapping,
+                    **self.xarray_kwargs,
+                    preprocess=self.preprocess
+                ).to_xarray()
             )
         )
         return self._kube
