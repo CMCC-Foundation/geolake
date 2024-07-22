@@ -265,7 +265,7 @@ class Executor(metaclass=LoggableMeta):
             n_workers=dask_cluster_opts["n_workers"],
             scheduler_port=dask_cluster_opts["scheduler_port"],
             dashboard_address=dask_cluster_opts["dashboard_address"],
-            memory_limit=dask_cluster_opts["memory_limit"],
+            #memory_limit=dask_cluster_opts["memory_limit"],
             threads_per_worker=1
         )
         self._LOG.info(
