@@ -261,18 +261,18 @@ class Executor(metaclass=LoggableMeta):
             dask_cluster_opts,
             extra={"track_id": self._worker_id},
         )
-        #dask_cluster = LocalCluster(
-        #    n_workers=dask_cluster_opts['n_workers'],
+        dask_cluster = LocalCluster(
+            n_workers=dask_cluster_opts['n_workers'],
             #scheduler_port=dask_cluster_opts["scheduler_port"],
             #dashboard_address=dask_cluster_opts["dashboard_address"],
             #memory_limit=dask_cluster_opts["memory_limit"],
-        #    threads_per_worker=1
-        #)
+            threads_per_worker=1
+        )
         self._LOG.info(
             "not creating Dask Client...", extra={"track_id": self._worker_id}
         )
-        #self._dask_client = Client(dask_cluster)
-        #self._nanny = Nanny(self._dask_client.cluster.scheduler.address)
+        self._dask_client = Client(dask_cluster)
+        self._nanny = Nanny(self._dask_client.cluster.scheduler.address)
 
     def maybe_restart_cluster(self, status: RequestStatus):
         if status is RequestStatus.TIMEOUT:
@@ -378,13 +378,13 @@ class Executor(metaclass=LoggableMeta):
             "submitting job for workflow request",
             extra={"track_id": message.request_id},
         )
-        #future = self._dask_client.submit(
-        #    process,
-        #    message=message,
-        #    compute=False,
-        #)
+        future = self._dask_client.submit(
+            process,
+            message=message,
+            compute=False,
+        )
 
-        future = asyncio.run(process(message,compute=False))
+        #future = asyncio.run(process(message,compute=False))
 
         location_path, status, fail_reason = self.retry_until_timeout(
             future,
@@ -405,7 +405,7 @@ class Executor(metaclass=LoggableMeta):
         cb = functools.partial(self.ack_message, channel, delivery_tag)
         connection.add_callback_threadsafe(cb)
 
-        #self.maybe_restart_cluster(status)
+        self.maybe_restart_cluster(status)
         self._LOG.debug(
             "request acknowledged", extra={"track_id": message.request_id}
         )
