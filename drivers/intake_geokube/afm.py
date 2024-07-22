@@ -19,7 +19,7 @@ def postprocess_afm(ds: xr.Dataset, post_process_chunks) -> xr.Dataset:
     # ds = ds.expand_dims(dim={"latitude": latitude, "longitude": longitude}, axis=(1,0))
     ds = ds.drop('lat')
     ds = ds.drop('lon')
-    ds = ds.drop('certainty')
+    #ds = ds.drop('certainty')
     deduplicated = ds.expand_dims(dim={"latitude": latitude, "longitude": longitude}, axis=(1, 0))
     for dim in deduplicated.dims:
         indexes = {dim: ~deduplicated.get_index(dim).duplicated(keep='first')}
