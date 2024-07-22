@@ -195,7 +195,7 @@ def persist_dataset(
     return path
 
 
-async def process(message: Message, compute: bool):
+def process(message: Message, compute: bool):
     res_path = os.path.join(_BASE_DOWNLOAD_PATH, message.request_id)
     os.makedirs(res_path, exist_ok=True)
     match message.type:
