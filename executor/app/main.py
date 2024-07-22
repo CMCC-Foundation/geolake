@@ -249,7 +249,7 @@ class Executor(metaclass=LoggableMeta):
             dask_cluster_opts["processes"] = True
             port = int(os.getenv("DASK_DASHBOARD_PORT", 8787))
             dask_cluster_opts["dashboard_address"] = f":{port}"
-            dask_cluster_opts["n_workers"] = None
+            dask_cluster_opts["n_workers"] = 4
             dask_cluster_opts["memory_limit"] = "auto"
         self._worker_id = self._db.create_worker(
             status="enabled",
@@ -262,9 +262,9 @@ class Executor(metaclass=LoggableMeta):
             extra={"track_id": self._worker_id},
         )
         dask_cluster = LocalCluster(
-            n_workers=dask_cluster_opts["n_workers"],
-            scheduler_port=dask_cluster_opts["scheduler_port"],
-            dashboard_address=dask_cluster_opts["dashboard_address"],
+            n_workers=dask_cluster_opts['n_workers'],
+            #scheduler_port=dask_cluster_opts["scheduler_port"],
+            #dashboard_address=dask_cluster_opts["dashboard_address"],
             #memory_limit=dask_cluster_opts["memory_limit"],
             threads_per_worker=1
         )
@@ -272,7 +272,7 @@ class Executor(metaclass=LoggableMeta):
             "creating Dask Client...", extra={"track_id": self._worker_id}
         )
         self._dask_client = Client(dask_cluster)
-        self._nanny = Nanny(self._dask_client.cluster.scheduler.address)
+        #self._nanny = Nanny(self._dask_client.cluster.scheduler.address)
 
     def maybe_restart_cluster(self, status: RequestStatus):
         if status is RequestStatus.TIMEOUT:
