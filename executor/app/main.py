@@ -266,6 +266,7 @@ class Executor(metaclass=LoggableMeta):
             scheduler_port=dask_cluster_opts["scheduler_port"],
             dashboard_address=dask_cluster_opts["dashboard_address"],
             memory_limit=dask_cluster_opts["memory_limit"],
+            threads_per_worker=1
         )
         self._LOG.info(
             "creating Dask Client...", extra={"track_id": self._worker_id}
@@ -451,6 +452,7 @@ if __name__ == "__main__":
     print("channel subscribe")
     for etype in executor_types:
         if etype == "query":
+            #TODO: create dask cluster with options
             executor.create_dask_cluster()
 
         executor.subscribe(etype)
