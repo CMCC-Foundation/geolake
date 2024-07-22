@@ -2,3 +2,5 @@ pika==1.2.1
 prometheus_client
 sqlalchemy
 pydantic
+dask==2024.7.1
+dask[distributed]==2024.7.1
