@@ -1,14 +1,18 @@
 """geokube driver for intake."""
+import glob
 import logging
 from functools import partial
 from typing import Any, Mapping, Optional, Union
 
 import numpy as np
+import pandas as pd
 import xarray as xr
+from geokube.backend.netcdf import FILES_COL
 
 from .base import GeokubeSource
 from geokube import open_datacube, open_dataset
-
+from intake.source.utils import reverse_format
+from string import Formatter
 from geokube.core.datacube import DataCube
 
 _PROJECTION = {"grid_mapping_name": "latitude_longitude"}
@@ -34,6 +38,27 @@ def add_projection(dset: xr.Dataset, **kwargs) -> xr.Dataset:
         enc = var.encoding
         enc["grid_mapping"] = "crs"
     return dset
+
+def _get_ds_attrs_names(pattern):
+    fmt = Formatter()
+    # get the dataset attrs from the pattern
+    ds_attr_names = [i[1] for i in fmt.parse(pattern) if i[1]]
+    return ds_attr_names
+
+
+def _get_df_from_files_list(files, pattern, ds_attr_names):
+    l = []
+    for f in files:
+        d = reverse_format(pattern, f)
+        d[FILES_COL] = f
+        l.append(d)
+    df = pd.DataFrame(l)
+    if len(l) == 0:
+        raise ValueError(f"No files found for the provided path!")
+    # unique index for each dataset attribute combos - we create a list of files
+    df = df.groupby(ds_attr_names)[FILES_COL].apply(list).reset_index()
+    df = df.set_index(ds_attr_names)
+    return df
 
 class CMCCAFMSource(GeokubeSource):
     name = "cmcc_afm_geokube"
@@ -85,11 +110,14 @@ class CMCCAFMSource(GeokubeSource):
                 )
             )
         else:
+            ds_attr_names = _get_ds_attrs_names(self.pattern)
+            files = glob.glob(self.path)  # all files
+            df = _get_df_from_files_list(files, self.pattern, ds_attr_names)
+
             self._kube = DataCube.from_xarray(
                 postprocess_afm(
-                    open_dataset(
-                        path=self.path,
-                        pattern=self.pattern,
+                    open_datacube(
+                        path=df[FILES_COL],
                         id_pattern=self.field_id,
                         metadata_caching=self.metadata_caching,
                         metadata_cache_path=self.metadata_cache_path,
