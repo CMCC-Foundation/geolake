@@ -3,7 +3,7 @@ import glob
 import logging
 from functools import partial
 from typing import Any, Mapping, Optional, Union
-
+import geokube
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -17,18 +17,22 @@ from geokube.core.datacube import DataCube
 
 _PROJECTION = {"grid_mapping_name": "latitude_longitude"}
 
-def postprocess_afm(ds: xr.Dataset, post_process_chunks) -> xr.Dataset:
+def postprocess_afm(ds: xr.Dataset, **post_process_chunks):
+    if isinstance(ds, geokube.core.datacube.DataCube):
+        ds = ds.to_xarray()
     latitude = ds['lat'].values
     longitude = ds['lon'].values
     # ds = ds.expand_dims(dim={"latitude": latitude, "longitude": longitude}, axis=(1,0))
     ds = ds.drop('lat')
     ds = ds.drop('lon')
-    #ds = ds.drop('certainty')
+    # ds = ds.drop('certainty')
     deduplicated = ds.expand_dims(dim={"latitude": latitude, "longitude": longitude}, axis=(1, 0))
+    # print(deduplicated.dims)
     for dim in deduplicated.dims:
         indexes = {dim: ~deduplicated.get_index(dim).duplicated(keep='first')}
         deduplicated = deduplicated.isel(indexes)
-    return add_projection(deduplicated.sortby('time').sortby('latitude').sortby('longitude').chunk(post_process_chunks))
+    return DataCube.from_xarray(
+        deduplicated.sortby('time').sortby('latitude').sortby('longitude').chunk(post_process_chunks))
 
 def add_projection(dset: xr.Dataset, **kwargs) -> xr.Dataset:
     """Add projection information to the dataset"""
@@ -95,7 +99,7 @@ class CMCCAFMSource(GeokubeSource):
 
     def _open_dataset(self):
         if self.pattern is None:
-            self._kube = DataCube.from_xarray(
+            self._kube =\
                 postprocess_afm(
                     open_datacube(
                         path=self.path,
@@ -105,27 +109,18 @@ class CMCCAFMSource(GeokubeSource):
                         mapping=self.mapping,
                         **self.xarray_kwargs,
                         # preprocess=self.preprocess
-                    ).to_xarray(),
-                    self.postprocess_chunk
+                    ),
+                    **self.postprocess_chunk
                 )
-            )
         else:
-            ds_attr_names = _get_ds_attrs_names(self.pattern)
-            files = glob.glob(self.path)  # all files
-            df = _get_df_from_files_list(files, self.pattern, ds_attr_names)
-
-            self._kube = DataCube.from_xarray(
-                postprocess_afm(
-                    open_datacube(
-                        path=df[FILES_COL].to_list(),
+            self._kube = open_dataset(
+                        path=self.path,
+                        pattern=self.pattern,
                         id_pattern=self.field_id,
                         metadata_caching=self.metadata_caching,
                         metadata_cache_path=self.metadata_cache_path,
                         mapping=self.mapping,
                         **self.xarray_kwargs,
                         # preprocess=self.preprocess
-                    ).to_xarray(),
-                    self.postprocess_chunk
-                )
-            )
+                    ).apply(postprocess_afm,**self.postprocess_chunk)
         return self._kube
