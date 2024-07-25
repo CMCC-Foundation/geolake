@@ -117,7 +117,7 @@ class CMCCAFMSource(GeokubeSource):
             self._kube = DataCube.from_xarray(
                 postprocess_afm(
                     open_datacube(
-                        path=df[FILES_COL],
+                        path=df[FILES_COL].to_list(),
                         id_pattern=self.field_id,
                         metadata_caching=self.metadata_caching,
                         metadata_cache_path=self.metadata_cache_path,
