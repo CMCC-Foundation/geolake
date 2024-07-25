@@ -69,18 +69,35 @@ class CMCCAFMSource(GeokubeSource):
         super(CMCCAFMSource, self).__init__(metadata=metadata)
 
     def _open_dataset(self):
-        self._kube = DataCube.from_xarray(
-            postprocess_afm(
-                open_datacube(
-                    path=self.path,
-                    id_pattern=self.field_id,
-                    metadata_caching=self.metadata_caching,
-                    metadata_cache_path=self.metadata_cache_path,
-                    mapping=self.mapping,
-                    **self.xarray_kwargs,
-                    # preprocess=self.preprocess
-                ).to_xarray(),
-                self.postprocess_chunk
+        if self.pattern is None:
+            self._kube = DataCube.from_xarray(
+                postprocess_afm(
+                    open_datacube(
+                        path=self.path,
+                        id_pattern=self.field_id,
+                        metadata_caching=self.metadata_caching,
+                        metadata_cache_path=self.metadata_cache_path,
+                        mapping=self.mapping,
+                        **self.xarray_kwargs,
+                        # preprocess=self.preprocess
+                    ).to_xarray(),
+                    self.postprocess_chunk
+                )
             )
-        )
+        else:
+            self._kube = DataCube.from_xarray(
+                postprocess_afm(
+                    open_dataset(
+                        path=self.path,
+                        pattern=self.pattern,
+                        id_pattern=self.field_id,
+                        metadata_caching=self.metadata_caching,
+                        metadata_cache_path=self.metadata_cache_path,
+                        mapping=self.mapping,
+                        **self.xarray_kwargs,
+                        # preprocess=self.preprocess
+                    ).to_xarray(),
+                    self.postprocess_chunk
+                )
+            )
         return self._kube
