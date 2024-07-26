@@ -25,7 +25,7 @@ def postprocess_afm(ds: xr.Dataset, **post_process_chunks):
         indexes = {dim: ~deduplicated.get_index(dim).duplicated(keep='first')}
         deduplicated = deduplicated.isel(indexes)
     return DataCube.from_xarray(
-        deduplicated.sortby('time').sortby('latitude').sortby('longitude'))
+        deduplicated.sortby('time').sortby('latitude').sortby('longitude').chunk(post_process_chunks))
 
 def add_projection(dset: xr.Dataset, **kwargs) -> xr.Dataset:
     """Add projection information to the dataset"""
