@@ -1,18 +1,11 @@
 """geokube driver for intake."""
-import glob
-import logging
-from functools import partial
-from typing import Any, Mapping, Optional, Union
+
+from typing import Mapping, Optional
 import geokube
 import numpy as np
-import pandas as pd
 import xarray as xr
-from geokube.backend.netcdf import FILES_COL
-
 from .base import GeokubeSource
 from geokube import open_datacube, open_dataset
-from intake.source.utils import reverse_format
-from string import Formatter
 from geokube.core.datacube import DataCube
 
 _PROJECTION = {"grid_mapping_name": "latitude_longitude"}
@@ -25,7 +18,7 @@ def postprocess_afm(ds: xr.Dataset, **post_process_chunks):
     # ds = ds.expand_dims(dim={"latitude": latitude, "longitude": longitude}, axis=(1,0))
     ds = ds.drop('lat')
     ds = ds.drop('lon')
-    # ds = ds.drop('certainty')
+    ds = ds.drop('certainty')
     deduplicated = ds.expand_dims(dim={"latitude": latitude, "longitude": longitude}, axis=(1, 0))
     # print(deduplicated.dims)
     for dim in deduplicated.dims:
@@ -91,7 +84,7 @@ class CMCCAFMSource(GeokubeSource):
                         # preprocess=self.preprocess
                     ),
                     **self.postprocess_chunk
-                )
+                ).resample('maximum', frequency='1H')
         else:
             self._kube = open_dataset(
                         path=self.path,
@@ -102,5 +95,5 @@ class CMCCAFMSource(GeokubeSource):
                         mapping=self.mapping,
                         **self.xarray_kwargs,
                         # preprocess=self.preprocess
-                    ).apply(postprocess_afm,**self.postprocess_chunk)
+                    ).apply(postprocess_afm,**self.postprocess_chunk).resample('maximum', frequency='1H')
         return self._kube
