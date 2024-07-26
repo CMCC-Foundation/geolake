@@ -249,8 +249,9 @@ class Executor(metaclass=LoggableMeta):
             dask_cluster_opts["processes"] = True
             port = int(os.getenv("DASK_DASHBOARD_PORT", 8787))
             dask_cluster_opts["dashboard_address"] = f":{port}"
-            dask_cluster_opts["n_workers"] = 4
+            dask_cluster_opts["n_workers"] = 1
             dask_cluster_opts["memory_limit"] = "auto"
+            dask_cluster_opts['thread_per_worker'] = 8
         self._worker_id = self._db.create_worker(
             status="enabled",
             dask_scheduler_port=dask_cluster_opts["scheduler_port"],
@@ -266,7 +267,7 @@ class Executor(metaclass=LoggableMeta):
             #scheduler_port=dask_cluster_opts["scheduler_port"],
             #dashboard_address=dask_cluster_opts["dashboard_address"],
             #memory_limit=dask_cluster_opts["memory_limit"],
-            threads_per_worker=1
+            threads_per_worker=dask_cluster_opts['thread_per_worker'],
         )
         self._LOG.info(
             "not creating Dask Client...", extra={"track_id": self._worker_id}
