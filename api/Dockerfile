@@ -18,4 +18,4 @@ RUN service cron start
 
 #CMD ["uvicorn", "app.main:app", "--proxy-headers", "--host", "0.0.0.0", "--port", "80"]
 
-ENTRYPOINT uvicorn app.main:app --proxy-headers --host 0.0.0.0 --port 80 && service cron start
+ENTRYPOINT service cron start && uvicorn app.main:app --proxy-headers --host 0.0.0.0 --port 80
