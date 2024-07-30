@@ -2,7 +2,7 @@ ARG REGISTRY=rg.fr-par.scw.cloud/geolake
 ARG TAG=latest
 FROM $REGISTRY/geolake-datastore:$TAG
 
-RUN apt update && apt install -y cron
+RUN apt update && apt install -y cron curl
 
 WORKDIR /app
 COPY requirements.txt /code/requirements.txt
@@ -15,6 +15,5 @@ COPY ./healtcheck.* /opt/
 RUN chmod +x /opt/healtcheck.sh
 RUN crontab -u root /opt/healtcheck.cron
 
-#CMD ["uvicorn", "app.main:app", "--proxy-headers", "--host", "0.0.0.0", "--port", "80"]
+CMD ["uvicorn", "app.main:app", "--proxy-headers", "--host", "0.0.0.0", "--port", "80"]
 
-ENTRYPOINT service cron start && ./../wait-for-it.sh $(BROKER_SERVICE_HOST):5672 -- uvicorn main:app --host 0.0.0.0 --port '80'
