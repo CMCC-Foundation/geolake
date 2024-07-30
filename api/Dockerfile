@@ -16,4 +16,6 @@ RUN chmod +x /opt/healtcheck.sh
 RUN crontab -u root /opt/healtcheck.cron
 RUN service cron start
 
-CMD ["uvicorn", "app.main:app", "--proxy-headers", "--host", "0.0.0.0", "--port", "80"]
+#CMD ["uvicorn", "app.main:app", "--proxy-headers", "--host", "0.0.0.0", "--port", "80"]
+
+ENTRYPOINT uvicorn app.main:app --proxy-headers --host 0.0.0.0 --port 80 && service cron start
