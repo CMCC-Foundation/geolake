@@ -20,7 +20,6 @@ class MyMetadataProvider:
     def listRecords(self, metadataPrefix='dcat_ap', from_=None, until=None, set=None):
         logging.debug("Fetching data from API")
         # Fetch data from the dataset endpoint
-        # TODO: Refactor to fetch from all endpoints, or get data directly if this code is integrated in the data lake system 
         '''
         data = main.fetch_data(
             f"{BASE_URL}{set}"
@@ -40,7 +39,7 @@ class MyMetadataProvider:
         else:
             dataset_url = BASE_URL
             data = dataset_handler.get_datasets(user_roles_names=['public'])
-        
+
         logging.debug(f"Fetched data: {data}")
 
         # Convert to RDF graph with proper DCAT-AP fields (URL is being used to fill the accessURL field)
@@ -57,19 +56,19 @@ class MyMetadataProvider:
         # Create metadata element and fill it with the RDF/XML string
         metadata_element = Element("metadata")
         metadata = Metadata(element=metadata_element, map={"rdf": rdf_string})
-    
+
 
         return [(header, metadata, [])], None
 
     # The remaining methods are only present because they are mandatory for the OAI-PMH protocol
-    
+
     # Minimal implementation for identify
     def identify(self):
         return Identify(
-            repositoryName='My Repository',  # Name of the repository
+            repositoryName='Sebastien DataLake',  # Name of the repository
             baseURL='',  # Base URL of the OAI-PMH endpoint
             protocolVersion='2.0',  # OAI-PMH protocol version
-            adminEmails=['admin@myserver.com'],  # List of admin email addresses
+            adminEmails=['sebastien_support@cmcc.it'],  # List of admin email addresses
             earliestDatestamp=datetime(2024, 1, 1),  # Earliest datestamp for records
             deletedRecord='no',  # Policy on deleted records
             granularity='YYYY-MM-DDThh:mm:ssZ',  # Date granularity

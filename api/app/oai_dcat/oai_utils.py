@@ -1,6 +1,17 @@
 from rdflib import Graph, Literal, Namespace, RDF, URIRef, BNode
 from rdflib.namespace import DCAT, DCTERMS, FOAF, RDF
 import logging
+from datetime import datetime
+
+# Dictionary with accrualPeriodicity values for somw known datasets
+ACCRUAL_PERIODICITY = {
+    "blue-tongue": "AS_NEEDED",
+    "iot-animal": "HOURLY",
+    "pasture": "BIWEEKLY",
+    "pi": "DAILY",
+    "pi-long-term": "AS_NEEDED",
+    "thi": "DAILY"
+}
 
 # Logging config
 logging.basicConfig(level=logging.DEBUG)
@@ -19,6 +30,7 @@ SCHEMA = Namespace("http://schema.org/")
 # Namespace for DCAT-AP IT
 DCATAPIT = Namespace("http://dati.gov.it/onto/dcatapit#")
 
+
 # Define classes for DCAT-AP entities (Dataset, Distribution and ContactPoint)
 
 class ContactPoint:
@@ -26,6 +38,7 @@ class ContactPoint:
         self.name = name
         self.email = email
         self.webpage = webpage
+
 
 class Distribution:
     def __init__(self, access_url=None, description=None, download_url=None,
@@ -38,6 +51,7 @@ class Distribution:
         self.rights = rights
         self.license = license
         self.identifier = identifier
+
 
 class DatasetDCAT:
     def __init__(self, uri, title=None, description=None, issued=None, identifier=None, contact_point=None):
@@ -106,21 +120,32 @@ class DatasetDCAT:
                 g.add((distribution_bnode, DCTERMS.identifier, Literal(dist.identifier)))
 
         return g
-    
+
+
 # Function to convert to DCAT-AP IT format
 def convert_to_dcat_ap_it(graph, catalog_uri):
     g = graph
 
     # Bind DCATAPIT namespace to graph
     g.bind("dcatapit", DCATAPIT)
+    g.bind("foaf", FOAF)
 
     # Create catalog and add it to the graph
     catalog = URIRef(catalog_uri)
     g.add((catalog, RDF.type, DCATAPIT.Catalog))
     g.add((catalog, DCTERMS.title, Literal("Sebastien Catalog")))
     g.add((catalog, DCTERMS.description, Literal("A catalog of Sebastien datasets")))
-    g.add((catalog, DCTERMS.publisher, URIRef("https://www.cmcc.it/")))
-    g.add((catalog, DCTERMS.modified, Literal("2023-07-09", datatype=DCTERMS.W3CDTF)))
+    g.add((catalog, DCTERMS.modified, Literal(datetime.now().strftime("%Y-%m-%d"), datatype=DCTERMS.W3CDTF)))
+
+    # Create catalog dct:publisher node
+    catalog_publisher_node = BNode()
+    g.add((catalog, DCTERMS.publisher, catalog_publisher_node))
+    g.add((catalog_publisher_node, RDF.type, FOAF.Agent))
+    g.add((catalog_publisher_node, RDF.type, DCATAPIT.Agent))
+    g.add((catalog_publisher_node, FOAF.name, Literal("CMCC Foundation")))
+    g.add((catalog_publisher_node, DCTERMS.identifier, Literal("XW88C90Q")))
+    g.add((catalog_publisher_node, FOAF.homepage, URIRef("https://www.cmcc.it")))
+    g.add((catalog_publisher_node, FOAF.mbox, URIRef("mailto:dds-support@cmcc.it")))
 
     # Find all datasets in graph
     for dataset_uri in g.subjects(RDF.type, DCAT.Dataset):
@@ -130,33 +155,70 @@ def convert_to_dcat_ap_it(graph, catalog_uri):
 
         # Wrap existing dataset elements under dcatapit:Dataset
         for s, p, o in g.triples((dataset_uri, None, None)):
-            g.remove((dataset_uri, p, o))
-            g.add((dcatapit_dataset_node, p, o))
+            if p != RDF.type:
+                g.remove((dataset_uri, p, o))
+                g.add((dcatapit_dataset_node, p, o))
 
-        # Add dcat:dataset relation to the new dcatapit:Dataset node
-        g.add((dataset_uri, DCAT.dataset, dcatapit_dataset_node))
+        # Remove original dcat:Dataset node
+        g.remove((dataset_uri, RDF.type, DCAT.Dataset))
 
-        # Add dcatapit:Dataset to catalog
-        g.add((catalog, DCATAPIT.dataset, dataset_uri))
+        # Add new dcat:dataset relation to the catalog, pointing to the dcatapit:Dataset
+        g.add((catalog, DCAT.dataset, dcatapit_dataset_node))
 
         # Add mandatory fields with placeholder values
-        g.add((dcatapit_dataset_node, DCAT.theme, URIRef("http://publications.europa.eu/resource/authority/data-theme/AGRI")))
+        g.add((dcatapit_dataset_node, DCAT.theme,
+               URIRef("http://publications.europa.eu/resource/authority/data-theme/AGRI")))
         g.add((dcatapit_dataset_node, DCTERMS.rightsHolder, URIRef("https://www.cmcc.it/")))
-        g.add((dcatapit_dataset_node, DCTERMS.accrualPeriodicity, URIRef("http://publications.europa.eu/resource/authority/frequency/WEEKLY")))
+        # Add accrualPeriodicity based on dataset name
+        dataset_name = dataset_uri.split("/")[-1]
+        if dataset_name in ACCRUAL_PERIODICITY:
+            g.add((dcatapit_dataset_node, DCTERMS.accrualPeriodicity, URIRef(
+                f"http://publications.europa.eu/resource/authority/frequency/{ACCRUAL_PERIODICITY[dataset_name]}")))
+        else:
+            g.add((dcatapit_dataset_node, DCTERMS.accrualPeriodicity,
+                   URIRef("http://publications.europa.eu/resource/authority/frequency/UNKNOWN")))
 
-        # Change Distribution namespace to DCATAPIT
-        for s, p, o in g.triples((dcatapit_dataset_node, DCAT.distribution, None)):
+        # Add publisher node to the dataset
+        dataset_publisher_node = BNode()
+        g.add((dcatapit_dataset_node, DCTERMS.publisher, dataset_publisher_node))
+        g.add((dataset_publisher_node, RDF.type, FOAF.Agent))
+        g.add((dataset_publisher_node, RDF.type, DCATAPIT.Agent))
+        g.add((dataset_publisher_node, FOAF.name, Literal("CMCC Foundation")))
+        g.add((dataset_publisher_node, DCTERMS.identifier, Literal("XW88C90Q")))
+
+        # Handle distribution
+        for s, p, o in list(g.triples((dcatapit_dataset_node, DCAT.distribution, None))):
+            # Remove existing distribution triple
             g.remove((s, p, o))
-            g.add((s, DCATAPIT.distribution, o))
-            g.add((o, RDF.type, DCATAPIT.Distribution))
+
+            # Add new dcat:distribution with rdf:resource
+            g.add((dcatapit_dataset_node, DCAT.distribution, URIRef(dataset_uri)))
+
+            # Create new dcatapit:Distribution outside the dataset
+            g.add((catalog, DCATAPIT.Distribution, URIRef(dataset_uri)))
+            g.add((URIRef(dataset_uri), RDF.type, DCATAPIT.Distribution))
+            g.add((URIRef(dataset_uri), DCAT.accessURL, URIRef(dataset_uri)))
+            g.add((URIRef(dataset_uri), DCTERMS.license,
+                   URIRef("http://publications.europa.eu/resource/authority/licence/OP_DATPRO")))
+
+            # Add dct:format
+            if dataset_name == "iot-animal":
+                g.add((URIRef(dataset_uri), DCTERMS.format,
+                       URIRef("http://publications.europa.eu/resource/authority/file-type/CSV")))
+            else:
+                g.add((URIRef(dataset_uri), DCTERMS.format,
+                       URIRef("http://publications.europa.eu/resource/authority/file-type/PNG")))
+
+    # Remove any remaining dcat:Distribution nodes
+    for s in g.subjects(RDF.type, DCAT.Distribution):
+        g.remove((s, None, None))
 
     return g
 
 
-
 def convert_to_dcat_ap(data, url):
     logging.debug("Starting convert_to_dcat_ap function")
-    
+
     g = Graph()
 
     # Bind namespaces
@@ -174,7 +236,6 @@ def convert_to_dcat_ap(data, url):
     # Placeholder URI
     dataset_uri = url
 
-    
     if not isinstance(data, list):
         data = [data]
 
@@ -182,10 +243,10 @@ def convert_to_dcat_ap(data, url):
         # Check if "dataset" key is present, if it isnt, wrap the dict in it
         if "dataset" not in dataset:
             dataset = {"dataset": dataset}
-        
+
         # Add the URL to the data
-        dataset["url"] = url    
-        
+        dataset["url"] = url
+
         # Create dataset and convert the field names to DCAT-AP
         metadata = DatasetDCAT(
             uri=f'{dataset_uri}/{dataset.get("dataset", {}).get("metadata", {}).get("id")}',
@@ -214,5 +275,5 @@ def convert_to_dcat_ap(data, url):
 
         # Add dataset to graph
         metadata.to_graph(g)
-    
+
     return g
