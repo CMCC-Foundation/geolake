@@ -1,3 +1,4 @@
+import re
 from rdflib import Graph, Literal, Namespace, RDF, URIRef, BNode
 from rdflib.namespace import DCAT, DCTERMS, FOAF, RDF
 import logging
@@ -52,6 +53,34 @@ class Distribution:
         self.license = license
         self.identifier = identifier
 
+    # Build the RDF graph for the distribution
+    def to_graph(self, g):
+        distribution = URIRef(self.uri)
+        g.add((distribution, RDF.type, DCAT.Distribution))
+        if self.access_url:
+            g.add((distribution, DCAT.accessURL, URIRef(self.access_url)))
+        if self.description:
+            g.add((distribution, DCTERMS.description, Literal(self.description)))
+        if self.download_url:
+            g.add((distribution, DCAT.downloadURL, URIRef(self.download_url)))
+        if self.media_type:
+            g.add((distribution, DCTERMS.mediaType, URIRef(self.media_type)))
+        if self.format:
+            g.add((distribution, DCTERMS.format, URIRef(self.format)))
+        if self.rights:
+            rights_bnode = BNode()
+            g.add((distribution, DCTERMS.rights, rights_bnode))
+            g.add((rights_bnode, RDF.type, DCTERMS.RightsStatement))
+            g.add((rights_bnode, DCTERMS.rights, URIRef(self.rights)))
+        if self.license:
+            license_bnode = BNode()
+            g.add((distribution, DCTERMS.license, license_bnode))
+            g.add((license_bnode, RDF.type, DCTERMS.LicenseDocument))
+            g.add((license_bnode, DCTERMS.license, URIRef(self.license)))
+        if self.identifier:
+            g.add((distribution, DCTERMS.identifier, Literal(self.identifier)))
+        return g
+
 
 class DatasetDCAT:
     def __init__(self, uri, title=None, description=None, issued=None, identifier=None, contact_point=None):
@@ -73,9 +102,9 @@ class DatasetDCAT:
         logging.debug(f"Adding to graph {g.identifier}: {dataset} a type {DCAT.Dataset}")
 
         if self.title:
-            g.add((dataset, DCT.title, Literal(self.title)))
+            g.add((dataset, DCTERMS.title, Literal(self.title)))
         if self.description:
-            g.add((dataset, DCT.description, Literal(self.description)))
+            g.add((dataset, DCTERMS.description, Literal(self.description)))
         if self.issued:
             g.add((dataset, DCTERMS.issued, Literal(self.issued, datatype=DCTERMS.W3CDTF)))
         if self.identifier:
@@ -122,98 +151,270 @@ class DatasetDCAT:
         return g
 
 
-# Function to convert to DCAT-AP IT format
-def convert_to_dcat_ap_it(graph, catalog_uri):
-    g = graph
+# Define classes for DCAT-AP IT entities (Catalog, Dataset, Distribution, and ContactPoint)
 
-    # Bind DCATAPIT namespace to graph
-    g.bind("dcatapit", DCATAPIT)
-    g.bind("foaf", FOAF)
+class ContactPointIT:
+    def __init__(self, name=None, email=None, webpage=None):
+        self.name = name
+        self.email = email
+        self.webpage = webpage
 
-    # Create catalog and add it to the graph
-    catalog = URIRef(catalog_uri)
-    g.add((catalog, RDF.type, DCATAPIT.Catalog))
-    g.add((catalog, DCTERMS.title, Literal("Sebastien Catalog")))
-    g.add((catalog, DCTERMS.description, Literal("A catalog of Sebastien datasets")))
-    g.add((catalog, DCTERMS.modified, Literal(datetime.now().strftime("%Y-%m-%d"), datatype=DCTERMS.W3CDTF)))
+    def to_graph(self, g, parent):
+        contact_bnode = BNode()
+        g.add((parent, DCAT.contactPoint, contact_bnode))
+        g.add((contact_bnode, RDF.type, VCARD.Kind))
+        if self.name:
+            g.add((contact_bnode, VCARD.fn, Literal(self.name)))
+        if self.email:
+            g.add((contact_bnode, VCARD.hasEmail, URIRef(f"mailto:{self.email}")))
+        if self.webpage:
+            g.add((contact_bnode, VCARD.hasURL, URIRef(self.webpage)))
 
-    # Create catalog dct:publisher node
-    catalog_publisher_node = BNode()
-    g.add((catalog, DCTERMS.publisher, catalog_publisher_node))
-    g.add((catalog_publisher_node, RDF.type, FOAF.Agent))
-    g.add((catalog_publisher_node, RDF.type, DCATAPIT.Agent))
-    g.add((catalog_publisher_node, FOAF.name, Literal("CMCC Foundation")))
-    g.add((catalog_publisher_node, DCTERMS.identifier, Literal("XW88C90Q")))
-    g.add((catalog_publisher_node, FOAF.homepage, URIRef("https://www.cmcc.it")))
-    g.add((catalog_publisher_node, FOAF.mbox, URIRef("mailto:dds-support@cmcc.it")))
 
-    # Find all datasets in graph
-    for dataset_uri in g.subjects(RDF.type, DCAT.Dataset):
-        # Create dcatapit:Dataset node
-        dcatapit_dataset_node = BNode()
-        g.add((dcatapit_dataset_node, RDF.type, DCATAPIT.Dataset))
+class DistributionIT:
+    def __init__(self, uri, access_url=None, description=None, download_url=None,
+                 media_type=None, format=None, rights=None, license=None, identifier=None):
+        self.uri = uri
+        self.access_url = access_url
+        self.description = description
+        self.download_url = download_url
+        self.media_type = media_type
+        self.format = format
+        self.rights = rights
+        self.license = license
+        self.identifier = identifier
 
-        # Wrap existing dataset elements under dcatapit:Dataset
-        for s, p, o in g.triples((dataset_uri, None, None)):
-            if p != RDF.type:
-                g.remove((dataset_uri, p, o))
-                g.add((dcatapit_dataset_node, p, o))
+    def to_graph(self, g):
+        distribution = URIRef(self.uri)
+        g.add((distribution, RDF.type, DCATAPIT.Distribution))
+        if self.access_url:
+            g.add((distribution, DCAT.accessURL, URIRef(self.access_url)))
+        if self.description:
+            g.add((distribution, DCTERMS.description, Literal(self.description)))
+        if self.download_url:
+            g.add((distribution, DCAT.downloadURL, URIRef(self.download_url)))
+        if self.media_type:
+            g.add((distribution, DCTERMS.mediaType, URIRef(self.media_type)))
+        if self.format:
+            g.add((distribution, DCTERMS.format, URIRef(self.format)))
+        if self.rights:
+            rights_bnode = BNode()
+            g.add((distribution, DCTERMS.rights, rights_bnode))
+            g.add((rights_bnode, RDF.type, DCTERMS.RightsStatement))
+            g.add((rights_bnode, DCTERMS.rights, URIRef(self.rights)))
+        if self.license:
+            license_bnode = BNode()
+            g.add((distribution, DCTERMS.license, license_bnode))
+            g.add((license_bnode, RDF.type, DCTERMS.LicenseDocument))
+            g.add((license_bnode, DCTERMS.license, URIRef(self.license)))
+        if self.identifier:
+            g.add((distribution, DCTERMS.identifier, Literal(self.identifier)))
 
-        # Remove original dcat:Dataset node
-        g.remove((dataset_uri, RDF.type, DCAT.Dataset))
 
-        # Add new dcat:dataset relation to the catalog, pointing to the dcatapit:Dataset
-        g.add((catalog, DCAT.dataset, dcatapit_dataset_node))
+class DatasetDCATAPIT:
+    def __init__(self, uri, title=None, description=None, issued=None, identifier=None, contact_point=None):
+        self.uri = uri
+        self.title = title
+        self.description = description
+        self.issued = issued
+        self.identifier = identifier
+        self.contact_point = contact_point
+        self.distributions = []
 
-        # Add mandatory fields with placeholder values
-        g.add((dcatapit_dataset_node, DCAT.theme,
-               URIRef("http://publications.europa.eu/resource/authority/data-theme/AGRI")))
-        g.add((dcatapit_dataset_node, DCTERMS.rightsHolder, URIRef("https://www.cmcc.it/")))
-        # Add accrualPeriodicity based on dataset name
-        dataset_name = dataset_uri.split("/")[-1]
-        if dataset_name in ACCRUAL_PERIODICITY:
-            g.add((dcatapit_dataset_node, DCTERMS.accrualPeriodicity, URIRef(
-                f"http://publications.europa.eu/resource/authority/frequency/{ACCRUAL_PERIODICITY[dataset_name]}")))
-        else:
-            g.add((dcatapit_dataset_node, DCTERMS.accrualPeriodicity,
-                   URIRef("http://publications.europa.eu/resource/authority/frequency/UNKNOWN")))
+    def add_distribution(self, distribution):
+        self.distributions.append(distribution)
 
-        # Add publisher node to the dataset
-        dataset_publisher_node = BNode()
-        g.add((dcatapit_dataset_node, DCTERMS.publisher, dataset_publisher_node))
-        g.add((dataset_publisher_node, RDF.type, FOAF.Agent))
-        g.add((dataset_publisher_node, RDF.type, DCATAPIT.Agent))
-        g.add((dataset_publisher_node, FOAF.name, Literal("CMCC Foundation")))
-        g.add((dataset_publisher_node, DCTERMS.identifier, Literal("XW88C90Q")))
+    def to_graph(self, g):
+        dataset = URIRef(self.uri)
+        g.add((dataset, RDF.type, DCATAPIT.Dataset))
+        if self.title:
+            g.add((dataset, DCTERMS.title, Literal(self.title)))
+        if self.description:
+            g.add((dataset, DCTERMS.description, Literal(self.description)))
+        if self.issued:
+            g.add((dataset, DCTERMS.issued, Literal(self.issued, datatype=DCTERMS.W3CDTF)))
+        if self.identifier:
+            g.add((dataset, DCTERMS.identifier, Literal(self.identifier)))
 
-        # Handle distribution
-        for s, p, o in list(g.triples((dcatapit_dataset_node, DCAT.distribution, None))):
-            # Remove existing distribution triple
-            g.remove((s, p, o))
+        if self.contact_point:
+            self.contact_point.to_graph(g, dataset)
 
-            # Add new dcat:distribution with rdf:resource
-            g.add((dcatapit_dataset_node, DCAT.distribution, URIRef(dataset_uri)))
+        for dist in self.distributions:
+            distribution_uri = URIRef(dist.uri)
+            g.add((dataset, DCAT.distribution, distribution_uri))
 
-            # Create new dcatapit:Distribution outside the dataset
-            g.add((catalog, DCATAPIT.Distribution, URIRef(dataset_uri)))
-            g.add((URIRef(dataset_uri), RDF.type, DCATAPIT.Distribution))
-            g.add((URIRef(dataset_uri), DCAT.accessURL, URIRef(dataset_uri)))
-            g.add((URIRef(dataset_uri), DCTERMS.license,
-                   URIRef("http://publications.europa.eu/resource/authority/licence/OP_DATPRO")))
+        return g
 
-            # Add dct:format
-            if dataset_name == "iot-animal":
-                g.add((URIRef(dataset_uri), DCTERMS.format,
-                       URIRef("http://publications.europa.eu/resource/authority/file-type/CSV")))
-            else:
-                g.add((URIRef(dataset_uri), DCTERMS.format,
-                       URIRef("http://publications.europa.eu/resource/authority/file-type/PNG")))
 
-    # Remove any remaining dcat:Distribution nodes
-    for s in g.subjects(RDF.type, DCAT.Distribution):
-        g.remove((s, None, None))
+class CatalogIT:
+    def __init__(self, uri, title, description, modified, publisher_name, publisher_identifier, publisher_homepage,
+                 publisher_email, dataset_uris=None):
+        self.uri = uri
+        self.title = title
+        self.description = description
+        self.modified = modified
+        self.publisher_name = publisher_name
+        self.publisher_identifier = publisher_identifier
+        self.publisher_homepage = publisher_homepage
+        self.publisher_email = publisher_email
+        self.dataset_uris = dataset_uris if dataset_uris is not None else []
 
-    return g
+    def add_dataset(self, dataset_uri):
+        self.dataset_uris.append(dataset_uri)
+
+    def to_graph(self, g):
+        catalog = URIRef(self.uri)
+        g.add((catalog, RDF.type, DCATAPIT.Catalog))
+        g.add((catalog, DCTERMS.title, Literal(self.title)))
+        g.add((catalog, DCTERMS.description, Literal(self.description)))
+        g.add((catalog, DCTERMS.modified, Literal(self.modified, datatype=DCTERMS.W3CDTF)))
+
+        catalog_publisher_node = BNode()
+        g.add((catalog, DCTERMS.publisher, catalog_publisher_node))
+        g.add((catalog_publisher_node, RDF.type, FOAF.Agent))
+        g.add((catalog_publisher_node, RDF.type, DCATAPIT.Agent))
+        g.add((catalog_publisher_node, FOAF.name, Literal(self.publisher_name)))
+        g.add((catalog_publisher_node, DCTERMS.identifier, Literal(self.publisher_identifier)))
+        g.add((catalog_publisher_node, FOAF.homepage, URIRef(self.publisher_homepage)))
+        g.add((catalog_publisher_node, FOAF.mbox, URIRef(f"mailto:{self.publisher_email}")))
+
+        for dataset_uri in self.dataset_uris:
+            g.add((catalog, DCAT.dataset, URIRef(dataset_uri)))
+
+        return g
+
+    # Function to convert to DCAT-AP IT format
+
+
+def convert_to_dcat_ap_it(data, url):
+    # Create separate graphs
+    catalog_graph = Graph()
+    datasets_graph = Graph()
+    distributions_graph = Graph()
+
+    # Bind namespaces to all graphs
+    for g in [catalog_graph, datasets_graph, distributions_graph]:
+        g.bind("dcatapit", DCATAPIT)
+        g.bind("foaf", FOAF)
+        g.bind("dcat", DCAT)
+        g.bind("dct", DCT)
+        g.bind("vcard", VCARD)
+        g.bind("rdf", RDF)
+
+    # Create catalog
+    catalog_uri = URIRef(url)
+    catalog_graph.add((catalog_uri, RDF.type, DCATAPIT.Catalog))
+    catalog_graph.add((catalog_uri, DCTERMS.title, Literal("Sebastien Catalog")))
+    catalog_graph.add((catalog_uri, DCTERMS.description, Literal("A catalog of Sebastien datasets")))
+    catalog_graph.add(
+        (catalog_uri, DCTERMS.language, URIRef("http://publications.europa.eu/resource/authority/language/ITA")))
+    catalog_graph.add(
+        (catalog_uri, DCTERMS.modified, Literal(datetime.now().strftime("%Y-%m-%d"), datatype=DCTERMS.W3CDTF)))
+
+    # Add publisher information
+    publisher = BNode()
+    catalog_graph.add((catalog_uri, DCTERMS.publisher, publisher))
+    catalog_graph.add((publisher, RDF.type, FOAF.Agent))
+    catalog_graph.add((publisher, RDF.type, DCATAPIT.Agent))
+    catalog_graph.add((publisher, FOAF.name, Literal("CMCC Foundation")))
+    catalog_graph.add((publisher, DCTERMS.identifier, Literal("XW88C90Q")))
+    catalog_graph.add((publisher, FOAF.homepage, URIRef("https://www.cmcc.it")))
+    catalog_graph.add((publisher, FOAF.mbox, URIRef("mailto:dds-support@cmcc.it")))
+
+    for dataset in data:
+        if "dataset" not in dataset:
+            dataset = {"dataset": dataset}
+        dataset_id = dataset.get("dataset", {}).get("metadata", {}).get("id")
+        dataset_uri = URIRef(f'{url}/{dataset_id}')
+
+        # Add dataset reference to catalog
+        catalog_graph.add((catalog_uri, DCAT.dataset, dataset_uri))
+
+        # Create dataset
+        datasets_graph.add((dataset_uri, RDF.type, DCATAPIT.Dataset))
+        datasets_graph.add((dataset_uri, RDF.type, DCAT.Dataset))
+        datasets_graph.add(
+            (dataset_uri, DCTERMS.title, Literal(dataset.get("dataset", {}).get("metadata", {}).get("label"))))
+        datasets_graph.add((dataset_uri, DCTERMS.description,
+                            Literal(dataset.get("dataset", {}).get("metadata", {}).get("description"))))
+        datasets_graph.add((dataset_uri, DCTERMS.issued,
+                            Literal(dataset.get("dataset", {}).get("metadata", {}).get("publication_date"),
+                                    datatype=DCTERMS.W3CDTF)))
+        datasets_graph.add((dataset_uri, DCTERMS.identifier, Literal(f"XW88C90Q:{dataset_id}")))
+        # Add dct:modified, dcat:theme, dct:rightsHolder and dct:accrualPeriodicity
+        datasets_graph.add(
+            (dataset_uri, DCTERMS.modified, Literal(datetime.now().strftime("%Y-%m-%d"), datatype=DCTERMS.W3CDTF)))
+        datasets_graph.add(
+            (dataset_uri, DCAT.theme, URIRef("http://publications.europa.eu/resource/authority/data-theme/AGRI")))
+        datasets_graph.add((dataset_uri, DCTERMS.accrualPeriodicity, URIRef(
+            f"http://publications.europa.eu/resource/authority/frequency/{ACCRUAL_PERIODICITY.get(dataset_id)}")))
+        # Add publisher info on dataset
+        publisher_dataset = BNode()
+        datasets_graph.add((dataset_uri, DCTERMS.publisher, publisher_dataset))
+        datasets_graph.add((publisher_dataset, RDF.type, FOAF.Agent))
+        datasets_graph.add((publisher_dataset, RDF.type, DCATAPIT.Agent))
+        datasets_graph.add((publisher_dataset, FOAF.name, Literal("CMCC Foundation")))
+        datasets_graph.add((publisher_dataset, DCTERMS.identifier, Literal("XW88C90Q")))
+        # Add rights holder BNode
+        rights_holder = BNode()
+        datasets_graph.add((dataset_uri, DCTERMS.rightsHolder, rights_holder))
+        datasets_graph.add((rights_holder, DCATAPIT.Agent, URIRef("XW88C90Q")))
+        datasets_graph.add((rights_holder, FOAF.name, Literal("CMCC Foundation")))
+
+        # Add contact point
+        contact = dataset.get("dataset", {}).get("metadata", {}).get("contact")
+        contact_point = BNode()
+        datasets_graph.add((dataset_uri, DCAT.contactPoint, contact_point))
+        datasets_graph.add((contact_point, RDF.type, VCARD.Kind))
+        datasets_graph.add((contact_point, VCARD.fn, Literal(contact.get("name"))))
+        datasets_graph.add((contact_point, VCARD.hasEmail, URIRef(f"mailto:{contact.get('email')}")))
+        datasets_graph.add((contact_point, VCARD.hasURL, URIRef(contact.get("webpage"))))
+
+        # Create distribution
+        # products = dataset.get("dataset", {}).get("metadata", {}).get("products", {}).get("monthly", {})
+        distribution_uri = URIRef(f'{url}/{dataset_id}')
+        datasets_graph.add((dataset_uri, DCAT.distribution, distribution_uri))
+        distributions_graph.add((distribution_uri, RDF.type, DCAT.Distribution))
+        distributions_graph.add((distribution_uri, DCAT.accessURL, distribution_uri))
+        distributions_graph.add((distribution_uri, DCTERMS.description,
+                                 Literal(dataset.get("dataset", {}).get("metadata", {}).get("description"))))
+        license_uri = URIRef("https://w3id.org/italia/controlled-vocabulary/licences/A21_CCBY40")
+        license_document = BNode()
+        distributions_graph.add((distribution_uri, DCTERMS.license, license_document))
+        distributions_graph.add((license_document, RDF.type, DCT.LicenseDocument))
+        distributions_graph.add(
+            (license_document, DCTERMS.type, URIRef("http://purl.org/adms/licencetype/Attribution")))
+        distributions_graph.add(
+            (license_document, FOAF.name, Literal("Creative Commons Attribuzione 4.0 Internazionale (CC BY 4.0)")))
+        distributions_graph.add((distribution_uri, DCTERMS.format,
+                                 URIRef("http://publications.europa.eu/resource/authority/file-type/JSON")))
+        distributions_graph.add((distribution_uri, RDF.type, DCATAPIT.Distribution))
+
+    return catalog_graph, datasets_graph, distributions_graph
+
+
+def serialize_and_concatenate_graphs(catalog_graph, datasets_graph, distributions_graph):
+    # Serialize each graph to a string
+    catalog_str = catalog_graph.serialize(format='pretty-xml')
+    datasets_str = datasets_graph.serialize(format='pretty-xml')
+    distributions_str = distributions_graph.serialize(format='pretty-xml')
+
+    # Remove XML headers and opening <rdf:RDF> tags from datasets and distributions strings
+    datasets_str = re.sub(r'<\?xml[^>]+\?>', '', datasets_str)
+    datasets_str = re.sub(r'<rdf:RDF[^>]*>', '', datasets_str, count=1).rsplit('</rdf:RDF>', 1)[0]
+    distributions_str = re.sub(r'<\?xml[^>]+\?>', '', distributions_str)
+    distributions_str = re.sub(r'<rdf:RDF[^>]*>', '', distributions_str, count=1).rsplit('</rdf:RDF>', 1)[0]
+
+    # Concatenate the strings
+    final_str = catalog_str.rsplit('</rdf:RDF>', 1)[0] + datasets_str + distributions_str + '</rdf:RDF>'
+
+    # Manually add the vcard namespace declaration
+    final_str = final_str.replace(
+        '<rdf:RDF',
+        '<rdf:RDF xmlns:vcard="http://www.w3.org/2006/vcard/ns#"'
+    )
+
+    return final_str
 
 
 def convert_to_dcat_ap(data, url):

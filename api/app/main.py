@@ -6,7 +6,7 @@ from typing import Optional, Dict
 from datetime import datetime
 
 from oai_dcat.metadata_provider import BASE_URL
-from oai_dcat.oai_utils import convert_to_dcat_ap, convert_to_dcat_ap_it
+from oai_dcat.oai_utils import serialize_and_concatenate_graphs, convert_to_dcat_ap_it
 from fastapi import FastAPI, HTTPException, Request, status, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.authentication import AuthenticationMiddleware
@@ -675,8 +675,8 @@ async def dcatapit(request: Request):
     data = dataset_handler.get_datasets(
             user_roles_names=request.auth.scopes
         )
-    dcatap_graph = convert_to_dcat_ap(data, BASE_URL)
-    dcatapit_graph = convert_to_dcat_ap_it(dcatap_graph, BASE_URL)
-    response = dcatapit_graph.serialize(format='pretty-xml')
+    catalog_graph, datasets_graph, distributions_graph = convert_to_dcat_ap_it(data, BASE_URL)
+    # response = dcatapit_graph.serialize(format='pretty-xml')
+    response = serialize_and_concatenate_graphs(catalog_graph, datasets_graph, distributions_graph)
 
     return Response(content=response, media_type="text/xml")
