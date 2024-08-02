@@ -1,6 +1,6 @@
 import re
 from rdflib import Graph, Literal, Namespace, RDF, URIRef, BNode
-from rdflib.namespace import DCAT, DCTERMS, FOAF, RDF
+from rdflib.namespace import DCAT, DCTERMS, FOAF, RDF, XSD
 import logging
 from datetime import datetime
 
@@ -291,15 +291,19 @@ def convert_to_dcat_ap_it(data, url):
     catalog_graph = Graph()
     datasets_graph = Graph()
     distributions_graph = Graph()
+    vcard_graph = Graph()
 
     # Bind namespaces to all graphs
-    for g in [catalog_graph, datasets_graph, distributions_graph]:
+    for g in [catalog_graph, datasets_graph, distributions_graph, vcard_graph]:
         g.bind("dcatapit", DCATAPIT)
         g.bind("foaf", FOAF)
         g.bind("dcat", DCAT)
         g.bind("dct", DCT)
         g.bind("vcard", VCARD)
         g.bind("rdf", RDF)
+
+    # Contact point URI
+    contact_point_uri = URIRef("https://www.cmcc.it")
 
     # Create catalog
     catalog_uri = URIRef(url)
@@ -308,8 +312,7 @@ def convert_to_dcat_ap_it(data, url):
     catalog_graph.add((catalog_uri, DCTERMS.description, Literal("A catalog of Sebastien datasets")))
     catalog_graph.add(
         (catalog_uri, DCTERMS.language, URIRef("http://publications.europa.eu/resource/authority/language/ITA")))
-    catalog_graph.add(
-        (catalog_uri, DCTERMS.modified, Literal(datetime.now().strftime("%Y-%m-%d"), datatype=DCTERMS.W3CDTF)))
+    catalog_graph.add((catalog_uri, DCTERMS.modified, Literal(datetime.now(), datatype=XSD.date)))
 
     # Add publisher information
     publisher = BNode()
@@ -337,13 +340,12 @@ def convert_to_dcat_ap_it(data, url):
             (dataset_uri, DCTERMS.title, Literal(dataset.get("dataset", {}).get("metadata", {}).get("label"))))
         datasets_graph.add((dataset_uri, DCTERMS.description,
                             Literal(dataset.get("dataset", {}).get("metadata", {}).get("description"))))
-        datasets_graph.add((dataset_uri, DCTERMS.issued,
-                            Literal(dataset.get("dataset", {}).get("metadata", {}).get("publication_date"),
-                                    datatype=DCTERMS.W3CDTF)))
+        datasets_graph.add((dataset_uri, DCTERMS.issued, Literal(
+            datetime.strptime(dataset.get("dataset", {}).get("metadata", {}).get("publication_date"), '%Y-%m-%d'),
+            datatype=XSD.date)))
         datasets_graph.add((dataset_uri, DCTERMS.identifier, Literal(f"XW88C90Q:{dataset_id}")))
         # Add dct:modified, dcat:theme, dct:rightsHolder and dct:accrualPeriodicity
-        datasets_graph.add(
-            (dataset_uri, DCTERMS.modified, Literal(datetime.now().strftime("%Y-%m-%d"), datatype=DCTERMS.W3CDTF)))
+        datasets_graph.add((dataset_uri, DCTERMS.modified, Literal(datetime.now(), datatype=XSD.date)))
         datasets_graph.add(
             (dataset_uri, DCAT.theme, URIRef("http://publications.europa.eu/resource/authority/data-theme/AGRI")))
         datasets_graph.add((dataset_uri, DCTERMS.accrualPeriodicity, URIRef(
@@ -356,19 +358,16 @@ def convert_to_dcat_ap_it(data, url):
         datasets_graph.add((publisher_dataset, FOAF.name, Literal("CMCC Foundation")))
         datasets_graph.add((publisher_dataset, DCTERMS.identifier, Literal("XW88C90Q")))
         # Add rights holder BNode
-        rights_holder = BNode()
-        datasets_graph.add((dataset_uri, DCTERMS.rightsHolder, rights_holder))
-        datasets_graph.add((rights_holder, DCATAPIT.Agent, URIRef("XW88C90Q")))
-        datasets_graph.add((rights_holder, FOAF.name, Literal("CMCC Foundation")))
+        rights_holder_uri = BNode()
+        datasets_graph.add((dataset_uri, DCTERMS.rightsHolder, rights_holder_uri))
+        datasets_graph.add((rights_holder_uri, RDF.type, DCATAPIT.Agent))
+        datasets_graph.add((rights_holder_uri, RDF.type, FOAF.Agent))
+        datasets_graph.add((rights_holder_uri, DCTERMS.identifier, Literal("XW88C90Q")))
+        datasets_graph.add((rights_holder_uri, FOAF.name, Literal("CMCC Foundation")))
 
         # Add contact point
         contact = dataset.get("dataset", {}).get("metadata", {}).get("contact")
-        contact_point = BNode()
-        datasets_graph.add((dataset_uri, DCAT.contactPoint, contact_point))
-        datasets_graph.add((contact_point, RDF.type, VCARD.Kind))
-        datasets_graph.add((contact_point, VCARD.fn, Literal(contact.get("name"))))
-        datasets_graph.add((contact_point, VCARD.hasEmail, URIRef(f"mailto:{contact.get('email')}")))
-        datasets_graph.add((contact_point, VCARD.hasURL, URIRef(contact.get("webpage"))))
+        datasets_graph.add((dataset_uri, DCAT.contactPoint, contact_point_uri))
 
         # Create distribution
         # products = dataset.get("dataset", {}).get("metadata", {}).get("products", {}).get("monthly", {})
@@ -381,7 +380,7 @@ def convert_to_dcat_ap_it(data, url):
         license_uri = URIRef("https://w3id.org/italia/controlled-vocabulary/licences/A21_CCBY40")
         license_document = BNode()
         distributions_graph.add((distribution_uri, DCTERMS.license, license_document))
-        distributions_graph.add((license_document, RDF.type, DCT.LicenseDocument))
+        distributions_graph.add((license_document, RDF.type, DCATAPIT.LicenseDocument))
         distributions_graph.add(
             (license_document, DCTERMS.type, URIRef("http://purl.org/adms/licencetype/Attribution")))
         distributions_graph.add(
@@ -390,23 +389,36 @@ def convert_to_dcat_ap_it(data, url):
                                  URIRef("http://publications.europa.eu/resource/authority/file-type/JSON")))
         distributions_graph.add((distribution_uri, RDF.type, DCATAPIT.Distribution))
 
-    return catalog_graph, datasets_graph, distributions_graph
+    # Create vcard:Organization node
+    contact = dataset.get("dataset", {}).get("metadata", {}).get("contact")
+    vcard_graph.add((contact_point_uri, RDF.type, VCARD.Organization))
+    vcard_graph.add((contact_point_uri, RDF.type, URIRef("http://dati.gov.it/onto/dcatapit#Organization")))
+    vcard_graph.add((contact_point_uri, RDF.type, URIRef("http://xmlns.com/foaf/0.1/Organization")))
+    vcard_graph.add((contact_point_uri, RDF.type, URIRef("http://www.w3.org/2006/vcard/ns#Kind")))
+    vcard_graph.add((contact_point_uri, VCARD.fn, Literal(contact.get("name"))))
+    vcard_graph.add((contact_point_uri, VCARD.hasEmail, URIRef(f"mailto:{contact.get('email')}")))
+    vcard_graph.add((contact_point_uri, VCARD.hasURL, URIRef(contact.get("webpage"))))
+
+    return catalog_graph, datasets_graph, distributions_graph, vcard_graph
 
 
-def serialize_and_concatenate_graphs(catalog_graph, datasets_graph, distributions_graph):
+def serialize_and_concatenate_graphs(catalog_graph, datasets_graph, distributions_graph, vcard_graph):
     # Serialize each graph to a string
     catalog_str = catalog_graph.serialize(format='pretty-xml')
     datasets_str = datasets_graph.serialize(format='pretty-xml')
     distributions_str = distributions_graph.serialize(format='pretty-xml')
+    vcard_str = vcard_graph.serialize(format='pretty-xml')
 
-    # Remove XML headers and opening <rdf:RDF> tags from datasets and distributions strings
+    # Remove XML headers and opening <rdf:RDF> tags from datasets and distributions and vcard strings
     datasets_str = re.sub(r'<\?xml[^>]+\?>', '', datasets_str)
     datasets_str = re.sub(r'<rdf:RDF[^>]*>', '', datasets_str, count=1).rsplit('</rdf:RDF>', 1)[0]
     distributions_str = re.sub(r'<\?xml[^>]+\?>', '', distributions_str)
     distributions_str = re.sub(r'<rdf:RDF[^>]*>', '', distributions_str, count=1).rsplit('</rdf:RDF>', 1)[0]
+    vcard_str = re.sub(r'<\?xml[^>]+\?>', '', vcard_str)
+    vcard_str = re.sub(r'<rdf:RDF[^>]*>', '', vcard_str, count=1).rsplit('</rdf:RDF>', 1)[0]
 
     # Concatenate the strings
-    final_str = catalog_str.rsplit('</rdf:RDF>', 1)[0] + datasets_str + distributions_str + '</rdf:RDF>'
+    final_str = catalog_str.rsplit('</rdf:RDF>', 1)[0] + datasets_str + distributions_str + vcard_str + '</rdf:RDF>'
 
     # Manually add the vcard namespace declaration
     final_str = final_str.replace(
