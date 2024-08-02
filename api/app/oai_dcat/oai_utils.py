@@ -341,7 +341,7 @@ def convert_to_dcat_ap_it(data, url):
         datasets_graph.add((dataset_uri, DCTERMS.description,
                             Literal(dataset.get("dataset", {}).get("metadata", {}).get("description"))))
         datasets_graph.add((dataset_uri, DCTERMS.issued, Literal(
-            datetime.strptime(dataset.get("dataset", {}).get("metadata", {}).get("publication_date"), '%Y-%m-%d'),
+            datetime.strptime(str(dataset.get("dataset", {}).get("metadata", {}).get("publication_date")), '%Y-%m-%d'),
             datatype=XSD.date)))
         datasets_graph.add((dataset_uri, DCTERMS.identifier, Literal(f"XW88C90Q:{dataset_id}")))
         # Add dct:modified, dcat:theme, dct:rightsHolder and dct:accrualPeriodicity
