@@ -1,0 +1,1 @@
+*/10 * * * * bash -c '/opt/healtcheck.sh'

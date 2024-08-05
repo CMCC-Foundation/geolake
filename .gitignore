@@ -112,3 +112,4 @@ venv.bak/
 _catalogs/
 _old/
 
+.DS_Store
