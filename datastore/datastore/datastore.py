@@ -50,7 +50,7 @@ class Datastore(metaclass=Singleton):
 
     @log_execution_time(_LOG)
     def get_cached_product_or_read(
-        self, dataset_id: str, product_id: str, query: GeoQuery | None = None
+        self, dataset_id: str, product_id: str,
     ) -> DataCube | Dataset:
         """Get product from the cache instead of loading files indicated in
         the catalog if `metadata_caching` set to `True`.
@@ -81,7 +81,7 @@ class Datastore(metaclass=Singleton):
             )
             return self.catalog(CACHE_DIR=self.cache_dir)[dataset_id][
                 product_id
-            ].get(geoquery=query, compute=False).read_chunked()
+            ].read_chunked()
         return self.cache[dataset_id][product_id]
 
     @log_execution_time(_LOG)
@@ -391,8 +391,7 @@ class Datastore(metaclass=Singleton):
         # NOTE: we always use catalog directly and single product cache
         self._LOG.debug("loading product...")
         # NOTE: for estimation we use cached products
-        kube = self.get_cached_product_or_read(dataset_id, product_id, 
-                                               query=query)
+        kube = self.get_cached_product_or_read(dataset_id, product_id)
         self._LOG.debug("original kube len: %s", len(kube))
         return Datastore._process_query(kube, geoquery, False).nbytes
 
