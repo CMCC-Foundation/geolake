@@ -308,10 +308,12 @@ def convert_to_dcat_ap_it(data, url):
     # Create catalog
     catalog_uri = URIRef(url)
     catalog_graph.add((catalog_uri, RDF.type, DCATAPIT.Catalog))
+    catalog_graph.add((catalog_uri, RDF.type, DCAT.Catalog))
     catalog_graph.add((catalog_uri, DCTERMS.title, Literal("Sebastien Catalog")))
     catalog_graph.add((catalog_uri, DCTERMS.description, Literal("A catalog of Sebastien datasets")))
+    catalog_graph.add((catalog_uri, FOAF.homepage, Literal(url)))
     catalog_graph.add(
-        (catalog_uri, DCTERMS.language, URIRef("http://publications.europa.eu/resource/authority/language/ITA")))
+        (catalog_uri, DCTERMS.language, Literal("http://publications.europa.eu/resource/authority/language/ITA")))
     catalog_graph.add((catalog_uri, DCTERMS.modified, Literal(datetime.now(), datatype=XSD.date)))
 
     # Add publisher information
@@ -324,11 +326,11 @@ def convert_to_dcat_ap_it(data, url):
     catalog_graph.add((publisher, FOAF.homepage, URIRef("https://www.cmcc.it")))
     catalog_graph.add((publisher, FOAF.mbox, URIRef("mailto:dds-support@cmcc.it")))
 
-    for dataset in data:
+    for i, dataset in enumerate(data, 1):
         if "dataset" not in dataset:
             dataset = {"dataset": dataset}
         dataset_id = dataset.get("dataset", {}).get("metadata", {}).get("id")
-        dataset_uri = URIRef(f'{url}/{dataset_id}')
+        dataset_uri = URIRef(f'{url}/{i}')
 
         # Add dataset reference to catalog
         catalog_graph.add((catalog_uri, DCAT.dataset, dataset_uri))
@@ -344,6 +346,8 @@ def convert_to_dcat_ap_it(data, url):
             datetime.strptime(str(dataset.get("dataset", {}).get("metadata", {}).get("publication_date")), '%Y-%m-%d'),
             datatype=XSD.date)))
         datasets_graph.add((dataset_uri, DCTERMS.identifier, Literal(f"XW88C90Q:{dataset_id}")))
+        datasets_graph.add(
+            (dataset_uri, DCTERMS.language, Literal("http://publications.europa.eu/resource/authority/language/ITA")))
         # Add dct:modified, dcat:theme, dct:rightsHolder and dct:accrualPeriodicity
         datasets_graph.add((dataset_uri, DCTERMS.modified, Literal(datetime.now(), datatype=XSD.date)))
         datasets_graph.add(
@@ -375,6 +379,8 @@ def convert_to_dcat_ap_it(data, url):
         datasets_graph.add((dataset_uri, DCAT.distribution, distribution_uri))
         distributions_graph.add((distribution_uri, RDF.type, DCAT.Distribution))
         distributions_graph.add((distribution_uri, DCAT.accessURL, distribution_uri))
+        distributions_graph.add((distribution_uri, DCTERMS.title,
+                                 Literal(dataset.get("dataset", {}).get("metadata", {}).get("description"))))
         distributions_graph.add((distribution_uri, DCTERMS.description,
                                  Literal(dataset.get("dataset", {}).get("metadata", {}).get("description"))))
         license_uri = URIRef("https://w3id.org/italia/controlled-vocabulary/licences/A21_CCBY40")

@@ -679,4 +679,4 @@ async def dcatapit(request: Request):
     # response = dcatapit_graph.serialize(format='pretty-xml')
     response = serialize_and_concatenate_graphs(catalog_graph, datasets_graph, distributions_graph, vcard_graph)
 
-    return Response(content=response, media_type="text/xml")
+    return Response(content=response, media_type="application/rdf+xml")
