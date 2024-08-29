@@ -11,7 +11,8 @@ ACCRUAL_PERIODICITY = {
     "pasture": "BIWEEKLY",
     "pi": "DAILY",
     "pi-long-term": "AS_NEEDED",
-    "thi": "DAILY"
+    "thi": "DAILY",
+    "iot-environmental" : "IRREG"
 }
 
 # Logging config

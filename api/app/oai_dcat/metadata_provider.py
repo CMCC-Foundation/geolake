@@ -9,7 +9,7 @@ import logging
 import exceptions as exc
 from endpoint_handlers import dataset_handler
 
-BASE_URL = "https://sebastien-datalake.cmcc.it/api/v2/datasets/"
+BASE_URL = "https://sebastien-datalake.cmcc.it/api/v2/datasets"
 
 # Logging config
 logging.basicConfig(level=logging.DEBUG)

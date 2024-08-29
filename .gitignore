@@ -113,3 +113,4 @@ _catalogs/
 _old/
 
 .DS_Store
+db_init
