@@ -315,7 +315,7 @@ def convert_to_dcat_ap_it(data, url):
     catalog_graph.add((catalog_uri, FOAF.homepage, Literal(url)))
     catalog_graph.add(
         (catalog_uri, DCTERMS.language, Literal("http://publications.europa.eu/resource/authority/language/ITA")))
-    catalog_graph.add((catalog_uri, DCTERMS.modified, Literal(datetime.now(), datatype=XSD.date)))
+    catalog_graph.add((catalog_uri, DCTERMS.modified, Literal(datetime.now(), datatype=XSD.dateTime)))
 
     # Add publisher information
     publisher = BNode()
@@ -345,12 +345,12 @@ def convert_to_dcat_ap_it(data, url):
                             Literal(dataset.get("dataset", {}).get("metadata", {}).get("description"))))
         datasets_graph.add((dataset_uri, DCTERMS.issued, Literal(
             datetime.strptime(str(dataset.get("dataset", {}).get("metadata", {}).get("publication_date")), '%Y-%m-%d'),
-            datatype=XSD.date)))
+            datatype=XSD.dateTime)))
         datasets_graph.add((dataset_uri, DCTERMS.identifier, Literal(f"XW88C90Q:{dataset_id}")))
         datasets_graph.add(
             (dataset_uri, DCTERMS.language, Literal("http://publications.europa.eu/resource/authority/language/ITA")))
         # Add dct:modified, dcat:theme, dct:rightsHolder and dct:accrualPeriodicity
-        datasets_graph.add((dataset_uri, DCTERMS.modified, Literal(datetime.now(), datatype=XSD.date)))
+        datasets_graph.add((dataset_uri, DCTERMS.modified, Literal(datetime.now(), datatype=XSD.dateTime)))
         datasets_graph.add(
             (dataset_uri, DCAT.theme, URIRef("http://publications.europa.eu/resource/authority/data-theme/AGRI")))
         datasets_graph.add((dataset_uri, DCTERMS.accrualPeriodicity, URIRef(
