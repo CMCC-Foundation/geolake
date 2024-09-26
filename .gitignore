@@ -114,3 +114,5 @@ _old/
 
 .DS_Store
 db_init
+*.zarr
+*.nc
