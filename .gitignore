@@ -113,3 +113,6 @@ _catalogs/
 _old/
 
 .DS_Store
+*.zarr
+*.nc
+db_init
