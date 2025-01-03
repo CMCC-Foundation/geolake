@@ -120,6 +120,9 @@ def persist_datacube(
         case "geojson":
             full_path = os.path.join(base_path, f"{path}.json")
             kube.to_geojson(full_path)
+        case "zarr":
+            full_path = os.path.join(base_path, f"{path}.zarr")
+            kube.to_zarr(full_path, mode='w', consolidated=True)
         case _:
             raise ValueError(f"format `{format}` is not supported")
     return full_path
