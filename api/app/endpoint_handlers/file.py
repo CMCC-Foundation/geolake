@@ -1,8 +1,17 @@
 """Module with functions to handle file related endpoints"""
+import io
 import os
+import zipfile
+from pathlib import Path
+from zipfile import ZipFile
 
 from fastapi.responses import FileResponse
+
+
 from dbmanager.dbmanager import DBManager, RequestStatus
+from starlette.requests import Request
+from starlette.responses import HTMLResponse, RedirectResponse, StreamingResponse
+from starlette.staticfiles import StaticFiles
 
 from utils.api_logging import get_dds_logger
 from utils.metrics import log_execution_time
@@ -10,9 +19,8 @@ import exceptions as exc
 
 log = get_dds_logger(__name__)
 
-
 @log_execution_time(log)
-def download_request_result(request_id: int):
+def download_request_result(request_id: int, filename: str = None):
     """Realize the logic for the endpoint:
 
     `GET /download/{request_id}`
@@ -60,7 +68,15 @@ def download_request_result(request_id: int):
             download_details.location_path,
         )
         raise FileNotFoundError
-    return FileResponse(
-        path=download_details.location_path,
-        filename=download_details.location_path.split(os.sep)[-1],
-    )
+
+    if download_details.location_path.endswith(".zarr"):
+        log.info("Zarr detected")
+        return FileResponse(
+            path=f'{download_details.location_path}/{filename}',
+            filename=filename,
+        )
+    else:
+        return FileResponse(
+            path=download_details.location_path,
+            filename=download_details.location_path.split(os.sep)[-1],
+        )
