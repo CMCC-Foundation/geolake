@@ -116,3 +116,6 @@ _old/
 *.zarr
 *.nc
 db_init
+catalog
+docker-compose.yaml
+nginx.conf
