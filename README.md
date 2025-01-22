@@ -1,5 +1,3 @@
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10598417.svg)](https://doi.org/10.5281/zenodo.10598417)
-
 # geolake
 
 ## Description
@@ -12,13 +10,14 @@ The system has been designed using a cloud-native architecture, based on contain
 
 It uses [geokube](https://github.com/CMCC-Foundation/geokube) as an Analytics Engine to perform geospatial operations.
 
-## Authors
+## Developer Team
 
-**Project Lead**:
-[Marco Mancini](https://github.com/km4rcus)
+- [Valentina Scardigno](https://github.com/vale95-eng)
+- [Gabriele Tramonte](https://github.com/gtramonte)
 
-**Main Developers**
+### Former Developers
+
+- [Marco Mancini](https://github.com/km4rcus)
 - [Jakub Walczak](https://github.com/jamesWalczak)
 - [Mirko Stojiljkovic](https://github.com/MMStojiljkovic)
-- [Valentina Scardigno](https://github.com/vale95-eng)
 
