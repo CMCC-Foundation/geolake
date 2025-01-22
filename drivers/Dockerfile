@@ -4,6 +4,6 @@ ARG REGISTRY=rg.fr-par.scw.cloud/geokube
 ARG TAG=v0.2.7.1
 FROM $REGISTRY/geokube:$TAG
 
-COPY dist/intake_geokube-0.1a0-py3-none-any.whl /
-RUN pip install /intake_geokube-0.1a0-py3-none-any.whl --break-system-packages
-RUN rm /intake_geokube-0.1a0-py3-none-any.whl
+ADD . /opt/intake_geokube
+RUN pip install /opt/intake_geokube --break-system-packages
+RUN rm -rf /opt/intake_geokube
