@@ -458,6 +458,9 @@ class Datastore(metaclass=Singleton):
             else:
                 method = "nearest"
             kube = kube.sel(vertical=vertical, method=method)
+        if query.resample:
+            Datastore._LOG.debug("Applying resample...")
+            kube = kube.resample(**query.resample)
         return kube.compute() if compute else kube
 
     @staticmethod

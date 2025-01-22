@@ -1,4 +1,5 @@
 import os
+import tempfile
 import time
 import datetime
 import pika
@@ -129,6 +130,9 @@ def persist_datacube(
         case "csv":
             full_path = os.path.join(base_path, f"{path}.csv")
             kube.to_csv(full_path)
+        case "zarr":
+            full_path = os.path.join(base_path, f"{path}.zarr")
+            kube.to_zarr(full_path, mode='w', consolidated=True)
         case _:
             raise ValueError(f"format `{format}` is not supported")
     return full_path
@@ -477,6 +481,7 @@ if __name__ == "__main__":
     dask_cluster_opts["n_workers"] = int(os.getenv("DASK_N_WORKERS", 1))
     dask_cluster_opts["memory_limit"] = os.getenv("DASK_MEMORY_LIMIT", "auto")
     dask_cluster_opts['thread_per_worker'] = int(os.getenv("DASK_THREADS_PER_WORKER", 8))
+    dask_cluster_opts['local_directory'] = os.getenv("LOCAL_DIR", tempfile.mkdtemp(f'{os.uname()[1]}'))
 
 
     executor = Executor(broker=broker, store_path=store_path, dask_cluster_opts=dask_cluster_opts)

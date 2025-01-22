@@ -113,6 +113,9 @@ _catalogs/
 _old/
 
 .DS_Store
-db_init
 *.zarr
 *.nc
+db_init
+catalog
+docker-compose.yaml
+nginx.conf

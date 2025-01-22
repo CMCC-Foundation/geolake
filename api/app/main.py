@@ -680,3 +680,51 @@ async def dcatapit(request: Request):
     response = serialize_and_concatenate_graphs(catalog_graph, datasets_graph, distributions_graph, vcard_graph)
 
     return Response(content=response, media_type="application/rdf+xml")
+@app.get("/download/{request_id}/{filename}", tags=[tags.REQUEST])
+@timer(
+    app.state.api_request_duration_seconds,
+    labels={"route": "GET /download/{request_id}/{filename}"},
+)
+# @requires([scopes.AUTHENTICATED]) # TODO: mange download auth in the web component
+async def download_request_result(
+    request: Request,
+    request_id: int,
+    filename: str,
+):
+    """Download result of the request"""
+    app.state.api_http_requests_total.inc(
+        {"route": "GET /download/{request_id}/{filename}"}
+    )
+    try:
+        return file_handler.download_request_result(request_id=request_id, filename=filename)
+    except exc.BaseDDSException as err:
+        raise err.wrap_around_http_exception() from err
+    except FileNotFoundError as err:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="File was not found!"
+        ) from err
+
+@app.get("/download/{request_id}/{filename}/{subfile}", tags=[tags.REQUEST])
+@timer(
+    app.state.api_request_duration_seconds,
+    labels={"route": "GET /download/{request_id}/{filename}/{subfile}"},
+)
+# @requires([scopes.AUTHENTICATED])
+async def download_request_result(
+    request: Request,
+    request_id: int,
+    filename: str,
+    subfile: str,
+):
+    """Download result of the request"""
+    app.state.api_http_requests_total.inc(
+        {"route": "GET /download/{request_id}/{filename}/{subfile}"}
+    )
+    try:
+        return file_handler.download_request_result(request_id=request_id, filename=f'{filename}/{subfile}')
+    except exc.BaseDDSException as err:
+        raise err.wrap_around_http_exception() from err
+    except FileNotFoundError as err:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="File was not found!"
+        ) from err

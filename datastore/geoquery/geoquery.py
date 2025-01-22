@@ -9,6 +9,7 @@ TGeoQuery = TypeVar("TGeoQuery")
 class GeoQuery(BaseModel, extra="allow"):
     variable: Optional[Union[str, List[str]]]
     # TODO: Check how `time` is to be represented
+    resample: Optional[Dict[str,str]]
     time: Optional[Union[Dict[str, str], Dict[str, List[str]]]]
     area: Optional[Dict[str, float]]
     location: Optional[Dict[str, Union[float, List[float]]]]
