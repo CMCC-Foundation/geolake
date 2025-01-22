@@ -7,7 +7,7 @@ RUN apt update && apt install -y cron curl
 
 WORKDIR /app
 COPY requirements.txt /code/requirements.txt
-RUN pip install --no-cache-dir -r /code/requirements.txt
+RUN pip install --no-cache-dir -r /code/requirements.txt --break-system-packages
 COPY app /app
 
 COPY ./healtcheck.* /opt/
