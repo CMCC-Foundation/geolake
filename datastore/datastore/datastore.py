@@ -461,6 +461,9 @@ class Datastore(metaclass=Singleton):
         if query.resample:
             Datastore._LOG.debug("Applying resample...")
             kube = kube.resample(**query.resample)
+        if query.regrid:
+            if query.regrid == 'regular':
+                kube = kube.to_regular()
         return kube.compute() if compute else kube
 
     @staticmethod

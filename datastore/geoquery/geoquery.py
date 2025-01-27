@@ -17,6 +17,7 @@ class GeoQuery(BaseModel, extra="allow"):
     filters: Optional[Dict]
     format: Optional[str]
     format_args: Optional[Dict]
+    regrid: Optional[str]
 
     # TODO: Check if we are going to allow the vertical coordinates inside both
     # `area`/`location` nad `vertical`
