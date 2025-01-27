@@ -85,15 +85,17 @@ class Datastore(metaclass=Singleton):
         return self.cache[dataset_id][product_id]
 
     @log_execution_time(_LOG)
-    def _load_cache(self):
-        if self.cache is None:
+    def _load_cache(self, datasets: list[str] | None = None):
+        if self.cache is None or datasets is None:
             self.cache = {}
-        for i, dataset_id in enumerate(self.dataset_list()):
+            datasets = self.dataset_list()
+
+        for i, dataset_id in enumerate(datasets):
             self._LOG.info(
                 "loading cache for `%s` (%d/%d)",
                 dataset_id,
                 i + 1,
-                len(self.dataset_list()),
+                len(datasets),
             )
             self.cache[dataset_id] = {}
             for product_id in self.product_list(dataset_id):
@@ -117,7 +119,7 @@ class Datastore(metaclass=Singleton):
                         dataset_id,
                         product_id,
                         exc_info=True,
-                    )
+                    ) 
 
     @log_execution_time(_LOG)
     def dataset_list(self) -> list:
@@ -419,7 +421,10 @@ class Datastore(metaclass=Singleton):
     def _process_query(kube, query: GeoQuery, compute: None | bool = False):
         if isinstance(kube, Dataset):
             Datastore._LOG.debug("filtering with: %s", query.filters)
-            kube = kube.filter(**query.filters)
+            try:
+                kube = kube.filter(**query.filters)
+            except ValueError as err:
+                Datastore._LOG.warning("could not filter by one of the key: %s", err)
             Datastore._LOG.debug("resulting kube len: %s", len(kube))
         if isinstance(kube, Delayed) and compute:
             kube = kube.compute()
@@ -444,10 +449,10 @@ class Datastore(metaclass=Singleton):
         if query.vertical:
             Datastore._LOG.debug("subsetting by vertical...")
             if isinstance(
-                vertical := Datastore._maybe_convert_dict_slice_to_slice(
-                    query.vertical
-                ),
-                slice,
+                    vertical := Datastore._maybe_convert_dict_slice_to_slice(
+                        query.vertical
+                    ),
+                    slice,
             ):
                 method = None
             else:
@@ -456,6 +461,9 @@ class Datastore(metaclass=Singleton):
         if query.resample:
             Datastore._LOG.debug("Applying resample...")
             kube = kube.resample(**query.resample)
+        if query.regrid:
+            if query.regrid == 'regular':
+                kube = kube.to_regular()
         return kube.compute() if compute else kube
 
     @staticmethod

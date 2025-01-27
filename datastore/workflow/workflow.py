@@ -108,9 +108,9 @@ class Workflow:
             return Datastore().query(
                 dataset_id=dataset_id,
                 product_id=product_id,
-                query=query
-                if isinstance(query, GeoQuery)
-                else GeoQuery(**query),
+                query=(
+                    query if isinstance(query, GeoQuery) else GeoQuery(**query)
+                ),
                 compute=False,
             )
 
@@ -153,18 +153,21 @@ class Workflow:
         )
         self._add_computational_node(task)
         return self
-    
+
     def to_regular(
         self, id: Hashable, *, dependencies: list[Hashable]
     ) -> "Workflow":
         def _to_regular(kube: DataCube | None = None) -> DataCube:
-            assert kube is not None, "`kube` cannot be `None` for `to_regular``"
+            assert (
+                kube is not None
+            ), "`kube` cannot be `None` for `to_regular``"
             return kube.to_regular()
+
         task = _WorkflowTask(
             id=id, operator=_to_regular, dependencies=dependencies
         )
         self._add_computational_node(task)
-        return self        
+        return self
 
     def add_task(
         self,

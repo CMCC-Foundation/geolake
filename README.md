@@ -10,7 +10,7 @@ The system has been designed using a cloud-native architecture, based on contain
 
 It uses [geokube](https://github.com/CMCC-Foundation/geokube) as an Analytics Engine to perform geospatial operations.
 
-## Developer Team
+## Developers Team
 
 - [Valentina Scardigno](https://github.com/vale95-eng)
 - [Gabriele Tramonte](https://github.com/gtramonte)

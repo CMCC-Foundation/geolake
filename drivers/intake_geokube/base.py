@@ -1,7 +1,9 @@
 # from . import __version__
+from dask.delayed import Delayed
 from intake.source.base import DataSource, Schema
 from geokube.core.datacube import DataCube
 from geokube.core.dataset import Dataset
+
 
 
 class GeokubeSource(DataSource):
@@ -56,9 +58,8 @@ class GeokubeSource(DataSource):
 
     def read_chunked(self):
         """Return a lazy geokube object"""
-        self._load_metadata()
-        return self._kube
-
+        return self.read()
+    
     def read_partition(self, i):
         """Fetch one chunk of data at tuple index i"""
         raise NotImplementedError
