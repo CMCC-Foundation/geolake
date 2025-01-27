@@ -5,8 +5,6 @@ import re
 from typing import Optional, Dict
 from datetime import datetime
 
-from oai_dcat.metadata_provider import BASE_URL
-from oai_dcat.oai_utils import serialize_and_concatenate_graphs, convert_to_dcat_ap_it
 from fastapi import FastAPI, HTTPException, Request, status, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.authentication import AuthenticationMiddleware
@@ -35,7 +33,6 @@ from callbacks import all_onstartup_callbacks
 from encoders import extend_json_encoders
 from const import venv, tags
 from auth import scopes
-from oai_dcat import oai_server
 
 def map_to_geoquery(
         variables: list[str],
@@ -631,55 +628,6 @@ async def download_request_result(
             status_code=status.HTTP_404_NOT_FOUND, detail="File was not found!"
         ) from err
 
-# Define OAI-PMH endpoint route
-@app.get("/oai/{dataset_id}")
-@app.post("/oai/{dataset_id}")
-async def oai(request: Request, dataset_id: str):
-    params = dict(request.query_params)
-
-    # Add dataset_id to the parameters as "set_", which is a parameter from the OAI-PMH protocol
-    params['set'] = dataset_id
-    # params['scopes'] = request.auth.scopes
-
-    # Making sure it uses the dcat_ap metadata prefix
-    if 'metadataPrefix' not in params:
-        params['metadataPrefix'] = 'dcat_ap'
-
-    # handleRequest points the request to the appropriate method in metadata_provider.py
-    response = oai_server.oai_server.handleRequest(params)
-    logger.debug(f"OAI-PMH Response: {response}")
-    # Replace date in datestamp by empty string
-    response = re.sub(b'<datestamp>.*</datestamp>', b'', response)
-    return Response(content=response, media_type="text/xml")
-
-# Define an endpoint for getting all the datasets
-@app.get("/oai")
-@app.post("/oai")
-async def oai_all_datasets(request: Request):
-    params = dict(request.query_params)
-
-    # Making sure it uses the dcat_ap metadata prefix
-    if 'metadataPrefix' not in params:
-        params['metadataPrefix'] = 'dcat_ap'
-
-    # handleRequest points the request to the appropriate method in metadata_provider.py
-    response = oai_server.oai_server.handleRequest(params)
-    logger.debug(f"OAI-PMH Response: {response}")
-    # Replace date in datestamp by empty string
-    response = re.sub(b'<datestamp>.*</datestamp>', b'', response)
-    return Response(content=response, media_type="text/xml")
-
-# Endpoint for generating DCAT-AP IT catalog
-@app.get("/dcatapit")
-async def dcatapit(request: Request):
-    data = dataset_handler.get_datasets(
-            user_roles_names=request.auth.scopes
-        )
-    catalog_graph, datasets_graph, distributions_graph, vcard_graph = convert_to_dcat_ap_it(data, BASE_URL)
-    # response = dcatapit_graph.serialize(format='pretty-xml')
-    response = serialize_and_concatenate_graphs(catalog_graph, datasets_graph, distributions_graph, vcard_graph)
-
-    return Response(content=response, media_type="application/rdf+xml")
 @app.get("/download/{request_id}/{filename}", tags=[tags.REQUEST])
 @timer(
     app.state.api_request_duration_seconds,
