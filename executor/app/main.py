@@ -114,6 +114,9 @@ def persist_datacube(
         format_args = message.content.format_args
     else:
         format = "netcdf"
+    for var in kube.fields.values():
+        if '_FillValue' in kube[var.name].encoding and 'missing_value' in kube[var.name].encoding:
+            del kube[var.name].encoding['missing_value']
     match format:
         case "netcdf":
             full_path = os.path.join(base_path, f"{path}.nc")
@@ -178,6 +181,9 @@ def persist_dataset(
                     message.request_id,
                 ]
             )
+        for var in dcube.fields.values():
+            if '_FillValue' in dcube[var.name].encoding and 'missing_value' in dcube[var.name].encoding:
+                del dcube[var.name].encoding['missing_value']
         match format:
             case "netcdf":
                 full_path = os.path.join(base_path, f"{path}.nc")
@@ -194,6 +200,11 @@ def persist_dataset(
             case "csv":
                 full_path = os.path.join(base_path, f"{path}.csv")
                 dcube.to_csv(full_path)
+            case "zarr":
+                full_path = os.path.join(base_path, f"{path}.zarr")
+                dcube.to_zarr(full_path, mode='w', consolidated=True)
+            case _:
+                raise ValueError(f"format `{format}` is not supported")
         return full_path
 
     if isinstance(message.content, GeoQuery):
