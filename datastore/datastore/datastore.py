@@ -463,7 +463,7 @@ class Datastore(metaclass=Singleton):
             Datastore._LOG.debug("Applying resample...")
             kube = kube.resample(**query.resample)
         if query.regrid:
-            if query.regrid == 'regular' and kube.domain.crs is not GeogCS:
+            if query.regrid == 'regular' and not isinstance(kube.domain.crs, GeogCS):
                 kube = kube.to_regular()
         return kube.compute() if compute else kube
 
