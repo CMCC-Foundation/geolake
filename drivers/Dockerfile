@@ -1,5 +1,5 @@
 ARG REGISTRY=rg.fr-par.scw.cloud/geokube
-ARG TAG=2025.03.24.13.55
+ARG TAG=2025.03.24.15.53
 #ARG TAG=v0.2.7.9
 FROM $REGISTRY/geokube:$TAG
 
