@@ -7,6 +7,7 @@ import json
 
 import intake
 from dask.delayed import Delayed
+from geokube import GeogCS
 
 from geoquery.geoquery import GeoQuery
 
@@ -462,7 +463,7 @@ class Datastore(metaclass=Singleton):
             Datastore._LOG.debug("Applying resample...")
             kube = kube.resample(**query.resample)
         if query.regrid:
-            if query.regrid == 'regular':
+            if query.regrid == 'regular' and not isinstance(kube.domain.crs, GeogCS):
                 kube = kube.to_regular()
         return kube.compute() if compute else kube
 
