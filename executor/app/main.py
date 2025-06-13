@@ -1,4 +1,5 @@
 import os
+import signal
 import tempfile
 import time
 import datetime
@@ -14,6 +15,7 @@ from dask.delayed import Delayed
 from geokube.core.datacube import DataCube
 from geokube.core.dataset import Dataset
 from geokube.core.field import Field
+from pika.exceptions import ChannelClosed
 
 from datastore.datastore import Datastore
 from workflow import Workflow
@@ -277,6 +279,8 @@ class Executor(metaclass=LoggableMeta):
         self._channel = broker_conn.channel()
         self._db = DBManager()
         self.dask_cluster_opts = dask_cluster_opts
+        self.to_exit = False
+        self.processing = False
 
     def create_dask_cluster(self, dask_cluster_opts: dict = None):
         if dask_cluster_opts is None:
@@ -307,21 +311,21 @@ class Executor(metaclass=LoggableMeta):
 
     def maybe_restart_cluster(self, status: RequestStatus):
         if status is RequestStatus.TIMEOUT:
-            self._LOG.info("recreating the cluster due to timeout")
+            self._LOG.info("recreating the cluster due to timeout", extra={"track_id": "N/A"})
             self._dask_client.cluster.close()
             self.create_dask_cluster()
         if self._dask_client.cluster.status is Status.failed:
-            self._LOG.info("attempt to restart the cluster...")
+            self._LOG.info("attempt to restart the cluster...", extra={"track_id": "N/A"})
             try:
                 asyncio.run(self._nanny.restart())
             except Exception as err:
                 self._LOG.error(
-                    "couldn't restart the cluster due to an error: %s", err
+                    "couldn't restart the cluster due to an error: %s", err, extra={"track_id": "N/A"}
                 )
-                self._LOG.info("closing the cluster")
+                self._LOG.info("closing the cluster", extra={"track_id": "N/A"})
                 self._dask_client.cluster.close()
-        if self._dask_client.cluster.status is Status.closed:
-            self._LOG.info("recreating the cluster")
+        if self._dask_client.cluster.status is Status.closed and not self.to_exit:
+            self._LOG.info("recreating the cluster", extra={"track_id": "N/A"})
             self.create_dask_cluster()
 
     def ack_message(self, channel, delivery_tag):
@@ -330,9 +334,13 @@ class Executor(metaclass=LoggableMeta):
         """
         if channel.is_open:
             channel.basic_ack(delivery_tag)
+            self.processing = False
+            if self.to_exit:
+                channel.stop_consuming()
         else:
             self._LOG.info(
-                "cannot acknowledge the message. channel is closed!"
+                "cannot acknowledge the message. channel is closed!",
+                extra={"track_id": "N/A"},
             )
             pass
 
@@ -391,6 +399,7 @@ class Executor(metaclass=LoggableMeta):
         return location_path, status, fail_reason
 
     def handle_message(self, connection, channel, delivery_tag, body):
+        self.processing = True
         message: Message = Message(body)
         self._LOG.debug(
             "executing query: `%s`",
@@ -468,8 +477,21 @@ class Executor(metaclass=LoggableMeta):
         )
 
     def listen(self):
-        while True:
-            self._channel.start_consuming()
+        while not self.to_exit:
+            try:
+                self._channel.start_consuming()
+            except ChannelClosed as cc:
+                self._LOG.error("Channel closed exiting...", extra={"track_id": "N/A"})
+        self._LOG.info(f'Shutting down Dask...', extra={"track_id": "N/A"})
+        self._dask_client.shutdown()
+        self._LOG.info(f'Exiting...', extra={"track_id": "N/A"})
+        exit(0)
+
+    def stop_listening(self, signo, frame):
+        self._LOG.info(f'received signal {signo}:', extra={"track_id": "N/A"})
+        self.to_exit = True
+        if not self.processing:
+            self._channel.stop_consuming()
 
     def get_size(self, location_path):
         if location_path and os.path.exists(location_path):
@@ -502,6 +524,10 @@ if __name__ == "__main__":
             executor.create_dask_cluster()
 
         executor.subscribe(etype)
+
+    print('registering signal handlers')
+    signal.signal(signal.SIGTERM, executor.stop_listening)
+    signal.signal(signal.SIGINT, executor.stop_listening)
 
     print("waiting for requests ...")
     executor.listen()
