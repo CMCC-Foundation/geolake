@@ -1,9 +1,10 @@
 name: Build geolake docker images for geolake components and push to the repository
 
 on:
-  push:
-    tags:        
-      - 'v*'
+  release:
+    types: [published]
+  workflow_dispatch:
+
 jobs:
   build:
     runs-on: ubuntu-latest
