@@ -6,6 +6,7 @@ import logging
 import json
 
 import intake
+import numpy as np
 from dask.delayed import Delayed
 from geokube import GeogCS
 
@@ -206,6 +207,15 @@ class Datastore(metaclass=Singleton):
             product_id
         ].metadata
 
+    def _convert_numpy(self,obj):
+        if isinstance(obj, dict):
+            return {k: self._convert_numpy(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [self._convert_numpy(i) for i in obj]
+        elif isinstance(obj, np.generic):
+            return obj.item()
+        return obj
+
     @log_execution_time(_LOG)
     def first_eligible_product_details(
         self,
@@ -256,6 +266,7 @@ class Datastore(metaclass=Singleton):
                 ).to_dict()
             else:
                 info["data"] = entry.read_chunked().to_dict()
+            info = self._convert_numpy(info)
             return info
         raise UnauthorizedError()
 
@@ -323,6 +334,7 @@ class Datastore(metaclass=Singleton):
             ).to_dict()
         else:
             info["data"] = entry.read_chunked().to_dict()
+        info = self._convert_numpy(info)
         return info
 
     @log_execution_time(_LOG)
