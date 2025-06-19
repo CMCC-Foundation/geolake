@@ -319,6 +319,7 @@ class Datastore(metaclass=Singleton):
             ).to_dict()
         else:
             info["data"] = entry.read_chunked().to_dict()
+        info = self._convert_numpy(info)
         return info
 
     def product_info(
