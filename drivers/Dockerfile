@@ -1,6 +1,6 @@
 ARG REGISTRY=rg.fr-par.scw.cloud/geokube
 #ARG TAG=2025.03.25.10.56
-ARG TAG=2025.06.3
+ARG TAG=2025.07
 FROM $REGISTRY/geokube:$TAG
 
 ADD . /opt/intake_geokube
