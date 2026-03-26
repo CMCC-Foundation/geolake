@@ -1,3 +1,4 @@
 networkx
 pydantic<2.0.0
 psycopg2-binary
+intake==2.0.9

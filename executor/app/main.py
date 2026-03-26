@@ -1,5 +1,4 @@
 import os
-import signal
 import tempfile
 import time
 import datetime
@@ -15,7 +14,6 @@ from dask.delayed import Delayed
 from geokube.core.datacube import DataCube
 from geokube.core.dataset import Dataset
 from geokube.core.field import Field
-from pika.exceptions import ChannelClosed
 
 from datastore.datastore import Datastore
 from workflow import Workflow
@@ -116,9 +114,6 @@ def persist_datacube(
         format_args = message.content.format_args
     else:
         format = "netcdf"
-    for var in kube.fields.values():
-        if '_FillValue' in kube[var.name].encoding and 'missing_value' in kube[var.name].encoding:
-            del kube[var.name].encoding['missing_value']
     match format:
         case "netcdf":
             full_path = os.path.join(base_path, f"{path}.nc")
@@ -183,9 +178,6 @@ def persist_dataset(
                     message.request_id,
                 ]
             )
-        for var in dcube.fields.values():
-            if '_FillValue' in dcube[var.name].encoding and 'missing_value' in dcube[var.name].encoding:
-                del dcube[var.name].encoding['missing_value']
         match format:
             case "netcdf":
                 full_path = os.path.join(base_path, f"{path}.nc")
@@ -202,11 +194,6 @@ def persist_dataset(
             case "csv":
                 full_path = os.path.join(base_path, f"{path}.csv")
                 dcube.to_csv(full_path)
-            case "zarr":
-                full_path = os.path.join(base_path, f"{path}.zarr")
-                dcube.to_zarr(full_path, mode='w', consolidated=True)
-            case _:
-                raise ValueError(f"format `{format}` is not supported")
         return full_path
 
     if isinstance(message.content, GeoQuery):
@@ -279,8 +266,6 @@ class Executor(metaclass=LoggableMeta):
         self._channel = broker_conn.channel()
         self._db = DBManager()
         self.dask_cluster_opts = dask_cluster_opts
-        self.to_exit = False
-        self.processing = False
 
     def create_dask_cluster(self, dask_cluster_opts: dict = None):
         if dask_cluster_opts is None:
@@ -302,6 +287,7 @@ class Executor(metaclass=LoggableMeta):
             dashboard_address=dask_cluster_opts["dashboard_address"],
             memory_limit=dask_cluster_opts["memory_limit"],
             threads_per_worker=dask_cluster_opts['thread_per_worker'],
+            local_directory=dask_cluster_opts["local_directory"],
         )
         self._LOG.info(
             "creating Dask Client...", extra={"track_id": self._worker_id}
@@ -311,21 +297,21 @@ class Executor(metaclass=LoggableMeta):
 
     def maybe_restart_cluster(self, status: RequestStatus):
         if status is RequestStatus.TIMEOUT:
-            self._LOG.info("recreating the cluster due to timeout", extra={"track_id": "N/A"})
+            self._LOG.info("recreating the cluster due to timeout")
             self._dask_client.cluster.close()
             self.create_dask_cluster()
         if self._dask_client.cluster.status is Status.failed:
-            self._LOG.info("attempt to restart the cluster...", extra={"track_id": "N/A"})
+            self._LOG.info("attempt to restart the cluster...")
             try:
                 asyncio.run(self._nanny.restart())
             except Exception as err:
                 self._LOG.error(
-                    "couldn't restart the cluster due to an error: %s", err, extra={"track_id": "N/A"}
+                    "couldn't restart the cluster due to an error: %s", err
                 )
-                self._LOG.info("closing the cluster", extra={"track_id": "N/A"})
+                self._LOG.info("closing the cluster")
                 self._dask_client.cluster.close()
-        if self._dask_client.cluster.status is Status.closed and not self.to_exit:
-            self._LOG.info("recreating the cluster", extra={"track_id": "N/A"})
+        if self._dask_client.cluster.status is Status.closed:
+            self._LOG.info("recreating the cluster")
             self.create_dask_cluster()
 
     def ack_message(self, channel, delivery_tag):
@@ -334,13 +320,9 @@ class Executor(metaclass=LoggableMeta):
         """
         if channel.is_open:
             channel.basic_ack(delivery_tag)
-            self.processing = False
-            if self.to_exit:
-                channel.stop_consuming()
         else:
             self._LOG.info(
-                "cannot acknowledge the message. channel is closed!",
-                extra={"track_id": "N/A"},
+                "cannot acknowledge the message. channel is closed!"
             )
             pass
 
@@ -399,7 +381,6 @@ class Executor(metaclass=LoggableMeta):
         return location_path, status, fail_reason
 
     def handle_message(self, connection, channel, delivery_tag, body):
-        self.processing = True
         message: Message = Message(body)
         self._LOG.debug(
             "executing query: `%s`",
@@ -477,21 +458,8 @@ class Executor(metaclass=LoggableMeta):
         )
 
     def listen(self):
-        while not self.to_exit:
-            try:
-                self._channel.start_consuming()
-            except ChannelClosed as cc:
-                self._LOG.error("Channel closed exiting...", extra={"track_id": "N/A"})
-        self._LOG.info(f'Shutting down Dask...', extra={"track_id": "N/A"})
-        self._dask_client.shutdown()
-        self._LOG.info(f'Exiting...', extra={"track_id": "N/A"})
-        exit(0)
-
-    def stop_listening(self, signo, frame):
-        self._LOG.info(f'received signal {signo}:', extra={"track_id": "N/A"})
-        self.to_exit = True
-        if not self.processing:
-            self._channel.stop_consuming()
+        while True:
+            self._channel.start_consuming()
 
     def get_size(self, location_path):
         if location_path and os.path.exists(location_path):
@@ -514,7 +482,8 @@ if __name__ == "__main__":
     dask_cluster_opts["n_workers"] = int(os.getenv("DASK_N_WORKERS", 1))
     dask_cluster_opts["memory_limit"] = os.getenv("DASK_MEMORY_LIMIT", "auto")
     dask_cluster_opts['thread_per_worker'] = int(os.getenv("DASK_THREADS_PER_WORKER", 8))
-    dask_cluster_opts['local_directory'] = os.getenv("LOCAL_DIR", tempfile.mkdtemp(f'{os.uname()[1]}'))
+    dask_cluster_opts['local_directory'] = os.getenv("LOCAL_DIR")
+    dask_cluster_opts['local_directory'] = tempfile.mkdtemp(dir=dask_cluster_opts["local_directory"] if not None else '/', suffix=f'{os.uname()[1]}')
 
 
     executor = Executor(broker=broker, store_path=store_path, dask_cluster_opts=dask_cluster_opts)
@@ -524,10 +493,6 @@ if __name__ == "__main__":
             executor.create_dask_cluster()
 
         executor.subscribe(etype)
-
-    print('registering signal handlers')
-    signal.signal(signal.SIGTERM, executor.stop_listening)
-    signal.signal(signal.SIGINT, executor.stop_listening)
 
     print("waiting for requests ...")
     executor.listen()
