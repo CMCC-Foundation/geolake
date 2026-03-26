@@ -1,4 +1,4 @@
-ARG REGISTRY=rg.fr-par.scw.cloud/geolake
+ARG REGISTRY=gtramonte
 ARG TAG=latest
 FROM $REGISTRY/geolake-drivers:$TAG
 
