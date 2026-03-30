@@ -1,6 +1,6 @@
 ARG REGISTRY=gtramonte
 #ARG TAG=2025.03.25.10.56
-ARG TAG=2026.03
+ARG TAG=2026.03.1
 FROM $REGISTRY/geokube:$TAG
 
 ADD . /opt/intake_geokube
