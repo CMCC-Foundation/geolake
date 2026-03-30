@@ -22,7 +22,7 @@ class GeoQuery(BaseModel, extra="allow"):
     # TODO: Check if we are going to allow the vertical coordinates inside both
     # `area`/`location` nad `vertical`
 
-    @root_validator(pre=True)
+    @validator()
     def area_locations_mutually_exclusive_validator(cls, query):
         if "area" in query.keys() or "location" in query.keys():
             if query["area"] is not None and query["location"] is not None:
@@ -33,7 +33,7 @@ class GeoQuery(BaseModel, extra="allow"):
         return query
 
 
-    @root_validator(pre=True)
+    @validator()
     def build_filters(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         if "filters" in values:
             return values
