@@ -24,12 +24,14 @@ class GeoQuery(BaseModel, extra="allow"):
 
     @root_validator(pre=True)
     def area_locations_mutually_exclusive_validator(cls, query):
-        if query["area"] is not None and query["location"] is not None:
-            raise KeyError(
-                "area and location couldn't be processed together, please use"
-                " one of them"
-            )
+        if "area" in query.keys() or "location" in query.keys():
+            if query["area"] is not None and query["location"] is not None:
+                raise KeyError(
+                    "area and location couldn't be processed together, please use"
+                    " one of them"
+                )
         return query
+
 
     @root_validator(pre=True)
     def build_filters(cls, values: Dict[str, Any]) -> Dict[str, Any]:
