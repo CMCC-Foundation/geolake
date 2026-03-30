@@ -7,29 +7,31 @@ TGeoQuery = TypeVar("TGeoQuery")
 
 
 class GeoQuery(BaseModel, extra="allow"):
-    variable: Optional[Union[str, List[str]]]
+    variable: Optional[Union[str, List[str]]] = None
     # TODO: Check how `time` is to be represented
-    resample: Optional[Dict[str,str]]
-    time: Optional[Union[Dict[str, str], Dict[str, List[str]]]]
-    area: Optional[Dict[str, float]]
-    location: Optional[Dict[str, Union[float, List[float]]]]
-    vertical: Optional[Union[float, List[float], Dict[str, float]]]
-    filters: Optional[Dict]
+    resample: Optional[Dict[str,str]] = None
+    time: Optional[Union[Dict[str, str], Dict[str, List[str]]]] = None
+    area: Optional[Dict[str, float]] = None
+    location: Optional[Dict[str, Union[float, List[float]]]] = None
+    vertical: Optional[Union[float, List[float], Dict[str, float]]] = None
+    filters: Optional[Dict] = None
     format: Optional[str]
-    format_args: Optional[Dict]
-    regrid: Optional[str]
+    format_args: Optional[Dict] = None
+    regrid: Optional[str] = None
 
     # TODO: Check if we are going to allow the vertical coordinates inside both
     # `area`/`location` nad `vertical`
 
     @root_validator(pre=True)
     def area_locations_mutually_exclusive_validator(cls, query):
-        if query["area"] is not None and query["location"] is not None:
-            raise KeyError(
-                "area and location couldn't be processed together, please use"
-                " one of them"
-            )
+        if "area" in query.keys() or "location" in query.keys():
+            if query["area"] is not None and query["location"] is not None:
+                raise KeyError(
+                    "area and location couldn't be processed together, please use"
+                    " one of them"
+                )
         return query
+
 
     @root_validator(pre=True)
     def build_filters(cls, values: Dict[str, Any]) -> Dict[str, Any]:
