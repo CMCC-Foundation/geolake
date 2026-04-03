@@ -13,13 +13,14 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/geokube/intake-geokube",
     packages=setuptools.find_packages(),
-    install_requires=["intake", "pytest", "pydantic<2.0.0"],
+    install_requires=["intake", "pytest", "pydantic<2.0.0","erddapy==2.2.4"],
     entry_points={
         "intake.drivers": [
             "geokube_netcdf = intake_geokube.netcdf:NetCDFSource",
             "cmcc_wrf_geokube = intake_geokube.wrf:CMCCWRFSource",
             "cmcc_sentinel_geokube = intake_geokube.sentinel:CMCCSentinelSource",
             "geokube_netcdf_ancillary = intake_geokube.netcdf_with_ancillary:NetCDFAncillarySource",
+            "geokube_erddap = intake_geokube.erddap:ERDDAPSource"
         ]
     },
     classifiers=[
