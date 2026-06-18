@@ -1,4 +1,5 @@
 """The module contains authentication backend"""
+import hmac
 from uuid import UUID
 
 from starlette.authentication import (
@@ -33,9 +34,17 @@ class DDSAuthenticationBackend(AuthenticationBackend):
                 code=err.code, detail=err.msg
             ) from err
         user_dto = DBManager().get_user_details(user_id)
-        if user_dto is None or user_dto.api_key != api_key:
+        if (
+            user_dto is None
+            or user_dto.api_key is None
+            or not hmac.compare_digest(
+                str(user_dto.api_key).encode("utf-8"), api_key.encode("utf-8")
+            )
+        ):
             # Unknown user or wrong API key -> 401. Both cases share the same
             # message so the response does not reveal whether the user exists.
+            # `hmac.compare_digest` is constant-time to avoid leaking the key
+            # via response timing.
             raise exc.DDSAuthenticationError(
                 code=401,
                 detail=f"Authentication of the user '{user_id}' failed!",

@@ -16,8 +16,10 @@ from starlette.staticfiles import StaticFiles
 from utils.api_logging import get_dds_logger
 from utils.metrics import log_execution_time
 import exceptions as exc
+from security import safe_join
 
 log = get_dds_logger(__name__)
+
 
 @log_execution_time(log)
 def download_request_result(request_id: int, filename: str = None):
@@ -71,9 +73,17 @@ def download_request_result(request_id: int, filename: str = None):
 
     if download_details.location_path.endswith(".zarr"):
         log.info("Zarr detected")
+        if not filename:
+            raise exc.MalformedQueryParameterError(
+                "A filename is required to download from a zarr result"
+            )
+        # Client-controlled `filename`/`subfile` must be contained within the
+        # result directory; `_safe_join` blocks traversal and the basename used
+        # for the Content-Disposition header prevents header injection (SEC-1/17).
+        safe_path = safe_join(download_details.location_path, filename)
         return FileResponse(
-            path=f'{download_details.location_path}/{filename}',
-            filename=filename,
+            path=safe_path,
+            filename=os.path.basename(safe_path),
         )
     else:
         return FileResponse(

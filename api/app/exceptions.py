@@ -34,6 +34,22 @@ class DDSAuthenticationError(StarletteAuthError):
         super().__init__(detail)
 
 
+class MalformedQueryParameterError(BaseDDSException):
+    """Raised when a request parameter (path/query/body) is malformed.
+
+    Maps to HTTP 400 so malformed input is reported as a client error instead
+    of surfacing as an unhandled 500.
+    """
+
+    msg: str = "Malformed request parameter"
+    code: int = 400
+
+    def __init__(self, detail: Optional[str] = None):
+        if detail:
+            self.msg = detail
+        super().__init__(self.msg)
+
+
 class EmptyUserTokenError(BaseDDSException):
     """Raised if `User-Token` is empty"""
 

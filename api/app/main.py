@@ -34,6 +34,12 @@ from callbacks import all_onstartup_callbacks
 from encoders import extend_json_encoders
 from const import venv, tags
 from auth import scopes
+from security import (
+    BodySizeLimitMiddleware,
+    build_path_filters,
+    parse_bbox,
+)
+
 
 def map_to_geoquery(
         variables: list[str],
@@ -45,8 +51,7 @@ def map_to_geoquery(
 ) -> GeoQuery:
 
     if bbox:
-        bbox_ = [float(x) for x in bbox.split(',')]
-        area = { 'west': bbox_[0], 'south': bbox_[1], 'east': bbox_[2], 'north': bbox_[3],  }
+        area = parse_bbox(bbox)
     else:
         area = None
     if time:
@@ -90,17 +95,20 @@ app.add_middleware(
 )
 
 # ======== CORS ========= #
-cors_kwargs: dict[str, str | list[str]]
+# Credentials are enabled only when an explicit origin regex is configured
+# (production). Combining the wildcard dev default with credentials is invalid
+# and unsafe, so credentials are disabled in that fallback (SEC-14).
+cors_kwargs: dict
 if venv.ALLOWED_CORS_ORIGINS_REGEX in os.environ:
     cors_kwargs = {
-        "allow_origin_regex": os.environ[venv.ALLOWED_CORS_ORIGINS_REGEX]
+        "allow_origin_regex": os.environ[venv.ALLOWED_CORS_ORIGINS_REGEX],
+        "allow_credentials": True,
     }
 else:
-    cors_kwargs = {"allow_origins": ["*"]}
+    cors_kwargs = {"allow_origins": ["*"], "allow_credentials": False}
 
 app.add_middleware(
     CORSMiddleware,
-    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
     **cors_kwargs,
@@ -110,6 +118,15 @@ app.add_middleware(
 # ======== Prometheus metrics ========= #
 app.add_middleware(MetricsMiddleware)
 app.add_route("/metrics", metrics)
+
+# ======== Request body size limit ========= #
+# Robust enforcement also needs a reverse-proxy limit (nginx client_max_body_size).
+_MAX_REQUEST_BODY_SIZE_BYTES = int(
+    os.environ.get("MAX_REQUEST_BODY_SIZE_BYTES", 10 * 1024 * 1024)
+)
+app.add_middleware(
+    BodySizeLimitMiddleware, max_body_bytes=_MAX_REQUEST_BODY_SIZE_BYTES
+)
 
 app.state.api_request_duration_seconds = Summary(
     "api_request_duration_seconds", "Requests duration"
@@ -276,10 +293,7 @@ async def get_map_with_filters(
             product_id=product_id,
         )
         
-        filters_keys = product_info['metadata']['filters']
-        filters_dict = {}
-        for i in range(0, len(filters_vals)):
-            filters_dict[filters_keys[i]['name']] = filters_vals[i]
+        filters_dict = build_path_filters(product_info, filters_vals)
     
     app.state.api_http_requests_total.inc(
         {"route": "GET /datasets/{dataset_id}/{product_id}/map"}
@@ -380,10 +394,7 @@ async def get_feature_with_filters(
             product_id=product_id,
         )
         
-        filters_keys = product_info['metadata']['filters']
-        filters_dict = {}
-        for i in range(0, len(filters_vals)):
-            filters_dict[filters_keys[i]['name']] = filters_vals[i]
+        filters_dict = build_path_filters(product_info, filters_vals)
     
     app.state.api_http_requests_total.inc(
         {"route": "GET /datasets/{dataset_id}/{product_id}/items/{feature_id}"}

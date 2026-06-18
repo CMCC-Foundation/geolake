@@ -19,6 +19,7 @@ from auth.manager import (
 import exceptions as exc
 from api_utils import make_bytes_readable_dict
 from validation import assert_product_exists
+from security import ensure_no_separator
 
 from . import request
 
@@ -281,6 +282,12 @@ def async_query(
     )
     broker_channel = broker_conn.channel()
 
+    # Reject a payload that would corrupt broker message framing before
+    # creating the DB request, so no orphan request is left behind (SEC-5).
+    serialized_query = ensure_no_separator(
+        query.model_dump_json(), MESSAGE_SEPARATOR
+    )
+
     request_id = DBManager().create_request(
         user_id=user_id,
         dataset=dataset_id,
@@ -288,9 +295,8 @@ def async_query(
         query=query.original_query_json(),
     )
 
-    # TODO: find a separator; for the moment use "\"
     message = MESSAGE_SEPARATOR.join(
-        [str(request_id), "query", dataset_id, product_id, query.model_dump_json()]
+        [str(request_id), "query", dataset_id, product_id, serialized_query]
     )
 
     broker_channel.basic_publish(
@@ -405,16 +411,19 @@ def run_workflow(
         )
     )
     broker_channel = broker_conn.channel()
+    serialized_workflow = ensure_no_separator(
+        workflow.model_dump_json(), MESSAGE_SEPARATOR
+    )
+
     request_id = DBManager().create_request(
         user_id=user_id,
         dataset=workflow.dataset_id,
         product=workflow.product_id,
-        query=workflow.model_dump_json(),
+        query=serialized_workflow,
     )
 
-    # TODO: find a separator; for the moment use "\"
     message = MESSAGE_SEPARATOR.join(
-        [str(request_id), "workflow", workflow.model_dump_json()]
+        [str(request_id), "workflow", serialized_workflow]
     )
 
     broker_channel.basic_publish(
