@@ -1,0 +1,12 @@
+metadata:
+  description: Synthetic dataset for geokube integration tests (no external data)
+sources:
+  synthetic:
+    description: Synthetic t2m grid (time=10, latitude=100, longitude=100)
+    driver: geokube_netcdf
+    args:
+      # {{ CATALOG_DIR }} is resolved by intake relative to this catalog file,
+      # so the committed synthetic.nc next to it is found regardless of cwd.
+      path: '{{ CATALOG_DIR }}/synthetic.nc'
+      delay_read_cubes: false
+      metadata_caching: false
