@@ -1,23 +1,50 @@
 import pytest
-from workflow.workflow import Workflow
 
-from .fixtures import workflow_str, bad_workflow_str
+# Integration: Workflow importa geokube (DataCube/Datastore) → eseguito in-image.
+pytest.importorskip("geokube")
+pytestmark = pytest.mark.integration
 
-
-def test_create_workflow(workflow_str):
-    comp_graph = Workflow(workflow_str)
-    assert len(comp_graph) == 2
-    task_iter = comp_graph.traverse()
-    node1, precedint1 = next(task_iter)
-    assert precedint1 == tuple()
-    assert node1.operator.name == "subset"
-
-    node2, precedint2 = next(task_iter)
-    assert len(precedint2) == 1
-    assert node2.operator.name == "resample"
-    assert precedint2[0].operator.name == "subset"
+from geoquery.task import TaskList  # noqa: E402
+from workflow.workflow import Workflow  # noqa: E402
 
 
-def test_fail_when_task_not_defined(bad_workflow_str):
-    with pytest.raises(ValueError, match=r"task with id*"):
-        _ = Workflow(bad_workflow_str)
+def test_workflow_from_tasklist_builds_graph():
+    tl = TaskList.parse(
+        [
+            {
+                "id": "s1",
+                "op": "subset",
+                "args": {
+                    "dataset_id": "ds",
+                    "product_id": "prod",
+                    "query": {"variable": ["t2m"]},
+                },
+            }
+        ]
+    )
+    wf = Workflow.from_tasklist(tl)
+    assert len(wf) == 1
+    wf.verify()  # un grafo valido non solleva
+    tasks = list(wf.traverse())
+    assert [t.id for t in tasks] == ["s1"]
+
+
+def test_workflow_verify_fails_on_undefined_dependency():
+    tl = TaskList.parse(
+        [
+            {
+                "id": "s1",
+                "op": "subset",
+                "args": {"dataset_id": "ds", "product_id": "prod", "query": {}},
+            },
+            {
+                "id": "a1",
+                "op": "average",
+                "use": ["s1", "ghost"],  # `ghost` non è definito
+                "args": {"dim": "time"},
+            },
+        ]
+    )
+    wf = Workflow.from_tasklist(tl)
+    with pytest.raises(ValueError, match=r"task with id .ghost. is not defined"):
+        wf.verify()

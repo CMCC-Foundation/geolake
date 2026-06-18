@@ -1,5 +1,9 @@
 import os
 import pytest
+
+pytest.importorskip("geokube")
+pytestmark = pytest.mark.integration
+
 import intake
 import yaml
 
@@ -10,6 +14,8 @@ def e_obs_catalog_path():
 
 
 def test_mapping_1(e_obs_catalog_path):
+    if not os.path.exists("/data/inputs/E-OBS/spread"):
+        pytest.skip("dati E-OBS esterni non disponibili in questo ambiente")
     catalog = intake.open_catalog(e_obs_catalog_path)
     ds = catalog["ensemble-spread"].read()
     for cb in ds.cubes:

@@ -290,7 +290,7 @@ def async_query(
 
     # TODO: find a separator; for the moment use "\"
     message = MESSAGE_SEPARATOR.join(
-        [str(request_id), "query", dataset_id, product_id, query.json()]
+        [str(request_id), "query", dataset_id, product_id, query.model_dump_json()]
     )
 
     broker_channel.basic_publish(
@@ -409,12 +409,12 @@ def run_workflow(
         user_id=user_id,
         dataset=workflow.dataset_id,
         product=workflow.product_id,
-        query=workflow.json(),
+        query=workflow.model_dump_json(),
     )
 
     # TODO: find a separator; for the moment use "\"
     message = MESSAGE_SEPARATOR.join(
-        [str(request_id), "workflow", workflow.json()]
+        [str(request_id), "workflow", workflow.model_dump_json()]
     )
 
     broker_channel.basic_publish(

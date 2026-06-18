@@ -1,7 +1,7 @@
 ARG REGISTRY=gtramonte
-#ARG TAG=2025.03.25.10.56
-ARG TAG=2026.03.1
-FROM $REGISTRY/geokube:$TAG
+# Versione dell'immagine base geokube (disaccoppiata dal TAG di release geolake).
+ARG GEOKUBE_TAG=2026.03.1
+FROM $REGISTRY/geokube:$GEOKUBE_TAG
 
 ADD . /opt/intake_geokube
 RUN pip install /opt/intake_geokube --break-system-packages

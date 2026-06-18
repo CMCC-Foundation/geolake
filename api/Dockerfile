@@ -2,9 +2,10 @@ ARG REGISTRY=gtramonte
 ARG TAG=latest
 FROM $REGISTRY/geolake-datastore:$TAG
 
+# Tutto il codice (API + pacchetti base geolake-datastore) ora è in site-packages → niente PYTHONPATH.
+# DONTWRITEBYTECODE + HOME=/tmp: per il rootfs read-only (Python non scrive .pyc, ~/.cache su tmpfs).
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app \
     HOME=/tmp
 
 WORKDIR /app

@@ -1,46 +1,54 @@
 import json
 from typing import Optional, List, Dict, Union, Mapping, Any, TypeVar
 
-from pydantic import BaseModel, root_validator, validator
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
 TGeoQuery = TypeVar("TGeoQuery")
 
 
-class GeoQuery(BaseModel, extra="allow"):
+class GeoQuery(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     variable: Optional[Union[str, List[str]]] = None
     # TODO: Check how `time` is to be represented
-    resample: Optional[Dict[str,str]] = None
+    resample: Optional[Dict[str, str]] = None
     time: Optional[Union[Dict[str, str], Dict[str, List[str]]]] = None
     area: Optional[Dict[str, float]] = None
     location: Optional[Dict[str, Union[float, List[float]]]] = None
     vertical: Optional[Union[float, List[float], Dict[str, float]]] = None
     filters: Optional[Dict] = None
-    format: Optional[str]
+    format: Optional[str] = None
     format_args: Optional[Dict] = None
     regrid: Optional[str] = None
 
     # TODO: Check if we are going to allow the vertical coordinates inside both
     # `area`/`location` nad `vertical`
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
+    @classmethod
     def area_locations_mutually_exclusive_validator(cls, query):
-        if "area" in query.keys() and "location" in query.keys():
+        if isinstance(query, dict) and "area" in query and "location" in query:
             if query["area"] is not None and query["location"] is not None:
                 raise KeyError(
-                    "area and location couldn't be processed together, please use one of them")
+                    "area and location couldn't be processed together,"
+                    " please use one of them"
+                )
         return query
 
-
-    @root_validator(pre=True)
-    def build_filters(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+    @model_validator(mode="before")
+    @classmethod
+    def build_filters(cls, values: Any) -> Any:
+        if not isinstance(values, dict):
+            return values
         if "filters" in values:
             return values
-        filters = {k: v for k, v in values.items() if k not in cls.__fields__}
-        values = {k: v for k, v in values.items() if k in cls.__fields__}
+        filters = {k: v for k, v in values.items() if k not in cls.model_fields}
+        values = {k: v for k, v in values.items() if k in cls.model_fields}
         values["filters"] = filters
         return values
 
-    @validator("vertical")
+    @field_validator("vertical")
+    @classmethod
     def match_vertical_dict(cls, value):
         if isinstance(value, dict):
             assert "start" in value, "Missing 'start' key"
@@ -50,7 +58,7 @@ class GeoQuery(BaseModel, extra="allow"):
     def original_query_json(self):
         """Return the JSON representation of the original query submitted
         to the geokube-dds"""
-        res = super().dict()
+        res = self.model_dump()
         res = dict(**res.pop("filters", {}), **res)
         # NOTE: skip empty values to make query representation
         # shorter and more elegant
@@ -59,8 +67,8 @@ class GeoQuery(BaseModel, extra="allow"):
 
     @classmethod
     def parse(
-        cls, load: TGeoQuery | dict | str | bytes | bytearray
-    ) -> TGeoQuery:
+        cls, load: "TGeoQuery | dict | str | bytes | bytearray"
+    ) -> "TGeoQuery":
         if isinstance(load, cls):
             return load
         if isinstance(load, (str, bytes, bytearray)):
