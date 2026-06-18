@@ -10,3 +10,18 @@ sources:
       path: '{{ CATALOG_DIR }}/synthetic.nc'
       delay_read_cubes: false
       metadata_caching: false
+  synthetic_wrf:
+    description: Synthetic raw WRF-like grid (Time=10, south_north=100, west_east=100)
+    driver: cmcc_wrf_geokube
+    args:
+      path: '{{ CATALOG_DIR }}/synthetic_wrf.nc'
+      delay_read_cubes: false
+      metadata_caching: false
+  synthetic_ancillary:
+    description: Synthetic main + ancillary grid (tdim=10, ygrid=100, xgrid=100)
+    driver: geokube_netcdf_ancillary
+    args:
+      path: '{{ CATALOG_DIR }}/synthetic_ancillary_main.nc'
+      ancillary_path: '{{ CATALOG_DIR }}/synthetic_ancillary_coords.nc'
+      delay_read_cubes: false
+      metadata_caching: false
