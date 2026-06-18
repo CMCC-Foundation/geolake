@@ -1,5 +1,5 @@
-"""Regressione della migrazione pydantic v2: il publish dei messaggi in
-`endpoint_handlers/dataset.py` usa `model_dump_json()` su GeoQuery/TaskList."""
+"""pydantic v2 migration regression: message publishing in
+`endpoint_handlers/dataset.py` uses `model_dump_json()` on GeoQuery/TaskList."""
 import json
 
 from geoquery.geoquery import GeoQuery

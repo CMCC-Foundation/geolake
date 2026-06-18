@@ -8,8 +8,8 @@ version = "0.1.0"
 description = "geolake async query/workflow executor (dask worker)"
 requires-python = ">=3.10"
 license = { text = "Apache-2.0" }
-# pydantic>=2 (allineato). geokube/dask/numpy e i pacchetti datastore
-# (datastore, workflow, geoquery, dbmanager) arrivano dall'immagine base.
+# pydantic>=2 (aligned). geokube/dask/numpy and the datastore packages
+# (datastore, workflow, geoquery, dbmanager) come from the base image.
 dependencies = ["pika==1.2.1", "prometheus_client", "SQLAlchemy", "pydantic>=2"]
 
 [project.optional-dependencies]
@@ -21,4 +21,4 @@ py-modules = ["main", "messaging", "meta"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-markers = ["integration: test che richiedono geokube/dati reali (eseguiti in-image)"]
+markers = ["integration: tests that require geokube/real data (run in-image)"]

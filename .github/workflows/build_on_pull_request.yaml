@@ -14,13 +14,13 @@ jobs:
       with:
         python-version: "3.11"
     - name: Install components (editable) with dev extras
-      # Tutti i pacchetti sono ora installabili (pyproject). Niente più hack
-      # PYTHONPATH=datastore o `pip install pyyaml` manuale.
+      # All packages are now installable (pyproject). No more
+      # PYTHONPATH=datastore hacks or manual `pip install pyyaml`.
       run: pip install -e ./drivers -e ./datastore -e "./api[dev]" -e "./executor[dev]"
     - name: Run unit tests (geokube-free), per component
-      # Per-componente: ogni invocazione carica il pyproject del componente
-      # (marker registrati) ed evita la collisione del modulo top-level `main`
-      # (definito sia da api che da executor).
+      # Per-component: each invocation loads the component's pyproject
+      # (registered markers) and avoids the collision of the top-level `main`
+      # module (defined by both api and executor).
       run: |
         pytest api/tests -m "not integration"
         pytest datastore/geoquery/tests -m "not integration"
@@ -36,7 +36,7 @@ jobs:
       with:
         username: ${{ vars.DOCKER_REGISTRY }}
         password: ${{ secrets.DOCKER_PASSWORD }}
-    - name: Build drivers + datastore images locally (geokube presente)
+    - name: Build drivers + datastore images locally (geokube available)
       run: |
         docker build -t local/geolake-drivers:ci \
           --build-arg REGISTRY=${{ vars.GEOKUBE_REGISTRY }} \

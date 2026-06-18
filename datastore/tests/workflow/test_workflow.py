@@ -1,6 +1,6 @@
 import pytest
 
-# Integration: Workflow importa geokube (DataCube/Datastore) → eseguito in-image.
+# Integration: Workflow imports geokube (DataCube/Datastore) → run in-image.
 pytest.importorskip("geokube")
 pytestmark = pytest.mark.integration
 
@@ -24,7 +24,7 @@ def test_workflow_from_tasklist_builds_graph():
     )
     wf = Workflow.from_tasklist(tl)
     assert len(wf) == 1
-    wf.verify()  # un grafo valido non solleva
+    wf.verify()  # a valid graph does not raise
     tasks = list(wf.traverse())
     assert [t.id for t in tasks] == ["s1"]
 
@@ -40,7 +40,7 @@ def test_workflow_verify_fails_on_undefined_dependency():
             {
                 "id": "a1",
                 "op": "average",
-                "use": ["s1", "ghost"],  # `ghost` non è definito
+                "use": ["s1", "ghost"],  # `ghost` is not defined
                 "args": {"dim": "time"},
             },
         ]

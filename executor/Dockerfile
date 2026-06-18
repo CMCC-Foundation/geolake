@@ -2,8 +2,8 @@ ARG REGISTRY=gtramonte
 ARG TAG=latest
 FROM $REGISTRY/geolake-datastore:$TAG
 
-# Codice + deps dichiarati in pyproject.toml; installati in site-packages, sorgenti rimossi.
-# L'executor resta ROOT con filesystem RW: in produzione scrive su /downloads (hardening deferito).
+# Code + deps declared in pyproject.toml; installed in site-packages, sources removed.
+# The executor stays ROOT with an RW filesystem: in production it writes to /downloads (hardening deferred).
 WORKDIR /app
 COPY pyproject.toml /code/pyproject.toml
 COPY app /code/app

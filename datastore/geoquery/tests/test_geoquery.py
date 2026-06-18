@@ -18,7 +18,7 @@ def test_query_no_attrs():
 
 
 def test_format_optional_defaults_to_none():
-    # Regressione pydantic v2: `Optional[str]` senza default sarebbe OBBLIGATORIO.
+    # pydantic v2 regression: `Optional[str]` without a default would be REQUIRED.
     query = GeoQuery(variable=["t2m"])
     assert query.format is None
 
@@ -61,12 +61,12 @@ def test_empty_filters():
 
 def test_vertical_dict_requires_start_and_stop():
     with pytest.raises(ValidationError):
-        GeoQuery(vertical={"start": 1.0})  # manca 'stop'
+        GeoQuery(vertical={"start": 1.0})  # 'stop' is missing
 
 
 def test_original_query_json_flattens_filters():
     query = GeoQuery(variable=["t2m"], resolution="0.1")
     data = json.loads(query.original_query_json())
     assert data["variable"] == ["t2m"]
-    assert data["resolution"] == "0.1"  # extra riportato a top-level
-    assert "filters" not in data  # filters svuotato/appiattito
+    assert data["resolution"] == "0.1"  # extra promoted to top-level
+    assert "filters" not in data  # filters emptied/flattened

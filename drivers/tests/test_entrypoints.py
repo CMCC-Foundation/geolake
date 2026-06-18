@@ -2,9 +2,9 @@ from importlib.metadata import entry_points
 
 
 def test_intake_driver_entrypoints_registered():
-    """intake scopre i driver via entry-points: verifichiamo i 3 attivi.
+    """intake discovers drivers via entry-points: we verify the 3 active ones.
 
-    geokube-free: legge solo i metadati, non importa i moduli driver.
+    geokube-free: reads only the metadata, does not import the driver modules.
     """
     names = {ep.name for ep in entry_points(group="intake.drivers")}
     assert {
@@ -12,5 +12,5 @@ def test_intake_driver_entrypoints_registered():
         "cmcc_wrf_geokube",
         "geokube_netcdf_ancillary",
     } <= names
-    # `sentinel` è un prototipo non funzionante → NON registrato.
+    # `sentinel` is a non-working prototype → NOT registered.
     assert "cmcc_sentinel_geokube" not in names

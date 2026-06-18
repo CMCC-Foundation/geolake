@@ -10,7 +10,7 @@ def test_task_defaults():
 
 
 def test_task_use_none_becomes_empty_list():
-    # field_validator(mode="before") deve convertire None → []
+    # field_validator(mode="before") must convert None → []
     t = Task(id="1", op="subset", use=None)
     assert t.use == []
 

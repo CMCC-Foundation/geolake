@@ -8,9 +8,9 @@ version = "0.1.0"
 description = "geolake datastore libraries (datastore, workflow, dbmanager, geoquery, utils)"
 requires-python = ">=3.10"
 license = { text = "Apache-2.0" }
-# Deps esplicite: requirements.txt aveva networkx/pydantic/psycopg2/intake;
-# PyYAML e SQLAlchemy erano implicite (dbmanager le importa) → ora dichiarate.
-# geokube NON è dichiarato: arriva dall'immagine base (drivers→geokube), non da PyPI.
+# Explicit deps: requirements.txt had networkx/pydantic/psycopg2/intake;
+# PyYAML and SQLAlchemy were implicit (dbmanager imports them) → now declared.
+# geokube is NOT declared: it comes from the base image (drivers→geokube), not from PyPI.
 dependencies = [
     "networkx",
     "pydantic>=2",
@@ -31,4 +31,4 @@ exclude = ["tests*", "*.tests*"]
 [tool.pytest.ini_options]
 # geoquery/tests = unit (geokube-free); tests/ = workflow + integration
 testpaths = ["geoquery/tests", "tests"]
-markers = ["integration: test che richiedono geokube/dati reali (eseguiti in-image)"]
+markers = ["integration: tests that require geokube/real data (run in-image)"]

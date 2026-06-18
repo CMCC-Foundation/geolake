@@ -10,7 +10,7 @@ def test_loggable_meta_configures_logger(monkeypatch):
         _LOG = logging.getLogger("test.loggable.foo")
 
     assert Foo._LOG.level == logging.DEBUG
-    assert Foo._LOG.handlers  # almeno un handler agganciato
+    assert Foo._LOG.handlers  # at least one handler attached
 
 
 def test_loggable_meta_without_log_attr_does_not_raise():

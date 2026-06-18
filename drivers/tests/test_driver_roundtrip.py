@@ -1,5 +1,5 @@
-"""Integration: valida la NOSTRA integrazione con geokube (driver geokube_netcdf)
-su dati SINTETICI (niente dipendenze da dataset esterni). Eseguito in-image."""
+"""Integration: validates OUR integration with geokube (geokube_netcdf driver)
+on SYNTHETIC data (no dependencies on external datasets). Run in-image."""
 import textwrap
 
 import pytest
@@ -46,7 +46,7 @@ def test_geokube_netcdf_driver_reads_synthetic_data(tmp_path):
     )
     catalog = intake.open_catalog(str(catalog_path))
     result = catalog["synthetic"].read()
-    # open_datacube (niente `pattern`) → DataCube; difensivo per eventuale Dataset.
+    # open_datacube (no `pattern`) → DataCube; defensive in case of a Dataset.
     cube = result.cubes[0] if hasattr(result, "cubes") else result
     xc = cube.to_xarray()
     assert "t2m" in xc

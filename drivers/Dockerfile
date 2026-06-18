@@ -1,5 +1,5 @@
 ARG REGISTRY=gtramonte
-# Versione dell'immagine base geokube (disaccoppiata dal TAG di release geolake).
+# Version of the base geokube image (decoupled from the geolake release TAG).
 ARG GEOKUBE_TAG=2026.03.1
 FROM $REGISTRY/geokube:$GEOKUBE_TAG
 
