@@ -5,7 +5,26 @@ on:
     types: [opened, synchronize]
   workflow_dispatch:
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+    - name: Install API (prod + dev) from pyproject
+      run: pip install -e "./api[dev]"
+    - name: Install datastore runtime deps needed to import dbmanager
+      # The datastore source is provided on PYTHONPATH (not yet packaged);
+      # dbmanager needs PyYAML at import time (SQLAlchemy comes from the API deps).
+      run: pip install pyyaml
+    - name: Run API unit tests
+      env:
+        PYTHONPATH: ${{ github.workspace }}/datastore
+      run: pytest api/tests
   build:
+    needs: test
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3

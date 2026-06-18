@@ -26,15 +26,23 @@ class DDSAuthenticationBackend(AuthenticationBackend):
         try:
             user_id, api_key = self.get_authorization_scheme_param(user_token)
         except exc.BaseDDSException as err:
-            raise err.wrap_around_http_exception()
+            # Malformed/empty token -> 400. Raised as DDSAuthenticationError so
+            # the AuthenticationMiddleware routes it to `on_error` (a bare
+            # HTTPException raised here would surface as 500).
+            raise exc.DDSAuthenticationError(
+                code=err.code, detail=err.msg
+            ) from err
         user_dto = DBManager().get_user_details(user_id)
+        if user_dto is None or user_dto.api_key != api_key:
+            # Unknown user or wrong API key -> 401. Both cases share the same
+            # message so the response does not reveal whether the user exists.
+            raise exc.DDSAuthenticationError(
+                code=401,
+                detail=f"Authentication of the user '{user_id}' failed!",
+            )
         eligible_scopes = [scopes.AUTHENTICATED] + self._get_scopes_for_user(
             user_dto=user_dto
         )
-        if user_dto.api_key != api_key:
-            raise exc.AuthenticationFailed(
-                user_dto
-            ).wrap_around_http_exception()
         return AuthCredentials(eligible_scopes), DDSUser(username=user_id)
 
     def _get_scopes_for_user(self, user_dto) -> list[str]:

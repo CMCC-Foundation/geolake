@@ -1,12 +1,17 @@
-ARG REGISTRY=rg.fr-par.scw.cloud/geolake
+ARG REGISTRY=gtramonte
 ARG TAG=latest
 FROM $REGISTRY/geolake-datastore:$TAG
 
 RUN apt update && apt install -y cron curl
 
 WORKDIR /app
-COPY requirements.txt /code/requirements.txt
-RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt --break-system-packages
+# Dependencies are declared in pyproject.toml (single manifest for prod + dev).
+# Built/installed from /code, which preserves the repo layout
+# (pyproject.toml + app/) so setuptools' `package-dir = {"" = "app"}` resolves.
+# The runtime keeps importing from the flat /app layout copied below.
+COPY pyproject.toml /code/pyproject.toml
+COPY app /code/app
+RUN pip install --no-cache-dir /code --break-system-packages
 COPY app /app
 EXPOSE 80
 

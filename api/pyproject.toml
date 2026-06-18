@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "geolake-api"
+version = "0.1.0"
+description = "REST API for geolake"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pika",
+    "sqlalchemy",
+    "aioprometheus",
+    "pyoai==2.5.0",
+    "rdflib==7.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7",
+    "httpx",  # required by starlette.testclient.TestClient
+]
+
+# --- packaging of the flat layout under app/ ---
+# The app uses flat top-level imports (e.g. `import exceptions`,
+# `from auth.backend import ...`), so `app/` is the source root: its single-file
+# modules are declared as py-modules and its sub-packages discovered via find.
+[tool.setuptools]
+package-dir = { "" = "app" }
+py-modules = [
+    "main",
+    "exceptions",
+    "error_handlers",
+    "api_utils",
+    "validation",
+    "encoders",
+    "decorators_factory",
+]
+
+[tool.setuptools.packages.find]
+where = ["app"]  # discovers: auth, callbacks, const, endpoint_handlers
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# No `pythonpath`: imports resolve via the editable install (pip install -e ".[dev]").

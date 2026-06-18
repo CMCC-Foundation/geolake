@@ -2,9 +2,10 @@
 from typing import Optional
 
 from fastapi import HTTPException
+from starlette.authentication import AuthenticationError as StarletteAuthError
 
 
-class BaseDDSException(BaseException):
+class BaseDDSException(Exception):
     """Base class for DDS.api exceptions"""
 
     msg: str = "Bad request"
@@ -16,6 +17,21 @@ class BaseDDSException(BaseException):
             status_code=self.code,
             detail=self.msg,
         )
+
+
+class DDSAuthenticationError(StarletteAuthError):
+    """Authentication error carrying an HTTP status code and a client-safe
+    detail message.
+
+    It subclasses Starlette's `AuthenticationError` so that, when raised from
+    within `AuthenticationMiddleware`, it is routed to the middleware
+    `on_error` handler (instead of propagating as an unhandled 500).
+    """
+
+    def __init__(self, code: int, detail: str):
+        self.code = code
+        self.detail = detail
+        super().__init__(detail)
 
 
 class EmptyUserTokenError(BaseDDSException):
