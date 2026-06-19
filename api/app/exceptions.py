@@ -225,3 +225,39 @@ class ProductRetrievingError(BaseDDSException):
             status=status
         )
         super().__init__(self.msg)
+
+
+class OperationNotSupportedError(BaseDDSException):
+    """Raised when a query requests an operation a product does not allow.
+
+    The product's catalog `capabilities` do not include the requested operation
+    (e.g. spatial/temporal subsetting, a regrid/resample, or an output format).
+    Mapped to HTTP 400, consistent with the other query-validation errors
+    (`MaximumAllowedSizeExceededError`, `EmptyDatasetError`); this is a
+    product-capability mismatch, not an authorization failure.
+    """
+
+    msg: str = (
+        "The requested operation is not supported for"
+        " '{dataset_id}.{product_id}': {reasons}"
+    )
+    code: int = 400
+
+    def __init__(self, dataset_id, product_id, violations):
+        self.msg = self.msg.format(
+            dataset_id=dataset_id,
+            product_id=product_id,
+            reasons="; ".join(violations),
+        )
+        super().__init__(self.msg)
+
+
+class EndpointDisabledError(BaseDDSException):
+    """Raised when a disabled endpoint is called by a non-eligible user.
+
+    Mapped to HTTP 405 (Method Not Allowed): the endpoint exists but is
+    currently inactive for the caller.
+    """
+
+    msg: str = "This endpoint is currently disabled"
+    code: int = 405

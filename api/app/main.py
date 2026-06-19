@@ -491,13 +491,21 @@ async def query(
     app.state.api_request_duration_seconds,
     labels={"route": "POST /datasets/workflow"},
 )
-@requires([scopes.AUTHENTICATED])
 async def workflow(
     request: Request,
     tasks: TaskList,
 ):
-    """Schedule the job of workflow processing"""
+    """Schedule the job of workflow processing.
+
+    The workflow feature is incomplete and currently disabled: it responds with
+    405 (Method Not Allowed) to everyone except users with the `admin` role.
+    The handler logic is kept so admins can still exercise it. Because it is
+    admin-only it is intentionally *not* subject to per-product capability
+    enforcement.
+    """
     app.state.api_http_requests_total.inc({"route": "POST /datasets/workflow"})
+    if scopes.ADMIN not in request.auth.scopes:
+        raise exc.EndpointDisabledError()
     return dataset_handler.run_workflow(
         user_id=request.user.id,
         workflow=tasks,

@@ -4,6 +4,14 @@ sources:
   synthetic:
     description: Synthetic t2m grid (time=10, latitude=100, longitude=100)
     driver: geokube_netcdf
+    # Example `capabilities` block: spatial subsetting is disabled and GeoJSON is
+    # offered alongside netCDF. The API rejects an area/location query here, and
+    # the web portal hides the spatial widgets while showing the GeoJSON format.
+    metadata:
+      capabilities:
+        spatial_subset: false
+        format:
+          values: [netcdf, geojson]
     args:
       # {{ CATALOG_DIR }} is resolved by intake relative to this catalog file,
       # so the committed synthetic.nc next to it is found regardless of cwd.
