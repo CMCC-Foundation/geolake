@@ -28,7 +28,9 @@ spec:
         - --host
         - 0.0.0.0
         - --port
-        - '80'
+        # 8080 (not 80): the hardened image runs as non-root and cannot bind a
+        # privileged port. The Service maps 8080 -> 8080.
+        - '8080'
         env:
         - name: LOGGING_LEVEL
           value: DEBUG
@@ -52,8 +54,10 @@ spec:
               name: db
         - name: API_URL
           value: http://api:8080
+        # Browser downloads route through the web download proxy (SEC-11),
+        # which forwards the User-Token to the API; no longer the API directly.
         - name: DOWNLOAD_PREFIX
-          value: https://ddshub.cmcc.it/api
+          value: https://ddshub.cmcc.it/web
         - name: ENDPOINT_PREFIX
           value: /web
         - name: ECHO_DB
@@ -63,7 +67,7 @@ spec:
         image: rg.nl-ams.scw.cloud/dds-production/geodds-web:v0.1a124
         name: web
         ports:
-        - containerPort: 80
+        - containerPort: 8080
         resources:
           limits:
             cpu: 500m

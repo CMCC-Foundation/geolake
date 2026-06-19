@@ -579,7 +579,7 @@ async def get_request_uri(
     app.state.api_request_duration_seconds,
     labels={"route": "GET /download/{request_id}"},
 )
-# @requires([scopes.AUTHENTICATED]) # TODO: mange download auth in the web component
+@requires([scopes.AUTHENTICATED])
 async def download_request_result(
     request: Request,
     request_id: int,
@@ -588,14 +588,16 @@ async def download_request_result(
     app.state.api_http_requests_total.inc(
         {"route": "GET /download/{request_id}"}
     )
-    return file_handler.download_request_result(request_id=request_id)
+    return file_handler.download_request_result(
+        request_id=request_id, user_id=request.user.id
+    )
 
 @app.get("/download/{request_id}/{filename}", tags=[tags.REQUEST])
 @timer(
     app.state.api_request_duration_seconds,
     labels={"route": "GET /download/{request_id}/{filename}"},
 )
-# @requires([scopes.AUTHENTICATED]) # TODO: mange download auth in the web component
+@requires([scopes.AUTHENTICATED])
 async def download_request_result(
     request: Request,
     request_id: int,
@@ -605,14 +607,16 @@ async def download_request_result(
     app.state.api_http_requests_total.inc(
         {"route": "GET /download/{request_id}/{filename}"}
     )
-    return file_handler.download_request_result(request_id=request_id, filename=filename)
+    return file_handler.download_request_result(
+        request_id=request_id, user_id=request.user.id, filename=filename
+    )
 
 @app.get("/download/{request_id}/{filename}/{subfile}", tags=[tags.REQUEST])
 @timer(
     app.state.api_request_duration_seconds,
     labels={"route": "GET /download/{request_id}/{filename}/{subfile}"},
 )
-# @requires([scopes.AUTHENTICATED])
+@requires([scopes.AUTHENTICATED])
 async def download_request_result(
     request: Request,
     request_id: int,
@@ -623,4 +627,8 @@ async def download_request_result(
     app.state.api_http_requests_total.inc(
         {"route": "GET /download/{request_id}/{filename}/{subfile}"}
     )
-    return file_handler.download_request_result(request_id=request_id, filename=f'{filename}/{subfile}')
+    return file_handler.download_request_result(
+        request_id=request_id,
+        user_id=request.user.id,
+        filename=f'{filename}/{subfile}',
+    )

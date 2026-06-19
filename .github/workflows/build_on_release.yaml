@@ -15,7 +15,7 @@ jobs:
       with:
         python-version: "3.11"
     - name: Install components (editable) with dev extras
-      run: pip install -e ./drivers -e ./datastore -e "./api[dev]" -e "./executor[dev]"
+      run: pip install -e ./drivers -e ./datastore -e "./api[dev]" -e "./executor[dev]" -e "./web[dev]"
     - name: Run unit tests (geokube-free), per component
       # Per-component: each invocation loads the component's pyproject
       # (registered markers) and avoids the collision of the top-level `main`
@@ -25,6 +25,7 @@ jobs:
         pytest datastore/geoquery/tests -m "not integration"
         pytest executor/tests -m "not integration"
         pytest drivers/tests -m "not integration"
+        pytest web/tests -m "not integration"
   integration:
     needs: test
     runs-on: ubuntu-latest
@@ -126,3 +127,16 @@ jobs:
         cache-to: type=gha,mode=max
         tags: |
           ${{ vars.GEOLAKE_REGISTRY }}/geolake-executor:${{ env.RELEASE_TAG }}
+    - name: Build and push web component
+      uses: docker/build-push-action@v5
+      with:
+        context: ./web
+        file: ./web/Dockerfile
+        push: true
+        build-args: |
+          REGISTRY=${{ vars.GEOLAKE_REGISTRY  }}
+          TAG=${{ env.RELEASE_TAG }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        tags: |
+          ${{ vars.GEOLAKE_REGISTRY }}/geolake-web:${{ env.RELEASE_TAG }}
