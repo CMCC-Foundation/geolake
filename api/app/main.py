@@ -551,7 +551,7 @@ async def get_request_resulting_size(
         {"route": "GET /requests/{request_id}/size"}
     )
     return request_handler.get_request_resulting_size(
-        request_id=request_id
+        request_id=request_id, user_id=request.user.id
     )
 
 
@@ -569,7 +569,9 @@ async def get_request_uri(
     app.state.api_http_requests_total.inc(
         {"route": "GET /requests/{request_id}/uri"}
     )
-    return request_handler.get_request_uri(request_id=request_id)
+    return request_handler.get_request_uri(
+        request_id=request_id, user_id=request.user.id
+    )
 
 
 @app.get("/download/{request_id}", tags=[tags.REQUEST])

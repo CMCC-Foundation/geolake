@@ -73,19 +73,6 @@ def build_path_filters(product_info: dict, filters_vals: list[str]) -> dict:
     }
 
 
-def ensure_no_separator(payload: str, separator: str) -> str:
-    """Reject a serialized payload containing the broker message separator (SEC-5).
-
-    The worker frames messages by splitting on ``separator``; a payload that
-    embeds it would corrupt the framing. Convert that into a clean 400.
-    """
-    if separator in payload:
-        raise exc.MalformedQueryParameterError(
-            "Query payload contains a reserved control character"
-        )
-    return payload
-
-
 class BodySizeLimitMiddleware:
     """Reject requests whose ``Content-Length`` exceeds a limit, with 413 (SEC-4).
 

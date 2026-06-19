@@ -1,11 +1,9 @@
-import os
+import json
 import logging
 from enum import Enum
 
 from geoquery.geoquery import GeoQuery
 from geoquery.task import TaskList
-
-MESSAGE_SEPARATOR = os.environ["MESSAGE_SEPARATOR"]
 
 
 class MessageType(Enum):
@@ -23,20 +21,46 @@ class Message:
     content: GeoQuery | TaskList
 
     def __init__(self, load: bytes) -> None:
-        self.request_id, msg_type, *query = load.decode().split(
-            MESSAGE_SEPARATOR
-        )
+        # Messages are framed as a JSON envelope (SEC-5). This is robust to any
+        # content, unlike the previous separator-joined string which a payload
+        # embedding the separator character could corrupt.
+        try:
+            data = json.loads(load)
+        except (json.JSONDecodeError, TypeError, ValueError) as err:
+            self._LOG.error("message is not valid JSON")
+            raise ValueError("message is not a valid JSON envelope") from err
+        if not isinstance(data, dict):
+            raise ValueError("message envelope must be a JSON object")
+        try:
+            self.request_id = data["request_id"]
+            msg_type = data["type"]
+        except KeyError as err:
+            raise ValueError(
+                f"message envelope is missing required key: {err}"
+            ) from err
+
         match MessageType(msg_type):
             case MessageType.QUERY:
                 self._LOG.debug("processing content of `query` type")
-                assert len(query) == 3, "improper content for query message"
-                self.dataset_id, self.product_id, self.content = query
-                self.content: GeoQuery = GeoQuery.parse(self.content)
+                try:
+                    self.dataset_id = data["dataset_id"]
+                    self.product_id = data["product_id"]
+                    content = data["content"]
+                except KeyError as err:
+                    raise ValueError(
+                        f"query message is missing required key: {err}"
+                    ) from err
+                self.content: GeoQuery = GeoQuery.parse(content)
                 self.type = MessageType.QUERY
             case MessageType.WORKFLOW:
                 self._LOG.debug("processing content of `workflow` type")
-                assert len(query) == 1, "improper content for workflow message"
-                self.content: TaskList = TaskList.parse(query[0])
+                try:
+                    content = data["content"]
+                except KeyError as err:
+                    raise ValueError(
+                        f"workflow message is missing required key: {err}"
+                    ) from err
+                self.content: TaskList = TaskList.parse(content)
                 self.dataset_id = self.content.dataset_id
                 self.product_id = self.content.product_id
                 self.type = MessageType.WORKFLOW

@@ -1,5 +1,6 @@
 """Modules realizing logic for dataset-related endpoints"""
 import os
+import json
 import pika
 from typing import Optional
 
@@ -19,14 +20,12 @@ from auth.manager import (
 import exceptions as exc
 from api_utils import make_bytes_readable_dict
 from validation import assert_product_exists
-from security import ensure_no_separator
 
 from . import request
 
 log = get_dds_logger(__name__)
 data_store = Datastore()
 
-MESSAGE_SEPARATOR = os.environ["MESSAGE_SEPARATOR"]
 
 def _is_etimate_enabled(dataset_id, product_id):
     if dataset_id in ("sentinel-2",):
@@ -282,12 +281,6 @@ def async_query(
     )
     broker_channel = broker_conn.channel()
 
-    # Reject a payload that would corrupt broker message framing before
-    # creating the DB request, so no orphan request is left behind (SEC-5).
-    serialized_query = ensure_no_separator(
-        query.model_dump_json(), MESSAGE_SEPARATOR
-    )
-
     request_id = DBManager().create_request(
         user_id=user_id,
         dataset=dataset_id,
@@ -295,8 +288,17 @@ def async_query(
         query=query.original_query_json(),
     )
 
-    message = MESSAGE_SEPARATOR.join(
-        [str(request_id), "query", dataset_id, product_id, serialized_query]
+    # Frame the broker message as a JSON envelope (SEC-5). This is robust to
+    # any content (the previous separator-joined string could be corrupted by
+    # a payload embedding the separator character).
+    message = json.dumps(
+        {
+            "request_id": request_id,
+            "type": "query",
+            "dataset_id": dataset_id,
+            "product_id": product_id,
+            "content": query.model_dump_json(),
+        }
     )
 
     broker_channel.basic_publish(
@@ -351,17 +353,21 @@ def sync_query(
     
     import time
     request_id = async_query(user_id, dataset_id, product_id, query)
-    status, _ = DBManager().get_request_status_and_reason(request_id)
+    status, _ = DBManager().get_request_status_and_reason(
+        request_id, user_id=user_id
+    )
     log.debug("sync query: status: %s", status)
-    while status in (RequestStatus.RUNNING, RequestStatus.QUEUED, 
+    while status in (RequestStatus.RUNNING, RequestStatus.QUEUED,
                      RequestStatus.PENDING):
         time.sleep(1)
-        status, _ = DBManager().get_request_status_and_reason(request_id)
+        status, _ = DBManager().get_request_status_and_reason(
+            request_id, user_id=user_id
+        )
         log.debug("sync query: status: %s", status)
-    
+
     if status is RequestStatus.DONE:
         download_details = DBManager().get_download_details_for_request_id(
-                request_id
+                request_id, user_id=user_id
         )
         return FileResponse(
             path=download_details.location_path,
@@ -411,9 +417,7 @@ def run_workflow(
         )
     )
     broker_channel = broker_conn.channel()
-    serialized_workflow = ensure_no_separator(
-        workflow.model_dump_json(), MESSAGE_SEPARATOR
-    )
+    serialized_workflow = workflow.model_dump_json()
 
     request_id = DBManager().create_request(
         user_id=user_id,
@@ -422,8 +426,13 @@ def run_workflow(
         query=serialized_workflow,
     )
 
-    message = MESSAGE_SEPARATOR.join(
-        [str(request_id), "workflow", serialized_workflow]
+    # Frame the broker message as a JSON envelope (SEC-5).
+    message = json.dumps(
+        {
+            "request_id": request_id,
+            "type": "workflow",
+            "content": serialized_workflow,
+        }
     )
 
     broker_channel.basic_publish(

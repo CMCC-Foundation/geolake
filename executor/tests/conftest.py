@@ -1,4 +1,5 @@
-import os
+"""Test configuration for the executor test-suite.
 
-# messaging.py reads MESSAGE_SEPARATOR at import-time → set it before collection.
-os.environ.setdefault("MESSAGE_SEPARATOR", "\x1e")
+Broker messages are framed as a JSON envelope (SEC-5), so no
+``MESSAGE_SEPARATOR`` environment variable is required at import time anymore.
+"""

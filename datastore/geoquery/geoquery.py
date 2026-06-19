@@ -5,6 +5,16 @@ from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
 TGeoQuery = TypeVar("TGeoQuery")
 
+# Bounds for the free-form `filters` mapping (SEC-15). They keep an abusive or
+# accidentally huge payload from being forwarded unchecked to the datastore /
+# broker, while leaving normal path/extra filters (a handful of scalars) intact.
+MAX_FILTERS = 64
+MAX_FILTER_VALUE_LEN = 1024
+MAX_FILTER_LIST_LEN = 512
+
+# Scalar types accepted as filter values (bool is a subclass of int).
+_FILTER_SCALARS = (str, int, float, bool)
+
 
 class GeoQuery(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -40,12 +50,58 @@ class GeoQuery(BaseModel):
     def build_filters(cls, values: Any) -> Any:
         if not isinstance(values, dict):
             return values
-        if "filters" in values:
+        # Always fold any extra (non-model) field into `filters` and merge it
+        # with an explicitly-provided `filters` mapping. This guarantees no
+        # extra field escapes validation by living in `__pydantic_extra__`
+        # (SEC-15); explicit filters take precedence on key clashes.
+        explicit = values.get("filters") or {}
+        if not isinstance(explicit, dict):
+            # Let the field validator below reject a non-mapping `filters`.
             return values
-        filters = {k: v for k, v in values.items() if k not in cls.model_fields}
-        values = {k: v for k, v in values.items() if k in cls.model_fields}
-        values["filters"] = filters
-        return values
+        extra = {
+            k: v for k, v in values.items() if k not in cls.model_fields
+        }
+        known = {k: v for k, v in values.items() if k in cls.model_fields}
+        known["filters"] = {**extra, **explicit}
+        return known
+
+    @field_validator("filters")
+    @classmethod
+    def validate_filters(cls, value):
+        """Constrain the free-form `filters` mapping (SEC-15).
+
+        Keys must be strings; values must be scalars or *flat* lists of
+        scalars (no nested objects/dicts), bounded in number and size.
+        """
+        if value is None:
+            return value
+        if not isinstance(value, dict):
+            raise ValueError("`filters` must be a mapping")
+        if len(value) > MAX_FILTERS:
+            raise ValueError(
+                f"too many filters (max {MAX_FILTERS})"
+            )
+
+        def _check_scalar(item):
+            # `bool` passes via `int`; reject dicts and other objects.
+            if item is not None and not isinstance(item, _FILTER_SCALARS):
+                raise ValueError(
+                    "filter values must be scalars or flat lists of scalars"
+                )
+            if isinstance(item, str) and len(item) > MAX_FILTER_VALUE_LEN:
+                raise ValueError("filter value is too long")
+
+        for key, val in value.items():
+            if not isinstance(key, str):
+                raise ValueError("filter keys must be strings")
+            if isinstance(val, (list, tuple)):
+                if len(val) > MAX_FILTER_LIST_LEN:
+                    raise ValueError("filter list is too long")
+                for item in val:
+                    _check_scalar(item)
+            else:
+                _check_scalar(val)
+        return value
 
     @field_validator("vertical")
     @classmethod

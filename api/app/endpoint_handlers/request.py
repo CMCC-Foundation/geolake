@@ -50,20 +50,31 @@ def get_request_status(user_id: str, request_id: int):
     status : tuple
         Tuple of status and fail reason.
     """
-    # NOTE: maybe verification should be added if user checks only him\her requests
+    # Ownership is enforced at the datastore layer (SEC-10): a request that
+    # does not belong to `user_id` raises PermissionError -> 403, a missing one
+    # raises IndexError -> 404/RequestNotFound.
     try:
-        status, reason = DBManager().get_request_status_and_reason(request_id)
+        status, reason = DBManager().get_request_status_and_reason(
+            request_id, user_id=user_id
+        )
     except IndexError as err:
         log.error(
             "request with id: '%s' was not found!",
             request_id,
         )
         raise exc.RequestNotFound(request_id=request_id) from err
+    except PermissionError as err:
+        log.warning(
+            "user '%s' attempted to access request '%s' they do not own",
+            user_id,
+            request_id,
+        )
+        raise exc.AuthorizationFailed(user_id=user_id) from err
     return {"status": status.name, "fail_reason": reason}
 
 
 @log_execution_time(log)
-def get_request_resulting_size(request_id: int):
+def get_request_resulting_size(request_id: int, user_id: str):
     """Realize the logic for the endpoint:
 
     `GET /requests/{request_id}/size`
@@ -74,6 +85,8 @@ def get_request_resulting_size(request_id: int):
     ----------
     request_id : int
         ID of the request
+    user_id : str
+        ID of the user owning the request
 
     Returns
     -------
@@ -84,11 +97,24 @@ def get_request_resulting_size(request_id: int):
     -------
     RequestNotFound
         If the request was not found
+    AuthorizationFailed
+        If the request does not belong to the user
     """
-    if request := DBManager().get_request_details(request_id):
+    # Ownership is enforced at the datastore layer (SEC-10): a request that
+    # does not belong to `user_id` raises PermissionError -> 403.
+    try:
+        request = DBManager().get_request_details(request_id, user_id=user_id)
+    except PermissionError as err:
+        log.warning(
+            "user '%s' attempted to access request '%s' they do not own",
+            user_id,
+            request_id,
+        )
+        raise exc.AuthorizationFailed(user_id=user_id) from err
+    if request:
         size = request.download.size_bytes
         if not size or size == 0:
-            raise exc.EmptyDatasetError(dataset_id=request.dataset, 
+            raise exc.EmptyDatasetError(dataset_id=request.dataset,
                                         product_id=request.product)
         return size
     log.info(
@@ -99,7 +125,7 @@ def get_request_resulting_size(request_id: int):
 
 
 @log_execution_time(log)
-def get_request_uri(request_id: int):
+def get_request_uri(request_id: int, user_id: str):
     """
     Realize the logic for the endpoint:
 
@@ -111,15 +137,25 @@ def get_request_uri(request_id: int):
     ----------
     request_id : int
         ID of the request
+    user_id : str
+        ID of the user owning the request
 
     Returns
     -------
     uri : str
         URI for the download associated with the given request
+
+    Raises
+    -------
+    RequestNotFound
+        If the request was not found
+    AuthorizationFailed
+        If the request does not belong to the user
     """
+    # Ownership is enforced at the datastore layer (SEC-10).
     try:
         download_details = DBManager().get_download_details_for_request_id(
-            request_id
+            request_id, user_id=user_id
         )
     except IndexError as err:
         log.error(
@@ -127,11 +163,20 @@ def get_request_uri(request_id: int):
             request_id,
         )
         raise exc.RequestNotFound(request_id=request_id) from err
+    except PermissionError as err:
+        log.warning(
+            "user '%s' attempted to access request '%s' they do not own",
+            user_id,
+            request_id,
+        )
+        raise exc.AuthorizationFailed(user_id=user_id) from err
     if download_details is None:
         (
             request_status,
             _,
-        ) = DBManager().get_request_status_and_reason(request_id)
+        ) = DBManager().get_request_status_and_reason(
+            request_id, user_id=user_id
+        )
         log.info(
             "download URI not found for request id: '%s'."
             " Request status is '%s'",

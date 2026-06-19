@@ -3,7 +3,12 @@ import json
 import pytest
 from pydantic import ValidationError
 
-from geoquery.geoquery import GeoQuery
+from geoquery.geoquery import (
+    GeoQuery,
+    MAX_FILTERS,
+    MAX_FILTER_VALUE_LEN,
+    MAX_FILTER_LIST_LEN,
+)
 
 
 def test_query_no_attrs():
@@ -70,3 +75,43 @@ def test_original_query_json_flattens_filters():
     assert data["variable"] == ["t2m"]
     assert data["resolution"] == "0.1"  # extra promoted to top-level
     assert "filters" not in data  # filters emptied/flattened
+
+
+# --- SEC-15: filters validation ------------------------------------------
+def test_filters_accept_scalars_and_flat_lists():
+    query = GeoQuery(
+        filters={"resolution": "0.1", "level": 5, "ratio": 0.5, "members": [1, 2, "a"]}
+    )
+    assert query.filters["members"] == [1, 2, "a"]
+
+
+def test_explicit_and_extra_filters_are_merged():
+    # extra (non-model) field is folded into the explicit `filters` mapping.
+    query = GeoQuery(resolution="0.1", filters={"version": "5"})
+    assert query.filters == {"resolution": "0.1", "version": "5"}
+
+
+def test_filters_reject_nested_dict():
+    with pytest.raises(ValidationError):
+        GeoQuery(filters={"bad": {"nested": "value"}})
+
+
+def test_filters_reject_nested_dict_inside_list():
+    with pytest.raises(ValidationError):
+        GeoQuery(filters={"bad": [{"nested": "value"}]})
+
+
+def test_filters_reject_too_many_keys():
+    too_many = {str(i): i for i in range(MAX_FILTERS + 1)}
+    with pytest.raises(ValidationError):
+        GeoQuery(filters=too_many)
+
+
+def test_filters_reject_overlong_value():
+    with pytest.raises(ValidationError):
+        GeoQuery(filters={"k": "x" * (MAX_FILTER_VALUE_LEN + 1)})
+
+
+def test_filters_reject_overlong_list():
+    with pytest.raises(ValidationError):
+        GeoQuery(filters={"k": list(range(MAX_FILTER_LIST_LEN + 1))})

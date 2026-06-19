@@ -1,7 +1,9 @@
 """Regression tests for the security fixes (see SECURITY_REMEDIATION.md).
 
-They exercise the import-safe helpers in `security.py` (SEC-1/2/3/5) and the
+They exercise the import-safe helpers in `security.py` (SEC-1/2/3) and the
 body-size middleware (SEC-4) without importing the full app or the datastore.
+The SEC-5 broker mitigation was superseded by the JSON message envelope (see
+`executor/tests/test_messaging.py`).
 """
 import pytest
 from starlette.applications import Starlette
@@ -13,7 +15,6 @@ import exceptions as exc
 from security import (
     BodySizeLimitMiddleware,
     build_path_filters,
-    ensure_no_separator,
     parse_bbox,
     safe_join,
 )
@@ -70,16 +71,6 @@ def test_safe_join_blocks_traversal(tmp_path, evil):
     base.mkdir()
     with pytest.raises(exc.MalformedQueryParameterError):
         safe_join(str(base), evil)
-
-
-# --- SEC-5: broker separator ---------------------------------------------
-def test_ensure_no_separator_passes_clean_payload():
-    assert ensure_no_separator('{"a": 1}', "\\") == '{"a": 1}'
-
-
-def test_ensure_no_separator_rejects_separator():
-    with pytest.raises(exc.MalformedQueryParameterError):
-        ensure_no_separator('{"a": "x\\y"}', "\\")
 
 
 # --- SEC-4: body-size middleware -----------------------------------------
