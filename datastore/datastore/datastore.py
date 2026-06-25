@@ -14,6 +14,7 @@ from geoquery.geoquery import GeoQuery
 
 from geokube.core.datacube import DataCube
 from geokube.core.dataset import Dataset
+from geokube.core.errs import CacheNotExist
 
 from .singleton import Singleton
 from .util import log_execution_time
@@ -115,13 +116,22 @@ class Datastore(metaclass=Singleton):
                     self.cache[dataset_id][
                         product_id
                     ] = catalog_entry.read_chunked()
+                except CacheNotExist:
+                    # Read-only API: the kerchunk cache for this product has not
+                    # been built by the catalog yet. Skip it (stay up) instead of
+                    # crashing startup; the build job publishes it out-of-band.
+                    self._LOG.warning(
+                        "metadata cache for `%s.%s` not built yet; skipping",
+                        dataset_id,
+                        product_id,
+                    )
                 except ValueError:
                     self._LOG.error(
                         "failed to load cache for `%s.%s`",
                         dataset_id,
                         product_id,
                         exc_info=True,
-                    ) 
+                    )
 
     @log_execution_time(_LOG)
     def dataset_list(self) -> list:

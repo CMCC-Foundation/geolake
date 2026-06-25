@@ -34,7 +34,7 @@ jobs:
     - name: Login to Scaleway Container Registry
       uses: docker/login-action@v2
       with:
-        username: ${{ vars.GEOLAKE_REGISTRY }}
+        username: ${{ vars.DOCKER_REGISTRY }}
         password: ${{ secrets.DOCKER_PASSWORD }}
     - name: Build drivers + datastore images locally (geokube available)
       run: |
@@ -70,9 +70,9 @@ jobs:
     - name: Login to Scaleway Container Registry
       uses: docker/login-action@v2
       with:
-        username: ${{ vars.GEOLAKE_REGISTRY }}
+        username: ${{ vars.DOCKER_REGISTRY }}
         password: ${{ secrets.DOCKER_PASSWORD }}
-        #registry: ${{ vars.GEOLAKE_REGISTRY }}
+        #registry: ${{ vars.DOCKER_REGISTRY }}
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
     - name: Build and push drivers
@@ -87,7 +87,8 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
         tags: |
-          ${{ vars.GEOLAKE_REGISTRY }}/geolake-drivers:${{ env.RELEASE_TAG }}
+          ${{ vars.DOCKER_REGISTRY }}/geolake-drivers:${{ env.RELEASE_TAG }}
+          ${{ vars.DOCKER_REGISTRY }}/geolake-drivers:latest
     - name: Build and push datastore component
       uses: docker/build-push-action@v5
       with:
@@ -95,12 +96,13 @@ jobs:
         file: ./datastore/Dockerfile
         push: true
         build-args: |
-          REGISTRY=${{ vars.GEOLAKE_REGISTRY  }}
+          REGISTRY=${{ vars.DOCKER_REGISTRY  }}
           TAG=${{ env.RELEASE_TAG }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
         tags: |
-          ${{ vars.GEOLAKE_REGISTRY }}/geolake-datastore:${{ env.RELEASE_TAG }}
+          ${{ vars.DOCKER_REGISTRY }}/geolake-datastore:${{ env.RELEASE_TAG }}
+          ${{ vars.DOCKER_REGISTRY }}/geolake-datastore:latest
     - name: Build and push api component
       uses: docker/build-push-action@v5
       with:
@@ -108,12 +110,13 @@ jobs:
         file: ./api/Dockerfile
         push: true
         build-args: |
-          REGISTRY=${{ vars.GEOLAKE_REGISTRY  }}
+          REGISTRY=${{ vars.DOCKER_REGISTRY  }}
           TAG=${{ env.RELEASE_TAG }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
         tags: |
-          ${{ vars.GEOLAKE_REGISTRY }}/geolake-api:${{ env.RELEASE_TAG }}
+          ${{ vars.DOCKER_REGISTRY }}/geolake-api:${{ env.RELEASE_TAG }}
+          ${{ vars.DOCKER_REGISTRY }}/geolake-api:latest
     - name: Build and push executor component
       uses: docker/build-push-action@v5
       with:
@@ -121,12 +124,13 @@ jobs:
         file: ./executor/Dockerfile
         push: true
         build-args: |
-          REGISTRY=${{ vars.GEOLAKE_REGISTRY  }}
+          REGISTRY=${{ vars.DOCKER_REGISTRY  }}
           TAG=${{ env.RELEASE_TAG }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
         tags: |
-          ${{ vars.GEOLAKE_REGISTRY }}/geolake-executor:${{ env.RELEASE_TAG }}
+          ${{ vars.DOCKER_REGISTRY }}/geolake-executor:${{ env.RELEASE_TAG }}
+          ${{ vars.DOCKER_REGISTRY }}/geolake-executor:latest
     - name: Build and push web component
       uses: docker/build-push-action@v5
       with:
@@ -134,9 +138,10 @@ jobs:
         file: ./web/Dockerfile
         push: true
         build-args: |
-          REGISTRY=${{ vars.GEOLAKE_REGISTRY  }}
+          REGISTRY=${{ vars.DOCKER_REGISTRY  }}
           TAG=${{ env.RELEASE_TAG }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
         tags: |
-          ${{ vars.GEOLAKE_REGISTRY }}/geolake-web:${{ env.RELEASE_TAG }}
+          ${{ vars.DOCKER_REGISTRY }}/geolake-web:${{ env.RELEASE_TAG }}
+          ${{ vars.DOCKER_REGISTRY }}/geolake-web:latest

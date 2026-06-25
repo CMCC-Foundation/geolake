@@ -146,6 +146,7 @@ class CMCCWRFSource(GeokubeSource):
         super(CMCCWRFSource, self).__init__(metadata=metadata, **kwargs)
 
     def _open_dataset(self):
+        self._maybe_build_metadata_cache()
         if self.pattern is None:
             self._kube = open_datacube(
                 path=self.path,

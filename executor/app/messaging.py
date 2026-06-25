@@ -14,7 +14,7 @@ class MessageType(Enum):
 class Message:
     _LOG = logging.getLogger("geokube.Message")
 
-    request_id: int
+    request_id: str
     dataset_id: str = "<unknown>"
     product_id: str = "<unknown>"
     type: MessageType
@@ -32,7 +32,12 @@ class Message:
         if not isinstance(data, dict):
             raise ValueError("message envelope must be a JSON object")
         try:
-            self.request_id = data["request_id"]
+            # The JSON envelope (SEC-5) preserves the numeric type of the DB
+            # primary key, whereas the previous separator-joined string always
+            # yielded a str. Downstream code builds download paths and filenames
+            # from request_id (os.path.join / "_".join), so normalize to str
+            # here. The DB layer coerces it back to the Integer PK on lookup.
+            self.request_id = str(data["request_id"])
             msg_type = data["type"]
         except KeyError as err:
             raise ValueError(

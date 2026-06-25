@@ -1,9 +1,11 @@
 # from . import __version__
+import os
+
+import geokube
 from dask.delayed import Delayed
 from intake.source.base import DataSource, Schema
 from geokube.core.datacube import DataCube
 from geokube.core.dataset import Dataset
-
 
 
 class GeokubeSource(DataSource):
@@ -12,6 +14,44 @@ class GeokubeSource(DataSource):
     version = "0.1a0"
     container = "geokube"
     partition_access = True
+
+    @staticmethod
+    def _cache_mode() -> str:
+        """Caching role for this process.
+
+        ``build`` is opt-in via the ``CACHE_MODE`` environment variable and is
+        only ever set on the dedicated catalog/build container (which owns write
+        access to the cache). Everything else defaults to ``read``, so the API
+        and executors can never (re)build or invalidate the metadata cache.
+        """
+        return os.environ.get("CACHE_MODE", "read")
+
+    def _maybe_build_metadata_cache(self) -> None:
+        """(Re)build the kerchunk metadata cache, only in build mode.
+
+        No-op in read mode or for sources with ``metadata_caching`` disabled.
+        Builds for any cached source -- including single, non-glob resources:
+        geokube's caching openers are read-only and raise ``CacheNotExist`` when
+        the cache is missing, so the cache must be published before any read.
+        After this returns, the regular read path (``metadata_caching=True``)
+        loads exactly what was just published, validating the round-trip.
+        """
+        if (
+            self._cache_mode() != "build"
+            or not self.metadata_caching
+        ):
+            return
+        geokube.build_metadata_cache(
+            path=self.path,
+            pattern=self.pattern,
+            metadata_cache_path=self.metadata_cache_path,
+            id_pattern=self.field_id,
+            mapping=self.mapping,
+            # Recombine at open time the same way the direct open would; the
+            # catalog encodes the strategy in xarray_kwargs (default by_coords).
+            combine=self.xarray_kwargs.get("combine", "by_coords"),
+            concat_dim=self.xarray_kwargs.get("concat_dim"),
+        )
 
     def _get_schema(self):
         """Make schema object, which embeds goekube fields metadata"""

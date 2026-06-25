@@ -30,7 +30,10 @@ def test_query_message_parsing():
         )
     )
     assert msg.type is MessageType.QUERY
-    assert msg.request_id == 42
+    # request_id is normalized to str even when the JSON envelope carries it as
+    # an int, since downstream code builds download paths/filenames from it.
+    assert msg.request_id == "42"
+    assert isinstance(msg.request_id, str)
     assert msg.dataset_id == "era5"
     assert msg.product_id == "reanalysis"
     assert isinstance(msg.content, GeoQuery)
