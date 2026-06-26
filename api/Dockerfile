@@ -14,8 +14,9 @@ COPY pyproject.toml /code/pyproject.toml
 COPY app /code/app
 RUN pip install --no-cache-dir /code --break-system-packages && rm -rf /code
 
-RUN groupadd --gid 10001 appuser && useradd --uid 10001 --gid 10001 --no-create-home appuser
-USER appuser
+# NOTE: runs as root (default). Non-root `appuser` was temporarily reverted because
+# appuser (uid 10001) lacks read permission on the HPC storage paths. To be restored
+# once the storage team provisions a shared uid/gid for the dataset volumes.
 
 EXPOSE 8080
 CMD ["uvicorn", "main:app", "--proxy-headers", "--host", "0.0.0.0", "--port", "8080"]
