@@ -98,6 +98,10 @@ def get_datasets(user_roles_names: list[str]) -> list[dict]:
                     product_role_name=prod_info.get("role"),
                     user_roles_names=user_roles_names,
                 )
+                # Hide products whose metadata cache has not been built yet
+                # (metadata_caching=True + CacheNotExist); metadata_caching=False
+                # products (e.g. native zarr) read directly and stay visible.
+                and data_store.is_product_available(dataset_id, prod_name)
             }
         except KeyError as err:
             log.error(

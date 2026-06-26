@@ -12,6 +12,15 @@ from starlette.requests import HTTPConnection
 from utils.api_logging import get_dds_logger
 import exceptions as exc
 
+# geokube is a heavy, optional dependency: present in the running API image but
+# not in the geokube-free unit-test env. Import it guardedly so this module stays
+# importable/unit-testable without geokube; the CacheNotExist handler below is
+# only registered when geokube is actually available.
+try:
+    from geokube.core.errs import CacheNotExist
+except Exception:  # pragma: no cover - exercised only in the geokube-free env
+    CacheNotExist = None
+
 logger = get_dds_logger(__name__)
 
 
@@ -45,6 +54,21 @@ def register_error_handlers(app) -> None:
         return JSONResponse(
             status_code=404, content={"detail": "File was not found!"}
         )
+
+    if CacheNotExist is not None:
+
+        @app.exception_handler(CacheNotExist)
+        async def _cache_not_built_handler(request: Request, err):
+            """A `metadata_caching` product whose kerchunk cache has not been
+            built yet. Temporary condition -> 503 (the catalog build job
+            publishes the cache out-of-band); the listing also hides it."""
+            return JSONResponse(
+                status_code=503,
+                content={
+                    "detail": "Product temporarily unavailable"
+                    " (metadata cache not built yet)"
+                },
+            )
 
     @app.exception_handler(Exception)
     async def _unhandled_exception_handler(request: Request, err: Exception):
