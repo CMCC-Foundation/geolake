@@ -2,6 +2,7 @@ import os
 import tempfile
 import time
 import datetime
+import warnings
 import pika
 import logging
 import asyncio
@@ -131,8 +132,27 @@ def persist_datacube(
             full_path = os.path.join(base_path, f"{path}.csv")
             kube.to_csv(full_path)
         case "zarr":
+            # Plain ``zarr`` means Zarr v2 (the format clients expect by
+            # default). zarr-python 3.x defaults ``to_zarr`` to v3, so the
+            # version must be pinned explicitly.
             full_path = os.path.join(base_path, f"{path}.zarr")
-            kube.to_zarr(full_path, mode='w', consolidated=True)
+            kube.to_zarr(
+                full_path, mode='w', consolidated=True, zarr_format=2
+            )
+        case "zarr3":
+            # Explicit Zarr v3. Consolidated metadata is not part of the v3
+            # spec (zarr emits a ``ZarrUserWarning``); we still consolidate for
+            # faster reopens via our own stack and silence the expected,
+            # intended warning to keep executor logs clean.
+            full_path = os.path.join(base_path, f"{path}.zarr")
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore",
+                    message="Consolidated metadata is currently not part*",
+                )
+                kube.to_zarr(
+                    full_path, mode='w', consolidated=True, zarr_format=3
+                )
         case _:
             raise ValueError(f"format `{format}` is not supported")
     return full_path
@@ -194,6 +214,16 @@ def persist_dataset(
             case "csv":
                 full_path = os.path.join(base_path, f"{path}.csv")
                 dcube.to_csv(full_path)
+            case "zarr" | "zarr3":
+                # A multi-part Dataset result is zipped from individual files;
+                # a Zarr store is a directory and is not supported here. Fail
+                # clearly instead of leaving ``full_path`` unbound.
+                raise ValueError(
+                    "zarr/zarr3 output is not supported for multi-part dataset"
+                    " results"
+                )
+            case _:
+                raise ValueError(f"format `{format}` is not supported")
         return full_path
 
     if isinstance(message.content, GeoQuery):

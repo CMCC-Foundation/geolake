@@ -35,7 +35,12 @@ _LOG = logging.getLogger("geokube.capabilities")
 FORMAT_REGISTRY: dict[str, dict[str, str]] = {
     "netcdf": {"label": "netCDF", "ext": ".nc"},
     "geojson": {"label": "GeoJSON", "ext": ".json"},
+    # ``zarr`` produces a Zarr v2 store; ``zarr3`` an explicit Zarr v3 store.
+    # Both write a ``.zarr`` directory (the ``ext`` is shared on purpose: the
+    # executor names the result ``{path}.zarr`` and the download endpoint keys
+    # off the ``.zarr`` suffix, so v3 reuses the same serving path).
     "zarr": {"label": "Zarr", "ext": ".zarr"},
+    "zarr3": {"label": "Zarr v3", "ext": ".zarr"},
 }
 
 GRID_REGISTRY: dict[str, str] = {

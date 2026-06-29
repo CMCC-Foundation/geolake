@@ -15,8 +15,10 @@ from geoquery.capabilities import (
 
 # --- registries ----------------------------------------------------------
 def test_format_registry_includes_zarr():
-    assert set(FORMAT_REGISTRY) == {"netcdf", "geojson", "zarr"}
+    assert set(FORMAT_REGISTRY) == {"netcdf", "geojson", "zarr", "zarr3"}
     assert FORMAT_REGISTRY["zarr"] == {"label": "Zarr", "ext": ".zarr"}
+    # zarr3 shares the ``.zarr`` extension (see capabilities.py for why).
+    assert FORMAT_REGISTRY["zarr3"] == {"label": "Zarr v3", "ext": ".zarr"}
 
 
 def test_other_registries():
@@ -182,6 +184,12 @@ def test_zarr_format_gated_by_values():
     assert len(DatasetCapabilities().check(GeoQuery(format="zarr"))) == 1
     caps = DatasetCapabilities(format={"values": ["netcdf", "zarr"]})
     assert caps.check(GeoQuery(format="zarr")) == []
+
+
+def test_zarr3_format_gated_by_values():
+    assert len(DatasetCapabilities().check(GeoQuery(format="zarr3"))) == 1
+    caps = DatasetCapabilities(format={"values": ["netcdf", "zarr3"]})
+    assert caps.check(GeoQuery(format="zarr3")) == []
 
 
 # --- check(): variable_raw_labels is presentation-only --------------------
