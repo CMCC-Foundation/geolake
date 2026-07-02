@@ -75,6 +75,7 @@ class NetCDFAncillarySource(GeokubeSource):
                 metadata_cache_path=self.metadata_cache_path,
                 combine=self.xarray_kwargs.get("combine", "by_coords"),
                 concat_dim=self.xarray_kwargs.get("concat_dim"),
+                progress=self._cache_progress(),
             )
 
         from geokube.backend import _kerchunk

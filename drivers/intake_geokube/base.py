@@ -26,6 +26,19 @@ class GeokubeSource(DataSource):
         """
         return os.environ.get("CACHE_MODE", "read")
 
+    @staticmethod
+    def _cache_progress() -> bool:
+        """Show geokube's cache-build progress bars (tqdm) while building.
+
+        Opt-in via the ``CACHE_PROGRESS`` environment variable; only meaningful
+        on the catalog/build container (progress is used solely while
+        (re)building the cache -- API/executor never reach the build branch).
+        Off by default.
+        """
+        return os.environ.get("CACHE_PROGRESS", "").strip().lower() in (
+            "1", "true", "yes", "y", "t", "on"
+        )
+
     def _maybe_build_metadata_cache(self) -> None:
         """(Re)build the kerchunk metadata cache, only in build mode.
 
@@ -51,6 +64,7 @@ class GeokubeSource(DataSource):
             # catalog encodes the strategy in xarray_kwargs (default by_coords).
             combine=self.xarray_kwargs.get("combine", "by_coords"),
             concat_dim=self.xarray_kwargs.get("concat_dim"),
+            progress=self._cache_progress(),
         )
 
     def _get_schema(self):
