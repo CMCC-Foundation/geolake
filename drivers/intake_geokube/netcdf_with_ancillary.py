@@ -76,6 +76,9 @@ class NetCDFAncillarySource(GeokubeSource):
                 combine=self.xarray_kwargs.get("combine", "by_coords"),
                 concat_dim=self.xarray_kwargs.get("concat_dim"),
                 progress=self._cache_progress(),
+                # Forward opener kwargs (decode_times, ...) so the build decodes exactly
+                # like the read path; open_store replays the persisted subset on read.
+                **self._build_open_kwargs(),
             )
 
         from geokube.backend import _kerchunk

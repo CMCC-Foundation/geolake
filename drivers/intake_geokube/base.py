@@ -8,12 +8,39 @@ from geokube.core.datacube import DataCube
 from geokube.core.dataset import Dataset
 
 
+# xarray_kwargs keys that are NOT xarray-opener options for the metadata build:
+# `combine`/`concat_dim` are passed to build_metadata_cache explicitly; `parallel`
+# (an open_mfdataset flag), `engine` and `scheduler` are build/opener controls the
+# build handles itself or does not accept as opener kwargs; `preprocess` is a
+# read-time transform the build intentionally never applies.
+_BUILD_ONLY_XARRAY_KWARGS = frozenset(
+    {"combine", "concat_dim", "parallel", "engine", "scheduler", "preprocess"}
+)
+
+
 class GeokubeSource(DataSource):
     """Common behaviours for plugins in this repo"""
 
     version = "0.1a0"
     container = "geokube"
     partition_access = True
+
+    def _build_open_kwargs(self) -> dict:
+        """Opener kwargs (``decode_times``, ``mask_and_scale``, ``chunks``, ...) forwarded
+        from the catalog's ``xarray_kwargs`` to ``build_metadata_cache`` so the BUILD
+        decodes data exactly like the read-path open does.
+
+        Dropping them (the historical behaviour) broke the build<->read symmetry the cache
+        design relies on: e.g. a source configured with ``decode_times: false`` still had its
+        cache built with default decoding and crashed on files whose time is undecodable or
+        out-of-range (the soil-erosion ``time_bnds`` fill-sentinel case). geokube persists the
+        safe subset in the store and the reader replays it, so the cache stays transparent.
+        Build-only / non-opener keys are excluded.
+        """
+        return {
+            k: v for k, v in (self.xarray_kwargs or {}).items()
+            if k not in _BUILD_ONLY_XARRAY_KWARGS
+        }
 
     @staticmethod
     def _cache_mode() -> str:
@@ -65,6 +92,9 @@ class GeokubeSource(DataSource):
             combine=self.xarray_kwargs.get("combine", "by_coords"),
             concat_dim=self.xarray_kwargs.get("concat_dim"),
             progress=self._cache_progress(),
+            # Forward the opener kwargs (decode_times, mask_and_scale, ...) so the build
+            # decodes exactly like the read path -- keeping the cache transparent.
+            **self._build_open_kwargs(),
         )
 
     def _get_schema(self):
