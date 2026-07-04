@@ -139,3 +139,53 @@ def test_decode_times_kwarg_forwarded_to_build(tmp_path, monkeypatch):
     xc = cube.to_xarray()
     assert "v" in xc
     assert not np.issubdtype(np.asarray(xc["time"].values).dtype, np.datetime64)
+
+
+def _write_no_time_bnds(path):
+    """A file with a ``time`` axis but NO ``time_bnds`` — the bioclimind shape where a var
+    named in drop_variables is absent from some files."""
+    import numpy as np
+    import xarray as xr
+
+    ds = xr.Dataset(
+        {"bio": (("time", "y", "x"), np.zeros((1, 3, 4), dtype="float32"))},
+        coords={"time": ("time", np.array([0], dtype="int32")),
+                "y": ("y", np.arange(3)), "x": ("x", np.arange(4))},
+    )
+    ds["time"].attrs = {"units": "days since 1970-01-01", "calendar": "standard",
+                        "standard_name": "time", "axis": "T"}
+    ds.to_netcdf(str(path), engine="netcdf4", format="NETCDF4")
+    return str(path)
+
+
+def test_drop_variables_not_forwarded_to_build(tmp_path, monkeypatch):
+    """Regression (bioclimind): `drop_variables` naming a var absent from a file must not crash
+    the build. `drop_variables` is a read-time EXCLUSION filter, not a build-materialization flag,
+    so the driver keeps it read-only (it is NOT forwarded to build_metadata_cache, where
+    VirtualiZarr's strict drop would raise on the missing var). The read path still forwards it and
+    drops leniently, so the variable is excluded from the result all the same.
+    """
+    from intake_geokube.netcdf import NetCDFSource
+    from geokube.backend import _kerchunk
+
+    p = _write_no_time_bnds(tmp_path / "bio.nc")  # has 'time', no 'time_bnds'
+    cache = str(tmp_path / "bio.cache")
+
+    # Build must succeed even though the file lacks 'time_bnds' listed in drop_variables.
+    monkeypatch.setenv("CACHE_MODE", "build")
+    NetCDFSource(
+        path=p, metadata_caching=True, metadata_cache_path=cache,
+        xarray_kwargs={"drop_variables": ["time", "time_bnds"]},
+    )._maybe_build_metadata_cache()
+    assert _kerchunk.load_store(cache) is not None  # store published (no strict-drop crash)
+
+    # Read: drop_variables is applied leniently at read -> 'time' excluded from the cube.
+    monkeypatch.setenv("CACHE_MODE", "read")
+    result = NetCDFSource(
+        path=p, metadata_caching=True, metadata_cache_path=cache,
+        xarray_kwargs={"drop_variables": ["time", "time_bnds"]},
+    ).read()
+    cube = result.cubes[0] if hasattr(result, "cubes") else result
+    xc = cube.to_xarray()
+    assert "bio" in xc
+    assert "time_bnds" not in xc.variables

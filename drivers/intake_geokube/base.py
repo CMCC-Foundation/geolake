@@ -8,13 +8,21 @@ from geokube.core.datacube import DataCube
 from geokube.core.dataset import Dataset
 
 
-# xarray_kwargs keys that are NOT xarray-opener options for the metadata build:
-# `combine`/`concat_dim` are passed to build_metadata_cache explicitly; `parallel`
-# (an open_mfdataset flag), `engine` and `scheduler` are build/opener controls the
-# build handles itself or does not accept as opener kwargs; `preprocess` is a
-# read-time transform the build intentionally never applies.
+# xarray_kwargs keys NOT forwarded to the metadata build:
+# - `combine`/`concat_dim` are passed to build_metadata_cache explicitly;
+# - `parallel` (an open_mfdataset flag), `engine`, `scheduler` are build/opener controls
+#   the build handles itself or does not accept as opener kwargs;
+# - `preprocess` is a read-time transform the build intentionally never applies;
+# - `drop_variables` is a read-time *exclusion* filter, not a *materialization* flag
+#   (unlike decode_times/mask_and_scale, which bake values into the store and so must be
+#   symmetric). An excluded var can be dropped at read from a store that still contains it
+#   (a harmless lazy reference). Forwarding it to the build gains nothing and hits
+#   VirtualiZarr's STRICT drop_vars, which raises when the var is absent from a given file
+#   (e.g. `time_bnds` present in only some bioclimind files). The read path still forwards
+#   it (xarray's drop is lenient), so exclusion still happens -- transparently.
 _BUILD_ONLY_XARRAY_KWARGS = frozenset(
-    {"combine", "concat_dim", "parallel", "engine", "scheduler", "preprocess"}
+    {"combine", "concat_dim", "parallel", "engine", "scheduler", "preprocess",
+     "drop_variables"}
 )
 
 
