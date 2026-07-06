@@ -115,6 +115,11 @@ _old/
 .DS_Store
 *.zarr
 *.nc
+# Exception: small committed synthetic fixtures for the geokube integration tests.
+!drivers/tests/resources/synthetic.nc
+!drivers/tests/resources/synthetic_wrf.nc
+!drivers/tests/resources/synthetic_ancillary_main.nc
+!drivers/tests/resources/synthetic_ancillary_coords.nc
 db_init
 catalog
 docker-compose.yaml

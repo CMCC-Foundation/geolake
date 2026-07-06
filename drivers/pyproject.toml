@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "intake-geokube"
+version = "0.1a0"
+description = "Geokube driver for Intake."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "Apache-2.0" }
+authors = [{ name = "CMCC Foundation - PPOS Research Group", email = "ppos-services@cmcc.it" }]
+# pydantic>=2: removes the <2 constraint (it was the cause of the conflict with fastapi).
+# intake_geokube does not use pydantic directly.
+dependencies = ["intake", "pydantic>=2"]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.urls]
+Homepage = "https://github.com/geokube/intake-geokube"
+
+# `sentinel` EXCLUDED: non-working prototype, to be rewritten (see intake_geokube/sentinel.py).
+[project.entry-points."intake.drivers"]
+geokube_netcdf = "intake_geokube.netcdf:NetCDFSource"
+cmcc_wrf_geokube = "intake_geokube.wrf:CMCCWRFSource"
+geokube_netcdf_ancillary = "intake_geokube.netcdf_with_ancillary:NetCDFAncillarySource"
+
+[tool.setuptools.packages.find]
+include = ["intake_geokube*"]
+exclude = ["tests*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["integration: tests that require geokube/real data (run in-image)"]

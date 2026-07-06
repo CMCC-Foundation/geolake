@@ -2,9 +2,10 @@
 from typing import Optional
 
 from fastapi import HTTPException
+from starlette.authentication import AuthenticationError as StarletteAuthError
 
 
-class BaseDDSException(BaseException):
+class BaseDDSException(Exception):
     """Base class for DDS.api exceptions"""
 
     msg: str = "Bad request"
@@ -16,6 +17,37 @@ class BaseDDSException(BaseException):
             status_code=self.code,
             detail=self.msg,
         )
+
+
+class DDSAuthenticationError(StarletteAuthError):
+    """Authentication error carrying an HTTP status code and a client-safe
+    detail message.
+
+    It subclasses Starlette's `AuthenticationError` so that, when raised from
+    within `AuthenticationMiddleware`, it is routed to the middleware
+    `on_error` handler (instead of propagating as an unhandled 500).
+    """
+
+    def __init__(self, code: int, detail: str):
+        self.code = code
+        self.detail = detail
+        super().__init__(detail)
+
+
+class MalformedQueryParameterError(BaseDDSException):
+    """Raised when a request parameter (path/query/body) is malformed.
+
+    Maps to HTTP 400 so malformed input is reported as a client error instead
+    of surfacing as an unhandled 500.
+    """
+
+    msg: str = "Malformed request parameter"
+    code: int = 400
+
+    def __init__(self, detail: Optional[str] = None):
+        if detail:
+            self.msg = detail
+        super().__init__(self.msg)
 
 
 class EmptyUserTokenError(BaseDDSException):
@@ -193,3 +225,39 @@ class ProductRetrievingError(BaseDDSException):
             status=status
         )
         super().__init__(self.msg)
+
+
+class OperationNotSupportedError(BaseDDSException):
+    """Raised when a query requests an operation a product does not allow.
+
+    The product's catalog `capabilities` do not include the requested operation
+    (e.g. spatial/temporal subsetting, a regrid/resample, or an output format).
+    Mapped to HTTP 400, consistent with the other query-validation errors
+    (`MaximumAllowedSizeExceededError`, `EmptyDatasetError`); this is a
+    product-capability mismatch, not an authorization failure.
+    """
+
+    msg: str = (
+        "The requested operation is not supported for"
+        " '{dataset_id}.{product_id}': {reasons}"
+    )
+    code: int = 400
+
+    def __init__(self, dataset_id, product_id, violations):
+        self.msg = self.msg.format(
+            dataset_id=dataset_id,
+            product_id=product_id,
+            reasons="; ".join(violations),
+        )
+        super().__init__(self.msg)
+
+
+class EndpointDisabledError(BaseDDSException):
+    """Raised when a disabled endpoint is called by a non-eligible user.
+
+    Mapped to HTTP 405 (Method Not Allowed): the endpoint exists but is
+    currently inactive for the caller.
+    """
+
+    msg: str = "This endpoint is currently disabled"
+    code: int = 405

@@ -1,0 +1,35 @@
+metadata:
+  description: Synthetic dataset for geokube integration tests (no external data)
+sources:
+  synthetic:
+    description: Synthetic t2m grid (time=10, latitude=100, longitude=100)
+    driver: geokube_netcdf
+    # Example `capabilities` block: spatial subsetting is disabled and GeoJSON is
+    # offered alongside netCDF. The API rejects an area/location query here, and
+    # the web portal hides the spatial widgets while showing the GeoJSON format.
+    metadata:
+      capabilities:
+        spatial_subset: false
+        format:
+          values: [netcdf, geojson]
+    args:
+      # {{ CATALOG_DIR }} is resolved by intake relative to this catalog file,
+      # so the committed synthetic.nc next to it is found regardless of cwd.
+      path: '{{ CATALOG_DIR }}/synthetic.nc'
+      delay_read_cubes: false
+      metadata_caching: false
+  synthetic_wrf:
+    description: Synthetic raw WRF-like grid (Time=10, south_north=100, west_east=100)
+    driver: cmcc_wrf_geokube
+    args:
+      path: '{{ CATALOG_DIR }}/synthetic_wrf.nc'
+      delay_read_cubes: false
+      metadata_caching: false
+  synthetic_ancillary:
+    description: Synthetic main + ancillary grid (tdim=10, ygrid=100, xgrid=100)
+    driver: geokube_netcdf_ancillary
+    args:
+      path: '{{ CATALOG_DIR }}/synthetic_ancillary_main.nc'
+      ancillary_path: '{{ CATALOG_DIR }}/synthetic_ancillary_coords.nc'
+      delay_read_cubes: false
+      metadata_caching: false

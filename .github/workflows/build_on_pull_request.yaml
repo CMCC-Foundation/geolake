@@ -5,7 +5,51 @@ on:
     types: [opened, synchronize]
   workflow_dispatch:
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+    - name: Install components (editable) with dev extras
+      # All packages are now installable (pyproject). No more
+      # PYTHONPATH=datastore hacks or manual `pip install pyyaml`.
+      run: pip install -e ./drivers -e ./datastore -e "./api[dev]" -e "./executor[dev]"
+    - name: Run unit tests (geokube-free), per component
+      # Per-component: each invocation loads the component's pyproject
+      # (registered markers) and avoids the collision of the top-level `main`
+      # module (defined by both api and executor).
+      run: |
+        pytest api/tests -m "not integration"
+        pytest datastore/geoquery/tests -m "not integration"
+        pytest executor/tests -m "not integration"
+        pytest drivers/tests -m "not integration"
+  integration:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Login to Container Registry
+      uses: docker/login-action@v2
+      with:
+        username: ${{ vars.DOCKER_REGISTRY }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Build drivers + datastore images locally (geokube available)
+      run: |
+        docker build -t local/geolake-drivers:ci \
+          --build-arg REGISTRY=${{ vars.GEOKUBE_REGISTRY }} \
+          --build-arg GEOKUBE_TAG=${{ vars.GEOKUBE_TAG || '2026.03.1' }} \
+          ./drivers
+        docker build -t local/geolake-datastore:ci \
+          --build-arg REGISTRY=local --build-arg TAG=ci ./datastore
+    - name: Run integration tests inside the datastore image
+      run: |
+        docker run --rm -v ${{ github.workspace }}:/src -w /src local/geolake-datastore:ci \
+          sh -c "pip install -e ./drivers -e ./datastore -e './api[dev]' -e './executor[dev]' --break-system-packages && pytest drivers/tests -m integration && pytest datastore/tests -m integration"
   build:
+    needs: [test, integration]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -43,8 +87,9 @@ jobs:
         cache-to: type=gha,mode=max
         build-args: |
           REGISTRY=${{ vars.GEOKUBE_REGISTRY  }}
-        tags: | 
-          ${{ vars.DOCKER_REGISTRY }}/geolake-drivers:${{ env.TAG }}  
+          GEOKUBE_TAG=${{ vars.GEOKUBE_TAG || '2026.03.1' }}
+        tags: |
+          ${{ vars.DOCKER_REGISTRY }}/geolake-drivers:${{ env.TAG }}
           ${{ vars.DOCKER_REGISTRY }}/geolake-drivers:latest
     - name: Build and push datastore component
       uses: docker/build-push-action@v5
@@ -56,8 +101,8 @@ jobs:
           REGISTRY=${{ vars.DOCKER_REGISTRY  }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
-        tags: | 
-          ${{ vars.DOCKER_REGISTRY }}/geolake-datastore:${{ env.TAG }}  
+        tags: |
+          ${{ vars.DOCKER_REGISTRY }}/geolake-datastore:${{ env.TAG }}
           ${{ vars.DOCKER_REGISTRY }}/geolake-datastore:latest
     - name: Build and push api component
       uses: docker/build-push-action@v5
@@ -69,8 +114,8 @@ jobs:
           REGISTRY=${{ vars.DOCKER_REGISTRY  }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
-        tags: | 
-          ${{ vars.DOCKER_REGISTRY }}/geolake-api:${{ env.TAG }}  
+        tags: |
+          ${{ vars.DOCKER_REGISTRY }}/geolake-api:${{ env.TAG }}
           ${{ vars.DOCKER_REGISTRY }}/geolake-api:latest
     - name: Build and push executor component
       uses: docker/build-push-action@v5
@@ -82,6 +127,17 @@ jobs:
           REGISTRY=${{ vars.DOCKER_REGISTRY  }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
-        tags: | 
-          ${{ vars.DOCKER_REGISTRY }}/geolake-executor:${{ env.TAG }}  
+        tags: |
+          ${{ vars.DOCKER_REGISTRY }}/geolake-executor:${{ env.TAG }}
           ${{ vars.DOCKER_REGISTRY }}/geolake-executor:latest
+    # The web component now lives in a separate private repo (DDS_PLUGIN_REPOSITORY).
+    # Trigger its build via repository_dispatch with the SAME image tag used here,
+    # so it can build FROM ${DOCKER_REGISTRY}/geolake-datastore:${TAG} (pushed above).
+    - name: Trigger external web component build
+      run: |
+        curl -fsSL -X POST \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${{ secrets.DDS_PLUGIN_PAT }}" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          "https://api.github.com/repos/${{ secrets.DDS_PLUGIN_REPOSITORY }}/dispatches" \
+          -d '{"event_type":"build-web","client_payload":{"tag":"${{ env.TAG }}"}}'

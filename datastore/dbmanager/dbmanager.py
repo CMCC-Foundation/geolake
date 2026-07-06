@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import yaml
 import logging
 import uuid
@@ -36,6 +37,30 @@ def is_true(item) -> bool:
 def generate_key() -> str:
     """Generate as new api key for a user"""
     return secrets.token_urlsafe(nbytes=32)
+
+
+def same_user(a, b) -> bool:
+    """Return True if two user ids refer to the same user.
+
+    The comparison is UUID-aware (so a canonical lowercase UUID matches an
+    upper-case one) and falls back to a plain string comparison when the
+    values are not valid UUIDs. Used to enforce per-user ownership of requests
+    (SEC-10) at the datastore layer, regardless of the calling component.
+    """
+    try:
+        return uuid.UUID(str(a)) == uuid.UUID(str(b))
+    except (ValueError, AttributeError, TypeError):
+        return str(a) == str(b)
+
+
+def mask_db_url(url: str) -> str:
+    """Mask the password in a postgres connection URL for safe logging (SEC-16).
+
+    ``postgresql://user:password@host:port/db`` becomes
+    ``postgresql://user:***@host:port/db``. The match is greedy up to the last
+    credential ``@`` so a password that itself contains ``@`` is fully masked.
+    """
+    return re.sub(r"(://[^:/@]+:).*(@)", r"\1***\2", url)
 
 
 @unique
@@ -170,7 +195,8 @@ class DBManager(metaclass=Singleton):
         database = os.environ["POSTGRES_DB"]
 
         url = f"postgresql://{user}:{password}@{host}:{port}/{database}"
-        self._LOG.info("db connection: `%s`", url)
+        # Never log the plaintext password (SEC-16); mask it for the log line.
+        self._LOG.info("db connection: `%s`", mask_db_url(url))
         self.__engine = create_engine(
             url, echo=is_true(os.environ.get("DB_LOGGING", False))
         )
@@ -224,9 +250,21 @@ class DBManager(metaclass=Singleton):
                 )
             )
 
-    def get_request_details(self, request_id: int):
+    def get_request_details(self, request_id: int, user_id=None):
         with self.__session_maker() as session:
-            return session.query(Request).get(request_id)
+            request = session.query(Request).get(request_id)
+            # Enforce per-user ownership when a user_id is supplied (SEC-10).
+            # A non-owned request is reported as forbidden; a missing one is
+            # left to the caller (returns None, as before).
+            if (
+                request is not None
+                and user_id is not None
+                and not same_user(request.user_id, user_id)
+            ):
+                raise PermissionError(
+                    f"Request `{request_id}` does not belong to the user"
+                )
+            return request
 
     def get_download_details_for_request(self, request_id: int):
         with self.__session_maker() as session:
@@ -297,14 +335,20 @@ class DBManager(metaclass=Singleton):
             return request.request_id
 
     def get_request_status_and_reason(
-        self, request_id
+        self, request_id, user_id=None
     ) -> None | RequestStatus:
         with self.__session_maker() as session:
-            if request := session.query(Request).get(request_id):
-                return RequestStatus(request.status), request.fail_reason
-            raise IndexError(
-                f"Request with id: `{request_id}` does not exist!"
-            )
+            request = session.query(Request).get(request_id)
+            if request is None:
+                raise IndexError(
+                    f"Request with id: `{request_id}` does not exist!"
+                )
+            # Enforce per-user ownership when a user_id is supplied (SEC-10).
+            if user_id is not None and not same_user(request.user_id, user_id):
+                raise PermissionError(
+                    f"Request `{request_id}` does not belong to the user"
+                )
+            return RequestStatus(request.status), request.fail_reason
 
     def get_requests_for_user_id(self, user_id) -> list[Request]:
         with self.__session_maker() as session:
@@ -320,12 +364,21 @@ class DBManager(metaclass=Singleton):
                 Request.status.in_(status)
             )
 
-    def get_download_details_for_request_id(self, request_id) -> Download:
+    def get_download_details_for_request_id(
+        self, request_id, user_id=None
+    ) -> Download:
         with self.__session_maker() as session:
             request_details = session.query(Request).get(request_id)
             if request_details is None:
                 raise IndexError(
                     f"Request with id: `{request_id}` does not exist!"
+                )
+            # Enforce per-user ownership when a user_id is supplied (SEC-10).
+            if user_id is not None and not same_user(
+                request_details.user_id, user_id
+            ):
+                raise PermissionError(
+                    f"Request `{request_id}` does not belong to the user"
                 )
             return request_details.download
 

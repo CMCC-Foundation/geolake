@@ -5,7 +5,7 @@ import re
 from typing import Optional, Dict
 from datetime import datetime
 
-from fastapi import FastAPI, HTTPException, Request, status, Query, Response
+from fastapi import FastAPI, Request, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.authentication import AuthenticationMiddleware
 from starlette.authentication import requires
@@ -23,6 +23,7 @@ from geoquery.geoquery import GeoQuery
 
 from utils.api_logging import get_dds_logger
 import exceptions as exc
+from error_handlers import auth_on_error, register_error_handlers
 from endpoint_handlers import (
     dataset_handler,
     file_handler,
@@ -33,6 +34,12 @@ from callbacks import all_onstartup_callbacks
 from encoders import extend_json_encoders
 from const import venv, tags
 from auth import scopes
+from security import (
+    BodySizeLimitMiddleware,
+    build_path_filters,
+    parse_bbox,
+)
+
 
 def map_to_geoquery(
         variables: list[str],
@@ -44,8 +51,7 @@ def map_to_geoquery(
 ) -> GeoQuery:
 
     if bbox:
-        bbox_ = [float(x) for x in bbox.split(',')]
-        area = { 'west': bbox_[0], 'south': bbox_[1], 'east': bbox_[2], 'north': bbox_[3],  }
+        area = parse_bbox(bbox)
     else:
         area = None
     if time:
@@ -83,21 +89,26 @@ app = FastAPI(
 
 # ======== Authentication backend ========= #
 app.add_middleware(
-    AuthenticationMiddleware, backend=DDSAuthenticationBackend()
+    AuthenticationMiddleware,
+    backend=DDSAuthenticationBackend(),
+    on_error=auth_on_error,
 )
 
 # ======== CORS ========= #
-cors_kwargs: dict[str, str | list[str]]
+# Credentials are enabled only when an explicit origin regex is configured
+# (production). Combining the wildcard dev default with credentials is invalid
+# and unsafe, so credentials are disabled in that fallback (SEC-14).
+cors_kwargs: dict
 if venv.ALLOWED_CORS_ORIGINS_REGEX in os.environ:
     cors_kwargs = {
-        "allow_origin_regex": os.environ[venv.ALLOWED_CORS_ORIGINS_REGEX]
+        "allow_origin_regex": os.environ[venv.ALLOWED_CORS_ORIGINS_REGEX],
+        "allow_credentials": True,
     }
 else:
-    cors_kwargs = {"allow_origins": ["*"]}
+    cors_kwargs = {"allow_origins": ["*"], "allow_credentials": False}
 
 app.add_middleware(
     CORSMiddleware,
-    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
     **cors_kwargs,
@@ -108,12 +119,25 @@ app.add_middleware(
 app.add_middleware(MetricsMiddleware)
 app.add_route("/metrics", metrics)
 
+# ======== Request body size limit ========= #
+# Robust enforcement also needs a reverse-proxy limit (nginx client_max_body_size).
+_MAX_REQUEST_BODY_SIZE_BYTES = int(
+    os.environ.get("MAX_REQUEST_BODY_SIZE_BYTES", 10 * 1024 * 1024)
+)
+app.add_middleware(
+    BodySizeLimitMiddleware, max_body_bytes=_MAX_REQUEST_BODY_SIZE_BYTES
+)
+
 app.state.api_request_duration_seconds = Summary(
     "api_request_duration_seconds", "Requests duration"
 )
 app.state.api_http_requests_total = Counter(
     "api_http_requests_total", "Total number of requests"
 )
+
+
+# ======== Global exception handlers ========= #
+register_error_handlers(app)
 
 
 # ======== Endpoints definitions ========= #
@@ -130,12 +154,9 @@ async def geolake_info():
 async def get_datasets(request: Request):
     """List all products eligible for a user defined by user_token"""
     app.state.api_http_requests_total.inc({"route": "GET /datasets"})
-    try:
-        return dataset_handler.get_datasets(
-            user_roles_names=request.auth.scopes
-        )
-    except exc.BaseDDSException as err:
-        raise err.wrap_around_http_exception() from err
+    return dataset_handler.get_datasets(
+        user_roles_names=request.auth.scopes
+    )
 
 
 @app.get("/datasets/{dataset_id}", tags=[tags.DATASET])
@@ -151,13 +172,10 @@ async def get_first_product_details(
     app.state.api_http_requests_total.inc(
         {"route": "GET /datasets/{dataset_id}"}
     )
-    try:
-        return dataset_handler.get_product_details(
-            user_roles_names=request.auth.scopes,
-            dataset_id=dataset_id,
-        )
-    except exc.BaseDDSException as err:
-        raise err.wrap_around_http_exception() from err
+    return dataset_handler.get_product_details(
+        user_roles_names=request.auth.scopes,
+        dataset_id=dataset_id,
+    )
 
 
 @app.get("/datasets/{dataset_id}/{product_id}", tags=[tags.DATASET])
@@ -174,14 +192,11 @@ async def get_product_details(
     app.state.api_http_requests_total.inc(
         {"route": "GET /datasets/{dataset_id}/{product_id}"}
     )
-    try:
-        return dataset_handler.get_product_details(
-            user_roles_names=request.auth.scopes,
-            dataset_id=dataset_id,
-            product_id=product_id,
-        )
-    except exc.BaseDDSException as err:
-        raise err.wrap_around_http_exception() from err
+    return dataset_handler.get_product_details(
+        user_roles_names=request.auth.scopes,
+        dataset_id=dataset_id,
+        product_id=product_id,
+    )
 
 @app.get("/datasets/{dataset_id}/{product_id}/map", tags=[tags.DATASET])
 @timer(
@@ -230,15 +245,12 @@ async def get_map(
                                 transparent=transparent, bgcolor=bgcolor,
                                 dpi=dpi, cmap=cmap, projection=crs,
                                 vmin=vmin, vmax=vmax)
-    try:
-        return dataset_handler.sync_query(
-            user_id=request.user.id,
-            dataset_id=dataset_id,
-            product_id=product_id,
-            query=query
-        )
-    except exc.BaseDDSException as err:
-        raise err.wrap_around_http_exception() from err
+    return dataset_handler.sync_query(
+        user_id=request.user.id,
+        dataset_id=dataset_id,
+        product_id=product_id,
+        query=query
+    )
 
 @app.get("/datasets/{dataset_id}/{product_id}/{filters:path}/map", tags=[tags.DATASET])
 @timer(
@@ -275,19 +287,13 @@ async def get_map_with_filters(
         filters_dict = {'pasture': filters_vals[0]}
     
     else:
-        try:
-            product_info = dataset_handler.get_product_details(
-                user_roles_names=request.auth.scopes,
-                dataset_id=dataset_id,
-                product_id=product_id,
-            )
-        except exc.BaseDDSException as err:
-            raise err.wrap_around_http_exception() from err
+        product_info = dataset_handler.get_product_details(
+            user_roles_names=request.auth.scopes,
+            dataset_id=dataset_id,
+            product_id=product_id,
+        )
         
-        filters_keys = product_info['metadata']['filters']
-        filters_dict = {}
-        for i in range(0, len(filters_vals)):
-            filters_dict[filters_keys[i]['name']] = filters_vals[i]
+        filters_dict = build_path_filters(product_info, filters_vals)
     
     app.state.api_http_requests_total.inc(
         {"route": "GET /datasets/{dataset_id}/{product_id}/map"}
@@ -307,15 +313,12 @@ async def get_map_with_filters(
                                 transparent=transparent, bgcolor=bgcolor,
                                 dpi=dpi, cmap=cmap, projection=crs, vmin=vmin, vmax=vmax)
 
-    try:
-        return dataset_handler.sync_query(
-            user_id=request.user.id,
-            dataset_id=dataset_id,
-            product_id=product_id,
-            query=query
-        )
-    except exc.BaseDDSException as err:
-        raise err.wrap_around_http_exception() from err
+    return dataset_handler.sync_query(
+        user_id=request.user.id,
+        dataset_id=dataset_id,
+        product_id=product_id,
+        query=query
+    )
 
 @app.get("/datasets/{dataset_id}/{product_id}/items/{feature_id}", tags=[tags.DATASET])
 @timer(
@@ -352,15 +355,12 @@ async def get_feature(
 
     query = map_to_geoquery(variables=[feature_id], bbox=bbox, time=time, 
                             format="geojson")
-    try:
-        return dataset_handler.sync_query(
-            user_id=request.user.id,
-            dataset_id=dataset_id,
-            product_id=product_id,
-            query=query
-        )
-    except exc.BaseDDSException as err:
-        raise err.wrap_around_http_exception() from err
+    return dataset_handler.sync_query(
+        user_id=request.user.id,
+        dataset_id=dataset_id,
+        product_id=product_id,
+        query=query
+    )
     
 @app.get("/datasets/{dataset_id}/{product_id}/{filters:path}/items/{feature_id}", tags=[tags.DATASET])
 @timer(
@@ -388,19 +388,13 @@ async def get_feature_with_filters(
         filters_dict = {'pasture': filters_vals[0]}
     
     else: 
-        try:
-            product_info = dataset_handler.get_product_details(
-                user_roles_names=request.auth.scopes,
-                dataset_id=dataset_id,
-                product_id=product_id,
-            )
-        except exc.BaseDDSException as err:
-            raise err.wrap_around_http_exception() from err
+        product_info = dataset_handler.get_product_details(
+            user_roles_names=request.auth.scopes,
+            dataset_id=dataset_id,
+            product_id=product_id,
+        )
         
-        filters_keys = product_info['metadata']['filters']
-        filters_dict = {}
-        for i in range(0, len(filters_vals)):
-            filters_dict[filters_keys[i]['name']] = filters_vals[i]
+        filters_dict = build_path_filters(product_info, filters_vals)
     
     app.state.api_http_requests_total.inc(
         {"route": "GET /datasets/{dataset_id}/{product_id}/items/{feature_id}"}
@@ -417,15 +411,12 @@ async def get_feature_with_filters(
 
     query = map_to_geoquery(variables=[feature_id], bbox=bbox, time=time, filters=filters_dict, 
                             format="geojson")
-    try:
-        return dataset_handler.sync_query(
-            user_id=request.user.id,
-            dataset_id=dataset_id,
-            product_id=product_id,
-            query=query
-        )
-    except exc.BaseDDSException as err:
-        raise err.wrap_around_http_exception() from err
+    return dataset_handler.sync_query(
+        user_id=request.user.id,
+        dataset_id=dataset_id,
+        product_id=product_id,
+        query=query
+    )
     
     
 @app.get("/datasets/{dataset_id}/{product_id}/metadata", tags=[tags.DATASET])
@@ -442,12 +433,9 @@ async def get_metadata(
     app.state.api_http_requests_total.inc(
         {"route": "GET /datasets/{dataset_id}/{product_id}/metadata"}
     )
-    try:
-        return dataset_handler.get_metadata(
-            dataset_id=dataset_id, product_id=product_id
-        )
-    except exc.BaseDDSException as err:
-        raise err.wrap_around_http_exception() from err
+    return dataset_handler.get_metadata(
+        dataset_id=dataset_id, product_id=product_id
+    )
 
 
 @app.post("/datasets/{dataset_id}/{product_id}/estimate", tags=[tags.DATASET])
@@ -466,15 +454,12 @@ async def estimate(
     app.state.api_http_requests_total.inc(
         {"route": "POST /datasets/{dataset_id}/{product_id}/estimate"}
     )
-    try:
-        return dataset_handler.estimate(
-            dataset_id=dataset_id,
-            product_id=product_id,
-            query=query,
-            unit=unit,
-        )
-    except exc.BaseDDSException as err:
-        raise err.wrap_around_http_exception() from err
+    return dataset_handler.estimate(
+        dataset_id=dataset_id,
+        product_id=product_id,
+        query=query,
+        unit=unit,
+    )
 
 
 @app.post("/datasets/{dataset_id}/{product_id}/execute", tags=[tags.DATASET])
@@ -493,15 +478,12 @@ async def query(
     app.state.api_http_requests_total.inc(
         {"route": "POST /datasets/{dataset_id}/{product_id}/execute"}
     )
-    try:
-        return dataset_handler.async_query(
-            user_id=request.user.id,
-            dataset_id=dataset_id,
-            product_id=product_id,
-            query=query,
-        )
-    except exc.BaseDDSException as err:
-        raise err.wrap_around_http_exception() from err
+    return dataset_handler.async_query(
+        user_id=request.user.id,
+        dataset_id=dataset_id,
+        product_id=product_id,
+        query=query,
+    )
 
 
 @app.post("/datasets/workflow", tags=[tags.DATASET])
@@ -509,20 +491,25 @@ async def query(
     app.state.api_request_duration_seconds,
     labels={"route": "POST /datasets/workflow"},
 )
-@requires([scopes.AUTHENTICATED])
 async def workflow(
     request: Request,
     tasks: TaskList,
 ):
-    """Schedule the job of workflow processing"""
+    """Schedule the job of workflow processing.
+
+    The workflow feature is incomplete and currently disabled: it responds with
+    405 (Method Not Allowed) to everyone except users with the `admin` role.
+    The handler logic is kept so admins can still exercise it. Because it is
+    admin-only it is intentionally *not* subject to per-product capability
+    enforcement.
+    """
     app.state.api_http_requests_total.inc({"route": "POST /datasets/workflow"})
-    try:
-        return dataset_handler.run_workflow(
-            user_id=request.user.id,
-            workflow=tasks,
-        )
-    except exc.BaseDDSException as err:
-        raise err.wrap_around_http_exception() from err
+    if scopes.ADMIN not in request.auth.scopes:
+        raise exc.EndpointDisabledError()
+    return dataset_handler.run_workflow(
+        user_id=request.user.id,
+        workflow=tasks,
+    )
 
 
 @app.get("/requests", tags=[tags.REQUEST])
@@ -535,10 +522,7 @@ async def get_requests(
 ):
     """Get all requests for the user"""
     app.state.api_http_requests_total.inc({"route": "GET /requests"})
-    try:
-        return request_handler.get_requests(request.user.id)
-    except exc.BaseDDSException as err:
-        raise err.wrap_around_http_exception() from err
+    return request_handler.get_requests(request.user.id)
 
 
 @app.get("/requests/{request_id}/status", tags=[tags.REQUEST])
@@ -555,12 +539,9 @@ async def get_request_status(
     app.state.api_http_requests_total.inc(
         {"route": "GET /requests/{request_id}/status"}
     )
-    try:
-        return request_handler.get_request_status(
-            user_id=request.user.id, request_id=request_id
-        )
-    except exc.BaseDDSException as err:
-        raise err.wrap_around_http_exception() from err
+    return request_handler.get_request_status(
+        user_id=request.user.id, request_id=request_id
+    )
 
 
 @app.get("/requests/{request_id}/size", tags=[tags.REQUEST])
@@ -577,12 +558,9 @@ async def get_request_resulting_size(
     app.state.api_http_requests_total.inc(
         {"route": "GET /requests/{request_id}/size"}
     )
-    try:
-        return request_handler.get_request_resulting_size(
-            request_id=request_id
-        )
-    except exc.BaseDDSException as err:
-        raise err.wrap_around_http_exception() from err
+    return request_handler.get_request_resulting_size(
+        request_id=request_id, user_id=request.user.id
+    )
 
 
 @app.get("/requests/{request_id}/uri", tags=[tags.REQUEST])
@@ -599,10 +577,9 @@ async def get_request_uri(
     app.state.api_http_requests_total.inc(
         {"route": "GET /requests/{request_id}/uri"}
     )
-    try:
-        return request_handler.get_request_uri(request_id=request_id)
-    except exc.BaseDDSException as err:
-        raise err.wrap_around_http_exception() from err
+    return request_handler.get_request_uri(
+        request_id=request_id, user_id=request.user.id
+    )
 
 
 @app.get("/download/{request_id}", tags=[tags.REQUEST])
@@ -610,7 +587,7 @@ async def get_request_uri(
     app.state.api_request_duration_seconds,
     labels={"route": "GET /download/{request_id}"},
 )
-# @requires([scopes.AUTHENTICATED]) # TODO: mange download auth in the web component
+@requires([scopes.AUTHENTICATED])
 async def download_request_result(
     request: Request,
     request_id: int,
@@ -619,21 +596,16 @@ async def download_request_result(
     app.state.api_http_requests_total.inc(
         {"route": "GET /download/{request_id}"}
     )
-    try:
-        return file_handler.download_request_result(request_id=request_id)
-    except exc.BaseDDSException as err:
-        raise err.wrap_around_http_exception() from err
-    except FileNotFoundError as err:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="File was not found!"
-        ) from err
+    return file_handler.download_request_result(
+        request_id=request_id, user_id=request.user.id
+    )
 
 @app.get("/download/{request_id}/{filename}", tags=[tags.REQUEST])
 @timer(
     app.state.api_request_duration_seconds,
     labels={"route": "GET /download/{request_id}/{filename}"},
 )
-# @requires([scopes.AUTHENTICATED]) # TODO: mange download auth in the web component
+@requires([scopes.AUTHENTICATED])
 async def download_request_result(
     request: Request,
     request_id: int,
@@ -643,21 +615,16 @@ async def download_request_result(
     app.state.api_http_requests_total.inc(
         {"route": "GET /download/{request_id}/{filename}"}
     )
-    try:
-        return file_handler.download_request_result(request_id=request_id, filename=filename)
-    except exc.BaseDDSException as err:
-        raise err.wrap_around_http_exception() from err
-    except FileNotFoundError as err:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="File was not found!"
-        ) from err
+    return file_handler.download_request_result(
+        request_id=request_id, user_id=request.user.id, filename=filename
+    )
 
 @app.get("/download/{request_id}/{filename}/{subfile}", tags=[tags.REQUEST])
 @timer(
     app.state.api_request_duration_seconds,
     labels={"route": "GET /download/{request_id}/{filename}/{subfile}"},
 )
-# @requires([scopes.AUTHENTICATED])
+@requires([scopes.AUTHENTICATED])
 async def download_request_result(
     request: Request,
     request_id: int,
@@ -668,11 +635,8 @@ async def download_request_result(
     app.state.api_http_requests_total.inc(
         {"route": "GET /download/{request_id}/{filename}/{subfile}"}
     )
-    try:
-        return file_handler.download_request_result(request_id=request_id, filename=f'{filename}/{subfile}')
-    except exc.BaseDDSException as err:
-        raise err.wrap_around_http_exception() from err
-    except FileNotFoundError as err:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="File was not found!"
-        ) from err
+    return file_handler.download_request_result(
+        request_id=request_id,
+        user_id=request.user.id,
+        filename=f'{filename}/{subfile}',
+    )

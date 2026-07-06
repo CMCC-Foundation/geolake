@@ -1,18 +1,12 @@
-ARG REGISTRY=rg.fr-par.scw.cloud/geolake
+ARG REGISTRY=gtramonte
 ARG TAG=latest
 FROM $REGISTRY/geolake-datastore:$TAG
 
-RUN apt update && apt install -y cron curl
-
-
+# Code + deps declared in pyproject.toml; installed in site-packages, sources removed.
+# The executor stays ROOT with an RW filesystem: in production it writes to /downloads (hardening deferred).
 WORKDIR /app
-COPY requirements.txt /code/requirements.txt
-RUN pip install --no-cache-dir -r /code/requirements.txt --break-system-packages
-COPY app /app
+COPY pyproject.toml /code/pyproject.toml
+COPY app /code/app
+RUN pip install --no-cache-dir /code --break-system-packages && rm -rf /code
 
-COPY ./healtcheck.* /opt/
-
-RUN chmod +x /opt/healtcheck.sh
-RUN crontab -u root /opt/healtcheck.cron
-
-CMD [ "python", "main.py" ]
+CMD ["python", "-m", "main"]

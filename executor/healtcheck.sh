@@ -1,1 +1,0 @@
-curl https://hc-ping.com/$HEALTCHECKS

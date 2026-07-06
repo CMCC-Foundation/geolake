@@ -1,5 +1,6 @@
 """Modules realizing logic for dataset-related endpoints"""
 import os
+import json
 import pika
 from typing import Optional
 
@@ -7,6 +8,7 @@ from fastapi.responses import FileResponse
 
 from dbmanager.dbmanager import DBManager, RequestStatus
 from geoquery.geoquery import GeoQuery
+from geoquery.capabilities import DatasetCapabilities
 from geoquery.task import TaskList
 from datastore.datastore import Datastore, DEFAULT_MAX_REQUEST_SIZE_GB
 from datastore import exception as datastore_exception
@@ -25,12 +27,32 @@ from . import request
 log = get_dds_logger(__name__)
 data_store = Datastore()
 
-MESSAGE_SEPARATOR = os.environ["MESSAGE_SEPARATOR"]
 
 def _is_etimate_enabled(dataset_id, product_id):
     if dataset_id in ("sentinel-2",):
         return False
     return True
+
+
+def _enforce_capabilities(
+    dataset_id: str, product_id: str, query: GeoQuery
+) -> None:
+    """Reject a query that uses operations the product does not allow.
+
+    Reads the product's catalog `capabilities` and raises
+    `OperationNotSupportedError` (HTTP 400) on any violation. A product without
+    a `capabilities` block is fully permissive (historical behavior).
+    """
+    capabilities = DatasetCapabilities.from_metadata(
+        data_store.product_metadata(dataset_id, product_id)
+    )
+    violations = capabilities.check(query)
+    if violations:
+        raise exc.OperationNotSupportedError(
+            dataset_id=dataset_id,
+            product_id=product_id,
+            violations=violations,
+        )
 
 
 @log_execution_time(log)
@@ -76,6 +98,10 @@ def get_datasets(user_roles_names: list[str]) -> list[dict]:
                     product_role_name=prod_info.get("role"),
                     user_roles_names=user_roles_names,
                 )
+                # Hide products whose metadata cache has not been built yet
+                # (metadata_caching=True + CacheNotExist); metadata_caching=False
+                # products (e.g. native zarr) read directly and stay visible.
+                and data_store.is_product_available(dataset_id, prod_name)
             }
         except KeyError as err:
             log.error(
@@ -182,6 +208,7 @@ def estimate(
     product_id: str,
     query: GeoQuery,
     unit: Optional[str] = None,
+    enforce_capabilities: bool = True,
 ):
     """Realize the logic for the nedpoint:
 
@@ -201,6 +228,10 @@ def estimate(
     unit : str
         One of unit [bytes, kB, MB, GB] to present the result. If `None`,
         unit will be inferred.
+    enforce_capabilities : bool, optional, default=True
+        Reject the query if it uses an operation the product does not allow.
+        Set to `False` when the caller has already enforced capabilities (e.g.
+        `async_query`) or for the OGC sync path that injects internal queries.
 
     Returns
     -------
@@ -213,6 +244,8 @@ def estimate(
         }
         ```
     """
+    if enforce_capabilities:
+        _enforce_capabilities(dataset_id, product_id, query)
     query_bytes_estimation = data_store.estimate(dataset_id, product_id, query)
     return make_bytes_readable_dict(
         size_bytes=query_bytes_estimation, units=unit
@@ -226,6 +259,7 @@ def async_query(
     dataset_id: str,
     product_id: str,
     query: GeoQuery,
+    enforce_capabilities: bool = True,
 ):
     """Realize the logic for the endpoint:
 
@@ -243,6 +277,10 @@ def async_query(
         ID of the product
     query : GeoQuery
         Query to perform
+    enforce_capabilities : bool, optional, default=True
+        Reject the query if it uses an operation the product does not allow.
+        The OGC sync path (`sync_query`) passes `False` because it injects
+        internal queries (e.g. `format=png`) that are not user-facing.
 
     Returns
     -------
@@ -258,8 +296,14 @@ def async_query(
 
     """
     log.debug("geoquery: %s", query)
+    # Enforce *before* the estimate gate so products with estimation disabled
+    # (see `_is_etimate_enabled`) are still subject to capability checks.
+    if enforce_capabilities:
+        _enforce_capabilities(dataset_id, product_id, query)
     if _is_etimate_enabled(dataset_id, product_id):
-        estimated_size = estimate(dataset_id, product_id, query, "GB").get("value")
+        estimated_size = estimate(
+            dataset_id, product_id, query, "GB", enforce_capabilities=False
+        ).get("value")
         allowed_size = data_store.product_metadata(dataset_id, product_id).get(
             "maximum_query_size_gb", DEFAULT_MAX_REQUEST_SIZE_GB
         )
@@ -288,9 +332,17 @@ def async_query(
         query=query.original_query_json(),
     )
 
-    # TODO: find a separator; for the moment use "\"
-    message = MESSAGE_SEPARATOR.join(
-        [str(request_id), "query", dataset_id, product_id, query.json()]
+    # Frame the broker message as a JSON envelope (SEC-5). This is robust to
+    # any content (the previous separator-joined string could be corrupted by
+    # a payload embedding the separator character).
+    message = json.dumps(
+        {
+            "request_id": request_id,
+            "type": "query",
+            "dataset_id": dataset_id,
+            "product_id": product_id,
+            "content": query.model_dump_json(),
+        }
     )
 
     broker_channel.basic_publish(
@@ -344,18 +396,27 @@ def sync_query(
     """
     
     import time
-    request_id = async_query(user_id, dataset_id, product_id, query)
-    status, _ = DBManager().get_request_status_and_reason(request_id)
+    # OGC map/feature endpoints route here with internally-built queries
+    # (e.g. `format=png`/`geojson`, bbox-derived `area`). They intentionally
+    # bypass capability enforcement, which gates the user-facing query path.
+    request_id = async_query(
+        user_id, dataset_id, product_id, query, enforce_capabilities=False
+    )
+    status, _ = DBManager().get_request_status_and_reason(
+        request_id, user_id=user_id
+    )
     log.debug("sync query: status: %s", status)
-    while status in (RequestStatus.RUNNING, RequestStatus.QUEUED, 
+    while status in (RequestStatus.RUNNING, RequestStatus.QUEUED,
                      RequestStatus.PENDING):
         time.sleep(1)
-        status, _ = DBManager().get_request_status_and_reason(request_id)
+        status, _ = DBManager().get_request_status_and_reason(
+            request_id, user_id=user_id
+        )
         log.debug("sync query: status: %s", status)
-    
+
     if status is RequestStatus.DONE:
         download_details = DBManager().get_download_details_for_request_id(
-                request_id
+                request_id, user_id=user_id
         )
         return FileResponse(
             path=download_details.location_path,
@@ -405,16 +466,22 @@ def run_workflow(
         )
     )
     broker_channel = broker_conn.channel()
+    serialized_workflow = workflow.model_dump_json()
+
     request_id = DBManager().create_request(
         user_id=user_id,
         dataset=workflow.dataset_id,
         product=workflow.product_id,
-        query=workflow.json(),
+        query=serialized_workflow,
     )
 
-    # TODO: find a separator; for the moment use "\"
-    message = MESSAGE_SEPARATOR.join(
-        [str(request_id), "workflow", workflow.json()]
+    # Frame the broker message as a JSON envelope (SEC-5).
+    message = json.dumps(
+        {
+            "request_id": request_id,
+            "type": "workflow",
+            "content": serialized_workflow,
+        }
     )
 
     broker_channel.basic_publish(

@@ -2,7 +2,7 @@ import json
 from collections import Counter
 from typing import Any, Optional, TypeVar
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 TWorkflow = TypeVar("TWorkflow")
 
@@ -13,7 +13,8 @@ class Task(BaseModel):
     use: Optional[list[str | int]] = Field(default_factory=list)
     args: Optional[dict[str, Any]] = Field(default_factory=dict)
 
-    @validator("use", pre=True, always=True, each_item=False)
+    @field_validator("use", mode="before")
+    @classmethod
     def match_use(cls, v):
         if v is None:
             return []
@@ -23,7 +24,8 @@ class Task(BaseModel):
 class TaskList(BaseModel):
     tasks: list[Task]
 
-    @validator("tasks")
+    @field_validator("tasks")
+    @classmethod
     def match_unique_ids(cls, items):
         for id_value, id_count in Counter([item.id for item in items]).items():
             if id_count != 1:
@@ -33,8 +35,8 @@ class TaskList(BaseModel):
     @classmethod
     def parse(
         cls,
-        workflow: TWorkflow | dict | list[dict] | str | bytes | bytearray,
-    ) -> TWorkflow:
+        workflow: "TWorkflow | dict | list[dict] | str | bytes | bytearray",
+    ) -> "TWorkflow":
         if isinstance(workflow, cls):
             return workflow
         if isinstance(workflow, (str | bytes | bytearray)):

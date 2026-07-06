@@ -71,6 +71,7 @@ class CMCCAFMSource(GeokubeSource):
         super(CMCCAFMSource, self).__init__(metadata=metadata)
 
     def _open_dataset(self):
+        self._maybe_build_metadata_cache()
         if self.pattern is None:
             self._kube =\
                 postprocess_afm(

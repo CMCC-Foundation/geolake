@@ -14,6 +14,7 @@ from geoquery.geoquery import GeoQuery
 
 from geokube.core.datacube import DataCube
 from geokube.core.dataset import Dataset
+from geokube.core.errs import CacheNotExist
 
 from .singleton import Singleton
 from .util import log_execution_time
@@ -86,6 +87,22 @@ class Datastore(metaclass=Singleton):
             ].read_chunked()
         return self.cache[dataset_id][product_id]
 
+    def is_product_available(self, dataset_id: str, product_id: str) -> bool:
+        """Whether the product can actually be served.
+
+        A ``metadata_caching=False`` product is read directly and is always
+        available. A ``metadata_caching=True`` product is available only once its
+        kerchunk cache has been built -- i.e. it was loaded into ``self.cache`` at
+        startup; otherwise reading it raises ``CacheNotExist``. Used to hide
+        not-yet-built products from the listing endpoints.
+        """
+        if self.cache is None:
+            self._load_cache()
+        entry = self.catalog(CACHE_DIR=self.cache_dir)[dataset_id][product_id]
+        if not entry.metadata_caching:
+            return True
+        return product_id in self.cache.get(dataset_id, {})
+
     @log_execution_time(_LOG)
     def _load_cache(self, datasets: list[str] | None = None):
         if self.cache is None or datasets is None:
@@ -115,13 +132,22 @@ class Datastore(metaclass=Singleton):
                     self.cache[dataset_id][
                         product_id
                     ] = catalog_entry.read_chunked()
+                except CacheNotExist:
+                    # Read-only API: the kerchunk cache for this product has not
+                    # been built by the catalog yet. Skip it (stay up) instead of
+                    # crashing startup; the build job publishes it out-of-band.
+                    self._LOG.warning(
+                        "metadata cache for `%s.%s` not built yet; skipping",
+                        dataset_id,
+                        product_id,
+                    )
                 except ValueError:
                     self._LOG.error(
                         "failed to load cache for `%s.%s`",
                         dataset_id,
                         product_id,
                         exc_info=True,
-                    ) 
+                    )
 
     @log_execution_time(_LOG)
     def dataset_list(self) -> list:
