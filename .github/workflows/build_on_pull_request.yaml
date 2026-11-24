@@ -40,7 +40,7 @@ jobs:
       run: |
         docker build -t local/geolake-drivers:ci \
           --build-arg REGISTRY=${{ vars.GEOKUBE_REGISTRY }} \
-          --build-arg GEOKUBE_TAG=${{ vars.GEOKUBE_TAG || '2026.03.1' }} \
+          --build-arg GEOKUBE_TAG=${{ vars.GEOKUBE_TAG || '2026.06.2.1' }} \
           ./drivers
         docker build -t local/geolake-datastore:ci \
           --build-arg REGISTRY=local --build-arg TAG=ci ./datastore
@@ -87,7 +87,7 @@ jobs:
         cache-to: type=gha,mode=max
         build-args: |
           REGISTRY=${{ vars.GEOKUBE_REGISTRY  }}
-          GEOKUBE_TAG=${{ vars.GEOKUBE_TAG || '2026.03.1' }}
+          GEOKUBE_TAG=${{ vars.GEOKUBE_TAG || '2026.06.2.1' }}
         tags: |
           ${{ vars.DOCKER_REGISTRY }}/geolake-drivers:${{ env.TAG }}
           ${{ vars.DOCKER_REGISTRY }}/geolake-drivers:latest
