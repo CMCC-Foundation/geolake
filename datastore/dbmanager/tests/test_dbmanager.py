@@ -5,7 +5,10 @@ These cover the pure functions backing the cross-component security fixes
 """
 import uuid
 
-from dbmanager.dbmanager import mask_db_url, same_user
+import pytest
+
+from dbmanager.dbmanager import DBManager, mask_db_url, same_user
+from dbmanager.singleton import Singleton
 
 
 # --- SEC-10: per-user ownership comparison --------------------------------
@@ -49,3 +52,30 @@ def test_mask_db_url_is_idempotent():
 def test_mask_db_url_without_credentials_is_unchanged():
     url = "postgresql://db-host:5432/geolake"
     assert mask_db_url(url) == url
+
+
+# --- DB driver: must be psycopg2 whatever SQLAlchemy's default is ---------
+@pytest.fixture
+def fresh_dbmanager(monkeypatch):
+    """Yield a DBManager built from env vars, isolated from the Singleton cache."""
+    for key, value in {
+        "POSTGRES_DB": "geolake",
+        "POSTGRES_USER": "dds_user",
+        "POSTGRES_PASSWORD": "s3cr3t",
+        "DB_SERVICE_HOST": "db-host",
+        "DB_SERVICE_PORT": "5432",
+    }.items():
+        monkeypatch.setenv(key, value)
+    Singleton._instances.pop(DBManager, None)
+    try:
+        yield DBManager()
+    finally:
+        Singleton._instances.pop(DBManager, None)
+
+
+def test_dbmanager_uses_psycopg2_driver(fresh_dbmanager):
+    # Regression: SQLAlchemy 2.1 resolves a bare `postgresql://` to psycopg (v3),
+    # which the images do not ship -> ModuleNotFoundError at executor startup.
+    # create_engine() does not connect; it only imports the DBAPI.
+    engine = fresh_dbmanager._DBManager__engine
+    assert engine.dialect.driver == "psycopg2"

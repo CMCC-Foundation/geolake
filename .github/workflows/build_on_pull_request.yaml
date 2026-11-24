@@ -24,6 +24,7 @@ jobs:
       run: |
         pytest api/tests -m "not integration"
         pytest datastore/geoquery/tests -m "not integration"
+        pytest datastore/dbmanager/tests -m "not integration"
         pytest executor/tests -m "not integration"
         pytest drivers/tests -m "not integration"
   integration:

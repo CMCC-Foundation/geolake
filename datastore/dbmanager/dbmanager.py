@@ -194,7 +194,9 @@ class DBManager(metaclass=Singleton):
         port = os.environ["DB_SERVICE_PORT"]
         database = os.environ["POSTGRES_DB"]
 
-        url = f"postgresql://{user}:{password}@{host}:{port}/{database}"
+        # Explicit driver: the bare `postgresql://` scheme resolves to psycopg2 on
+        # SQLAlchemy 2.0 but to psycopg (v3) on 2.1, which is not installed.
+        url = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{database}"
         # Never log the plaintext password (SEC-16); mask it for the log line.
         self._LOG.info("db connection: `%s`", mask_db_url(url))
         self.__engine = create_engine(
