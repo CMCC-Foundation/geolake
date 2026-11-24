@@ -17,7 +17,8 @@ dependencies = [
     "psycopg2-binary",
     "intake==2.0.9",
     "PyYAML",
-    "SQLAlchemy",
+    # <2.1: stay on the 2.0 line until the 2.1 migration is evaluated separately.
+    "SQLAlchemy>=2.0,<2.1",
 ]
 
 [project.optional-dependencies]
